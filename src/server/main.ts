@@ -1,5 +1,5 @@
 import { loadConfig } from './config.js';
-import { createContextAsync } from './context.js';
+import { createContextAsync, probeBackend } from './context.js';
 import { buildApp } from './app.js';
 import { startWorker } from './domain/jobs.js';
 import { ensureSetupCode } from './domain/users.js';
@@ -7,6 +7,17 @@ import { getSealKey } from './domain/sealkeys.js';
 
 const cfg = loadConfig();
 const ctx = await createContextAsync(cfg);
+
+// Dateiablage vor allem anderen prüfen: lieber gar nicht starten als beim ersten Upload scheitern.
+try {
+  const p = await probeBackend(ctx);
+  ctx.log.info({ storage: p.storage, ms: p.ms, bucket: cfg.s3?.bucket, prefix: cfg.s3?.prefix }, 'Dateiablage geprüft');
+} catch (e: any) {
+  ctx.log.fatal(e?.message ?? String(e));
+  ctx.log.flush?.();
+  process.exitCode = 1;
+  process.exit(1);
+}
 
 if (cfg.masterKeySource === 'generated') {
   ctx.log.warn('MASTER_KEY ist nicht gesetzt – es wird ein Schlüssel unter DATA_DIR/secrets verwendet. Für den Produktivbetrieb MASTER_KEY_FILE (Docker-Secret) setzen und gesondert sichern.');

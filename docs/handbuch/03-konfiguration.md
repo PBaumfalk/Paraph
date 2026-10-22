@@ -72,13 +72,68 @@ Details: [Kapitel 4](04-administration.md#anmeldung-per-oidc-authentik).
 | Variable | Standard | Zweck |
 |---|---|---|
 | `S3_BUCKET` | – | Bucket-Name. Schaltet S3 statt lokaler Ablage ein. |
-| `S3_ENDPOINT` | – | Endpunkt, z. B. `https://s3.eu-central-1.amazonaws.com` oder ein MinIO-Server. |
-| `S3_REGION` | `us-east-1` | Region für die SigV4-Signatur. |
-| `S3_ACCESS_KEY_ID` | leer | Zugangsschlüssel. |
-| `S3_SECRET_ACCESS_KEY` | leer | Geheimer Schlüssel. |
-| `S3_FORCE_PATH_STYLE` | `true` | Pfadstil-Adressierung (`endpoint/bucket/objekt`), wie bei MinIO üblich. |
+| `S3_ENDPOINT` | – | Endpunkt, z. B. `https://s3.eu-central-1.amazonaws.com` oder ein MinIO-Server. Ohne Angabe: `https://s3.<S3_REGION>.amazonaws.com`. Keine Zugangsdaten in die URL schreiben. |
+| `S3_REGION` | `us-east-1` | Region für die SigV4-Signatur. Muss zur Region des Buckets passen (MinIO/Garage: meist `us-east-1` bzw. `garage`). |
+| `S3_ACCESS_KEY_ID` | – | Zugangsschlüssel. Pflicht. |
+| `S3_SECRET_ACCESS_KEY` | – | Geheimer Schlüssel. Pflicht; besser als Docker-Secret über `S3_SECRET_ACCESS_KEY_FILE`. |
+| `S3_SESSION_TOKEN` | – | Nur für temporäre Zugangsdaten (STS); wird als `x-amz-security-token` mitsigniert. Läuft das Token ab, schlagen Zugriffe mit „Sitzungstoken abgelaufen“ fehl – Paraph erneuert es nicht selbst. |
+| `S3_FORCE_PATH_STYLE` | `true` mit `S3_ENDPOINT`, sonst `false` | Pfadstil (`endpoint/bucket/objekt`), wie bei MinIO, Garage und Ceph üblich. `false` = virtual-hosted (`bucket.endpoint/objekt`), Standard bei AWS. Bucketnamen mit Punkt oder Großbuchstaben werden immer im Pfadstil angesprochen, weil sie nicht zum TLS-Zertifikat der Subdomain passen. |
+| `S3_PREFIX` | leer | Schlüsselpräfix im Bucket, z. B. `paraph/`. Erlaubt einen gemeinsamen Bucket für mehrere Dienste und eine auf das Präfix beschränkte Policy. Nachträglich nicht ändern: vorhandene Objekte werden nicht verschoben. |
 
-Dateien werden vor dem Hochladen verschlüsselt. Mit S3 enthält die Sicherung nur die Datenbank, nicht die Dateien. Siehe [Kapitel 6](06-sicherung.md#s3).
+Dateien werden vor dem Hochladen verschlüsselt (AES-256-GCM, Schlüssel je Datei aus dem Hauptschlüssel abgeleitet); der Bucket enthält nur Chiffrat. Mit S3 enthält die Sicherung nur die Datenbank, nicht die Dateien. Siehe [Kapitel 6](06-sicherung.md#s3).
+
+### Startprüfung und Fehlerverhalten
+
+Beim Start prüft Paraph die Ablage, bevor der Webserver läuft: Bucket auflisten, ein zufälliges Probeobjekt unter `<S3_PREFIX>_paraph-probe/` schreiben, lesen und wieder löschen. Schlägt ein Schritt fehl, bricht der Start mit einer Meldung ab, z. B.
+
+```
+S3-Startprüfung fehlgeschlagen (Auflisten, Bucket „paraph“ an s3.example.org): S3: Signatur ungültig – S3_SECRET_ACCESS_KEY prüfen
+```
+
+Häufige Ursachen: falscher geheimer Schlüssel (`SignatureDoesNotMatch`), unbekannte Schlüssel-ID (`InvalidAccessKeyId`), falsche Region (`AuthorizationHeaderMalformed`), Bucket fehlt (`NoSuchBucket`; ohne Berechtigung meldet S3 stattdessen `AccessDenied`), Uhrzeit des Servers weicht mehr als 15 Minuten ab (`RequestTimeTooSkewed` – NTP einrichten). Zugangsdaten und der Meldungstext von S3 erscheinen nie in Fehlermeldungen oder im Log.
+
+Im Betrieb wiederholt Paraph Anfragen bei Serverfehlern (5xx, `SlowDown`), Zeitüberschreitung (60 s je Versuch) und Netzwerkfehlern bis zu dreimal mit wachsendem Abstand; 4xx-Fehler werden nicht wiederholt. Uploads tragen `Content-MD5` und `x-amz-content-sha256`; S3 lehnt beschädigte Übertragungen ab. Fehlt ein Objekt, das die Datenbank kennt, lautet die Meldung „Datei fehlt im Speicher“.
+
+### Sicherheitsempfehlungen für den Bucket
+
+- **Privat und ohne öffentlichen Zugriff.** Bei AWS „Block Public Access“ für Bucket und Konto vollständig aktivieren, keine Bucket-ACLs (Object Ownership „Bucket owner enforced“). Bei MinIO keine anonyme Policy (`mc anonymous get` muss `none` zeigen).
+- **Eigener Benutzer mit minimalen Rechten** nur für Paraph, nie der Root- oder Admin-Schlüssel. Paraph braucht genau `s3:GetObject`, `s3:PutObject`, `s3:DeleteObject` und `s3:ListBucket` – keine Rechte zum Anlegen oder Löschen von Buckets, keine Policy- oder ACL-Rechte.
+- **Transportverschlüsselung:** `S3_ENDPOINT` mit `https://`, außer der Speicher läuft im selben abgeschotteten Netz (z. B. MinIO im Docker-Netz). Optional per Policy erzwingen (`aws:SecureTransport`).
+- **Versionierung** (optional, empfohlen) schützt vor versehentlichem Löschen und Überschreiben. Paraph löscht Dateien nach Ablauf der Aufbewahrungsfrist; mit Versionierung bleiben alte Versionen bestehen, bis eine Lifecycle-Regel sie entfernt – die Regel passend zur Löschpflicht (DSGVO) wählen, z. B. nicht aktuelle Versionen nach 30 Tagen löschen.
+- **Object Lock** (optional, nur bei neu angelegten Buckets mit Versionierung) macht Objekte für eine Frist unveränderbar und schützt so auch gegen Ransomware mit gestohlenen Schlüsseln. Im Modus „Governance“ beginnen; „Compliance“ verhindert jede Löschung vor Fristende, auch die nach Aufbewahrungsfrist.
+- **Sicherung:** Die Paraph-Sicherung erfasst den Bucket nicht. Sichern Sie ihn gesondert und zeitlich passend zur Datenbank (Replikation in einen zweiten Bucket/Standort, `mc mirror`, `rclone sync`). Ohne den Hauptschlüssel ist auch die Bucket-Kopie unlesbar – Schlüssel getrennt aufbewahren.
+
+Beispiel-Policy (AWS-IAM-Syntax; MinIO und Ceph RGW verstehen dieselbe Form, Garage vergibt Rechte stattdessen je Schlüssel mit `garage bucket allow --read --write`) für Bucket `kanzlei-paraph` mit `S3_PREFIX=paraph/`. Ohne Präfix die `Condition` weglassen und `paraph/*` durch `*` ersetzen:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ParaphListe",
+      "Effect": "Allow",
+      "Action": ["s3:ListBucket"],
+      "Resource": ["arn:aws:s3:::kanzlei-paraph"],
+      "Condition": { "StringLike": { "s3:prefix": ["paraph/*"] } }
+    },
+    {
+      "Sid": "ParaphObjekte",
+      "Effect": "Allow",
+      "Action": ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
+      "Resource": ["arn:aws:s3:::kanzlei-paraph/paraph/*"]
+    }
+  ]
+}
+```
+
+MinIO, Benutzer und Policy anlegen:
+
+```bash
+mc mb local/kanzlei-paraph
+mc admin policy create local paraph-rw paraph-policy.json
+mc admin user add local paraph "$(openssl rand -base64 30)"
+mc admin policy attach local paraph-rw --user paraph
+```
 
 ## SMS
 

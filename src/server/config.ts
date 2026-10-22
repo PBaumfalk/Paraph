@@ -48,7 +48,7 @@ export interface Config {
   webhookAllowPrivate: boolean;
   webhookAllowHosts: string[];
   oidc?: { issuer: string; clientId: string; clientSecret: string; name: string; autoCreate: boolean };
-  s3?: { endpoint?: string; region: string; bucket: string; accessKeyId: string; secretAccessKey: string; forcePathStyle: boolean };
+  s3?: { endpoint?: string; region: string; bucket: string; accessKeyId: string; secretAccessKey: string; sessionToken?: string; forcePathStyle: boolean; prefix?: string };
   sms?: { url: string; token?: string; sender?: string };
   qes?: { name: string; baseUrl: string; clientId: string; clientSecret: string; tokenUrl?: string };
   backup: { intervalHours: number; keep: number };
@@ -128,7 +128,10 @@ export function loadConfig(overrides: Partial<Config> = {}): Config {
           bucket: s3Bucket,
           accessKeyId: env('S3_ACCESS_KEY_ID', '')!,
           secretAccessKey: env('S3_SECRET_ACCESS_KEY', '')!,
-          forcePathStyle: bool('S3_FORCE_PATH_STYLE', true),
+          sessionToken: env('S3_SESSION_TOKEN') || undefined,
+          // Mit eigenem Endpunkt (MinIO, Garage, Ceph …) ist Pfadstil üblich, bei AWS der virtual-hosted-Stil.
+          forcePathStyle: bool('S3_FORCE_PATH_STYLE', !!env('S3_ENDPOINT')),
+          prefix: env('S3_PREFIX') || undefined,
         }
       : undefined,
     sms: smsUrl ? { url: smsUrl, token: env('SMS_GATEWAY_TOKEN'), sender: env('SMS_SENDER') } : undefined,
