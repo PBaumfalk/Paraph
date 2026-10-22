@@ -10,6 +10,8 @@ export interface BlobBackend {
   get(key: string): Promise<Buffer>;
   del(key: string): Promise<void>;
   list?(): Promise<string[]>;
+  /** Startprüfung: Ablage erreichbar, schreib-, les- und löschbar. Wirft mit verständlicher Meldung. */
+  probe?(): Promise<void>;
 }
 
 export class LocalBackend implements BlobBackend {
@@ -42,6 +44,16 @@ export class LocalBackend implements BlobBackend {
     }
     return out;
   }
+  async probe() {
+    const p = join(this.dir, `.paraph-probe-${process.pid}-${Date.now()}`);
+    try {
+      writeFileSync(p, 'probe', { mode: 0o600 });
+      if (readFileSync(p, 'utf8') !== 'probe') throw new Error('gelesener Inhalt weicht ab');
+      unlinkSync(p);
+    } catch (e: any) {
+      throw new Error(`Dateiablage ${this.dir} nicht schreib-/lesbar: ${e?.code ?? e?.message ?? e}`);
+    }
+  }
 }
 
 export interface BlobMeta {
@@ -54,7 +66,7 @@ export interface BlobMeta {
 export class BlobStore {
   constructor(
     private db: DB,
-    private backend: BlobBackend,
+    readonly backend: BlobBackend,
     private master: Buffer,
   ) {}
 

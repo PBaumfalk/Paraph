@@ -54,3 +54,13 @@ export async function createContextAsync(cfg: Config, opts: { log?: Logger } = {
   }
   return createContext(cfg, opts);
 }
+
+/**
+ * Startprüfung der Dateiablage (bei S3: Bucket auflisten, Probeobjekt unter „_paraph-probe/“
+ * schreiben, lesen, löschen). Wirft mit verständlicher Meldung, damit der Start früh abbricht.
+ */
+export async function probeBackend(ctx: Ctx): Promise<{ storage: 'local' | 's3'; ms: number }> {
+  const t = Date.now();
+  await ctx.blobs.backend.probe?.();
+  return { storage: ctx.cfg.s3 ? 's3' : 'local', ms: Date.now() - t };
+}

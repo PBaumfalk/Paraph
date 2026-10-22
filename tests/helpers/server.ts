@@ -11,6 +11,7 @@ import { drain } from '../../src/server/domain/jobs.js';
 import { ensureSetupCode } from '../../src/server/domain/users.js';
 import { openString } from '../../src/server/lib/crypto.js';
 import type { FastifyInstance } from 'fastify';
+import type { BlobBackend } from '../../src/server/lib/storage.js';
 
 export interface TestServer {
   ctx: Ctx;
@@ -19,9 +20,9 @@ export interface TestServer {
   close: () => Promise<void>;
 }
 
-export async function startTestServer(overrides: Partial<Config> = {}, dir = mkdtempSync(join(tmpdir(), 'paraph-test-')), masterKey = randomBytes(32)): Promise<TestServer> {
+export async function startTestServer(overrides: Partial<Config> = {}, dir = mkdtempSync(join(tmpdir(), 'paraph-test-')), masterKey = randomBytes(32), opts: { backend?: BlobBackend } = {}): Promise<TestServer> {
   const cfg = loadConfig({ dataDir: dir, appUrl: 'http://paraph.test', masterKey, ...overrides });
-  const ctx = createContext(cfg, { log: pino({ level: process.env.TEST_LOG ?? 'silent' }) });
+  const ctx = createContext(cfg, { log: pino({ level: process.env.TEST_LOG ?? 'silent' }), backend: opts.backend });
   const app = await buildApp(ctx);
   await app.ready();
   return { ctx, app, dir, close: async () => { await app.close(); ctx.db.close(); } };
