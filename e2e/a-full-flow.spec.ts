@@ -22,7 +22,7 @@ test('A: Hochladen → Felder → Einladen → Unterschreiben → Herunterladen'
   await page.getByPlaceholder('E-Mail-Adresse', { exact: true }).first().fill('erika@example.org');
 
   // Unterschriftsfeld per Klick platzieren
-  const pageEl = page.locator('.page[data-page="0"]').first();
+  const pageEl = page.locator('.pdfpage[data-page="0"]').first();
   await expect(pageEl.locator('canvas')).toBeVisible();
   const pb = (await pageEl.boundingBox())!;
   await page.locator('.pal-item', { hasText: 'Unterschrift' }).first().click();

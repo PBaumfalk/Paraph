@@ -242,6 +242,7 @@ export default function TemplateEditor() {
           <label className="drop-card" style={{ cursor: 'pointer' }}>
             <h2 className="display">{t('Dokument für die Vorlage')}</h2>
             <p className="muted">{t('PDF, Word oder ODT auswählen')}</p>
+            <Link to="/templates" className="btn btn-ghost btn-sm" onClick={(e) => e.stopPropagation()}>{t('Zurück')}</Link>
             <input type="file" hidden accept=".pdf,.docx,.doc,.odt,.rtf" onChange={(e) => addDoc([...(e.target.files ?? [])])} />
           </label>
         </div>

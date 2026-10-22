@@ -70,7 +70,7 @@ test('H: Vorlage anlegen, veröffentlichen, mit wenigen Klicks verwenden', async
   await page.waitForURL(/\/templates\/tpl_[^/]+\/edit$/);
   const file = await pdfFile('vorlage.pdf', { title: 'Mandatsvereinbarung' });
   await page.locator('.drop-card input[type=file]').setInputFiles(file);
-  const pageEl = page.locator('.page[data-page="0"]').first();
+  const pageEl = page.locator('.pdfpage[data-page="0"]').first();
   await expect(pageEl.locator('canvas')).toBeVisible();
   const pb = (await pageEl.boundingBox())!;
   await page.locator('.pal-item', { hasText: 'Unterschrift' }).first().click();

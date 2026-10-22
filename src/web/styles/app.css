@@ -720,11 +720,22 @@
 .auth-art .quote em {
   color: #9aa6ff;
 }
+.auth-art .quote,
+.auth-art > p {
+  position: relative;
+  z-index: 1;
+}
 .auth-art .bigparaph {
   position: absolute;
-  right: -40px;
-  bottom: 80px;
-  opacity: 0.9;
+  right: -60px;
+  bottom: -40px;
+  width: 78%;
+  opacity: 0.45;
+  pointer-events: none;
+}
+.auth-art .bigparaph svg {
+  width: 100%;
+  height: auto;
 }
 .auth-form {
   display: grid;

@@ -468,7 +468,7 @@ function SignStep({ view, onDone, onDeclined, onError }: { view: any; onDone: ()
           <section key={d.id} aria-label={d.name}>
             {view.documents.length > 1 && <div className="signer-docname"><FileText size={14} /> {d.name}</div>}
             {pagesOf(d).map(({ p, i }: any) => (
-              <div key={i} className="page signer-page" style={{ width, aspectRatio: `${p.width} / ${p.height}` }} aria-label={t('Seite {n} von {m}', { n: i + 1, m: d.pages.length })}>
+              <div key={i} className="pdfpage signer-page" style={{ width, aspectRatio: `${p.width} / ${p.height}` }} aria-label={t('Seite {n} von {m}', { n: i + 1, m: d.pages.length })}>
                 <PdfPage doc={pdfs[d.id] ?? null} index={i} width={width} />
                 {!pdfs[d.id] && <div className="page-loading"><Spinner /></div>}
                 {all

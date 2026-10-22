@@ -76,7 +76,7 @@ function Preview({ env }: { env: any }) {
           pages.map((i: number) => {
             const p = info(i);
             return (
-              <div key={i} className="page" style={{ width, aspectRatio: p ? `${p.width} / ${p.height}` : undefined, minHeight: p ? undefined : width * 1.41, margin: '0 auto' }}>
+              <div key={i} className="pdfpage" style={{ width, aspectRatio: p ? `${p.width} / ${p.height}` : undefined, minHeight: p ? undefined : width * 1.41, margin: '0 auto' }}>
                 <PdfPage doc={pdf} index={i} width={width} />
                 {!completed &&
                   env.fields
@@ -131,7 +131,7 @@ export default function EnvelopePage() {
   const done = actors.filter((r: any) => r.status === 'completed').length;
 
   return (
-    <div className="page" style={{ maxWidth: 1240 }}>
+    <div className="pdfpage" style={{ maxWidth: 1240 }}>
       <div className="page-head">
         <div className="grow" style={{ minWidth: 0 }}>
           <Link to="/" className="btn btn-ghost btn-sm" style={{ marginBottom: 8, marginLeft: -10 }}><ArrowLeft /> {t('Übersicht')}</Link>

@@ -350,6 +350,7 @@ export default function EnvelopeEditor() {
           <label className="drop-card" style={{ cursor: 'pointer' }}>
             <h2 className="display">{t('Dokument hinzufügen')}</h2>
             <p className="muted">{t('PDF, Word oder ODT auswählen')}</p>
+            <Link to="/" className="btn btn-ghost btn-sm" onClick={(e) => e.stopPropagation()}>{t('Zurück')}</Link>
             <input type="file" hidden multiple accept=".pdf,.docx,.doc,.odt,.rtf" onChange={(e) => addDocs([...(e.target.files ?? [])])} />
           </label>
         </div>

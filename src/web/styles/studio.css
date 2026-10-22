@@ -178,7 +178,7 @@
   color: var(--ink-4);
   font-family: var(--font-mono);
 }
-.page {
+.pdfpage {
   position: relative;
   background: var(--paper);
   box-shadow: var(--sheet-shadow);
@@ -187,10 +187,10 @@
   user-select: none;
   -webkit-user-select: none;
 }
-.is-placing .page {
+.is-placing .pdfpage {
   cursor: crosshair;
 }
-.page-hover {
+.pdfpage-hover {
   outline: 2px dashed var(--tinte);
   outline-offset: 4px;
 }

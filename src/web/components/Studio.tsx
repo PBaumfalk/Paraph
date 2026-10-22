@@ -524,7 +524,7 @@ export function Studio({
                   {t('Seite {n} von {m}', { n: pi + 1, m: d.pages.length })}
                 </div>
                 <div
-                  className={`page ${hoverPage === `${di}:${pi}` ? 'page-hover' : ''}`}
+                  className={`pdfpage ${hoverPage === `${di}:${pi}` ? 'page-hover' : ''}`}
                   data-doc={di}
                   data-page={pi}
                   style={{ width: pageWidth, aspectRatio: `${p.width} / ${p.height}` }}
