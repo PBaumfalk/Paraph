@@ -3,6 +3,7 @@
 import { webcrypto, createHash } from 'node:crypto';
 import * as pkijs from 'pkijs';
 import * as asn1js from 'asn1js';
+import { sha256, verifyTimestampToken } from './timestamp.js';
 
 pkijs.setEngine('node', new pkijs.CryptoEngine({ name: 'node', crypto: webcrypto as any }) as any);
 
@@ -16,6 +17,9 @@ export interface SigCheck {
   certSha256: string;
   signedAt: string | null;
   timestamp: string | null;
+  timestampOk: boolean | null; // null = kein Zeitstempel vorhanden
+  timestampAuthority?: string;
+  timestampError?: string;
   error?: string;
 }
 
@@ -28,7 +32,7 @@ export async function verifyPdfSignatures(pdf: Buffer): Promise<SigCheck[]> {
   while ((m = re.exec(text))) {
     index++;
     const [a, b, c, d] = m.slice(1).map(Number);
-    const check: SigCheck = { index, subfilter: '', coversWholeFile: false, digestOk: false, signatureOk: false, signerSubject: '', certSha256: '', signedAt: null, timestamp: null };
+    const check: SigCheck = { index, subfilter: '', coversWholeFile: false, digestOk: false, signatureOk: false, signerSubject: '', certSha256: '', signedAt: null, timestamp: null, timestampOk: null };
     try {
       if (a !== 0 || b <= 0 || c <= b || c + d > pdf.length) throw new Error('Ungültige ByteRange');
       check.coversWholeFile = c + d === pdf.length;
@@ -53,10 +57,16 @@ export async function verifyPdfSignatures(pdf: Buffer): Promise<SigCheck[]> {
       if (mm) check.signedAt = `${mm[1].slice(0, 4)}-${mm[1].slice(4, 6)}-${mm[1].slice(6, 8)}T${mm[1].slice(8, 10)}:${mm[1].slice(10, 12)}:${mm[1].slice(12, 14)}Z`;
       const ts = si.unsignedAttrs?.attributes.find((x) => x.type === '1.2.840.113549.1.9.16.2.14');
       if (ts) {
-        const tci = new pkijs.ContentInfo({ schema: ts.values[0] });
-        const tsd = new pkijs.SignedData({ schema: tci.content });
-        const tst = pkijs.TSTInfo.fromBER(tsd.encapContentInfo.eContent!.valueBlock.valueHexView);
-        check.timestamp = tst.genTime.toISOString();
+        // Zeitstempel nur als gültig ausweisen, wenn TSA-Signatur und Imprint (Hash des Signaturwerts) stimmen
+        check.timestampOk = false;
+        try {
+          const info = await verifyTimestampToken(new pkijs.ContentInfo({ schema: ts.values[0] }), sha256(si.signature.valueBlock.valueHexView));
+          check.timestamp = info.genTime;
+          check.timestampAuthority = info.tsaSubject;
+          check.timestampOk = true;
+        } catch (e: any) {
+          check.timestampError = String(e?.message ?? e);
+        }
       }
     } catch (e: any) {
       check.error = String(e?.message ?? e);

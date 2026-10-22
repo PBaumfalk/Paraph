@@ -52,6 +52,7 @@ export interface Config {
   sms?: { url: string; token?: string; sender?: string };
   qes?: { name: string; baseUrl: string; clientId: string; clientSecret: string; tokenUrl?: string };
   backup: { intervalHours: number; keep: number };
+  anchorIntervalMinutes: number;
   devMode: boolean;
   version: string;
 }
@@ -141,6 +142,7 @@ export function loadConfig(overrides: Partial<Config> = {}): Config {
         }
       : undefined,
     backup: { intervalHours: int('BACKUP_INTERVAL_HOURS', 24), keep: int('BACKUP_KEEP', 14) },
+    anchorIntervalMinutes: Math.max(5, int('ANCHOR_INTERVAL_MINUTES', 60)),
     devMode: bool('DEV_MODE', false),
     version: process.env.PARAPH_BUILD_VERSION ?? '0.1.0-dev',
     ...overrides,

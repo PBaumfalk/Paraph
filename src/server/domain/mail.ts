@@ -18,7 +18,10 @@ export type MailKind =
   | 'password_reset'
   | 'owner_completed'
   | 'owner_declined'
-  | 'form_otp';
+  | 'form_otp'
+  | 'system_alert'
+  | 'delivery_failed'
+  | 'test';
 
 type Vars = Record<string, string>;
 
@@ -36,7 +39,7 @@ const T: Record<'de' | 'en', Record<MailKind, { subject: string; body: string; b
     },
     completed: {
       subject: 'Abgeschlossen: {{title}}',
-      body: 'Guten Tag {{recipient}},\n\nalle Beteiligten haben „{{title}}“ unterschrieben. Über den Link können Sie das fertige Dokument und die Abschlussbestätigung herunterladen.',
+      body: 'Guten Tag {{recipient}},\n\nalle Beteiligten haben „{{title}}“ unterschrieben. Über den Link können Sie das fertige Dokument und die Abschlussbestätigung herunterladen.\n\nPrüfwert (SHA-256) des unterschriebenen Dokuments:\n{{checksum}}\n\nBewahren Sie diese E-Mail auf: Mit dem Prüfwert lässt sich unter {{verify_url}} jederzeit feststellen, ob eine Datei genau dem unterschriebenen Dokument entspricht.',
       button: 'Dokument herunterladen',
     },
     declined: {
@@ -74,6 +77,20 @@ const T: Record<'de' | 'en', Record<MailKind, { subject: string; body: string; b
       body: '„{{title}}“ ist vollständig unterschrieben. Fertiges Dokument, Abschlussbestätigung und Nachweispaket stehen bereit.',
       button: 'Vorgang öffnen',
     },
+    system_alert: {
+      subject: 'Paraph: Störung „{{job}}“',
+      body: 'Eine Hintergrundaufgabe ist nach allen Wiederholungen endgültig fehlgeschlagen.\n\nAufgabe: {{job}}\nFehler: {{error}}\n\nDetails und „Erneut versuchen“ unter Einstellungen → System.',
+      button: 'System öffnen',
+    },
+    delivery_failed: {
+      subject: 'Zustellung fehlgeschlagen: {{title}}',
+      body: 'Die E-Mail an {{recipient}} <{{email}}> zu „{{title}}“ konnte nicht zugestellt werden.\n\nGrund: {{error}}\n\nBitte die Adresse prüfen und im Vorgang erneut senden oder den Link auf anderem Weg übergeben.',
+      button: 'Vorgang öffnen',
+    },
+    test: {
+      subject: 'Paraph: Test-E-Mail',
+      body: 'Diese Test-E-Mail bestätigt, dass Paraph über den eingerichteten Mailserver versenden kann.\n\nAbsender: {{from}}\nZeitpunkt: {{at}}',
+    },
     owner_declined: {
       subject: 'Abgelehnt: {{title}}',
       body: '{{actor}} hat „{{title}}“ abgelehnt.\n\nBegründung: {{reason}}',
@@ -93,7 +110,7 @@ const T: Record<'de' | 'en', Record<MailKind, { subject: string; body: string; b
     },
     completed: {
       subject: 'Completed: {{title}}',
-      body: 'Hello {{recipient}},\n\neveryone has signed “{{title}}”. Use the link to download the final document and the completion certificate.',
+      body: 'Hello {{recipient}},\n\neveryone has signed “{{title}}”. Use the link to download the final document and the completion certificate.\n\nChecksum (SHA-256) of the signed document:\n{{checksum}}\n\nKeep this email: with the checksum you can confirm at {{verify_url}} at any time whether a file is exactly the signed document.',
       button: 'Download document',
     },
     declined: { subject: 'Declined: {{title}}', body: 'Hello {{recipient}},\n\n{{actor}} declined to sign “{{title}}”. The request has ended; no further action is needed.' },
@@ -104,6 +121,9 @@ const T: Record<'de' | 'en', Record<MailKind, { subject: string; body: string; b
     user_invite: { subject: 'Invitation to {{org}} on Paraph', body: '{{sender}} invited you to join “{{org}}”. The invitation is valid for 7 days.', button: 'Accept invitation' },
     password_reset: { subject: 'Reset your password', body: 'Use the link below to set a new password. It is valid for 60 minutes.', button: 'Set new password' },
     owner_completed: { subject: 'Everyone signed: {{title}}', body: '“{{title}}” is fully signed. Final document, certificate and evidence package are ready.', button: 'Open' },
+    system_alert: { subject: 'Paraph: failure “{{job}}”', body: 'A background task failed permanently after all retries.\n\nTask: {{job}}\nError: {{error}}\n\nDetails and “Retry” under Settings → System.', button: 'Open system' },
+    delivery_failed: { subject: 'Delivery failed: {{title}}', body: 'The email to {{recipient}} <{{email}}> about “{{title}}” could not be delivered.\n\nReason: {{error}}\n\nPlease check the address and resend from the envelope, or hand over the link another way.', button: 'Open envelope' },
+    test: { subject: 'Paraph: test email', body: 'This test email confirms that Paraph can send through the configured mail server.\n\nSender: {{from}}\nTime: {{at}}' },
     owner_declined: { subject: 'Declined: {{title}}', body: '{{actor}} declined “{{title}}”.\n\nReason: {{reason}}', button: 'Open' },
   },
 };

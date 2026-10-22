@@ -53,7 +53,8 @@ function envGate(ctx: Ctx, env: EnvelopeRow, rec: any): LinkState {
 /** Öffnet eine Signatursitzung über den Link aus der E-Mail. */
 export function openFromLink(ctx: Ctx, token: string, meta: ReqMeta) {
   if (!/^[A-Za-z0-9_-]{20,100}$/.test(token)) throw notFound('Link ungültig oder ersetzt');
-  const rec = ctx.db.prepare('SELECT * FROM recipients WHERE token_hash = ?').get(hashToken(token)) as any;
+  const th = hashToken(token);
+  const rec = ctx.db.prepare('SELECT * FROM recipients WHERE token_hash = ? OR prev_token_hash = ?').get(th, th) as any;
   if (!rec) throw notFound('Link ungültig oder ersetzt');
   const env = envRow(ctx, rec.envelope_id)!;
   envGate(ctx, env, rec);
@@ -493,6 +494,9 @@ export function complete(ctx: Ctx, sc0: SignerCtx, input: CompleteInput, meta: R
 
     const consent = consentText(rec.kind as ConsentKind, env.locale);
     const myValues = Object.fromEntries(mine.map((f) => [f.key, active.has(f.key) ? computed[f.key] ?? '' : '']));
+    // Eigene Eingaben ohne Formelfelder (diese ändern sich durch spätere Unterzeichner); der Abschluss
+    // prüft vor dem Einbrennen, dass genau diese Werte noch in der Datenbank stehen.
+    const myInputs = Object.fromEntries(mine.filter((f) => f.type !== 'formula').map((f) => [f.key, myValues[f.key]]));
     appendAudit(ctx.db, env.id, env.org_id, 'recipient.consented', recActor(rec), {
       recipient_id: rec.id,
       consent_version: consent.version,
@@ -510,6 +514,7 @@ export function complete(ctx: Ctx, sc0: SignerCtx, input: CompleteInput, meta: R
       in_person_host: session.host_user_id ?? undefined,
       document_hashes: expected,
       values_sha256: sha256Hex(canonicalJson(myValues)),
+      inputs_sha256: sha256Hex(canonicalJson(myInputs)),
       field_count: mine.length,
       signatures: [...sigs.entries()].map(([key, s]) => ({ field: key, signature_id: s.id, method: s.method, image_sha256: s.sha256 })),
       ip: meta.ip,

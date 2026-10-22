@@ -4,6 +4,7 @@
 import { webcrypto, randomBytes, createHash } from 'node:crypto';
 import * as pkijs from 'pkijs';
 import * as asn1js from 'asn1js';
+import { requestTimestamp, sha256, type TimestampInfo } from './timestamp.js';
 import { PDFDocument, PDFName, PDFNumber, PDFHexString, PDFString, PDFArray, PDFDict } from 'pdf-lib';
 
 const crypto = webcrypto as unknown as Crypto;
@@ -87,35 +88,11 @@ export function certInfo(cert: pkijs.Certificate) {
   };
 }
 
-async function requestTimestamp(tsaUrl: string, data: ArrayBuffer): Promise<pkijs.ContentInfo> {
-  const digest = await crypto.subtle.digest('SHA-256', data);
-  const req = new pkijs.TimeStampReq({
-    version: 1,
-    messageImprint: new pkijs.MessageImprint({
-      hashAlgorithm: new pkijs.AlgorithmIdentifier({ algorithmId: '2.16.840.1.101.3.4.2.1' }),
-      hashedMessage: new asn1js.OctetString({ valueHex: digest }),
-    }),
-    nonce: new asn1js.Integer({ valueHex: randomBytes(8) }),
-    certReq: true,
-  });
-  const body = req.toSchema().toBER(false);
-  const res = await fetch(tsaUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/timestamp-query' },
-    body: Buffer.from(body),
-    signal: AbortSignal.timeout(15_000),
-  });
-  if (!res.ok) throw new Error(`Zeitstempeldienst antwortet mit ${res.status}`);
-  const resp = pkijs.TimeStampResp.fromBER(await res.arrayBuffer());
-  if (resp.status.status !== 0 && resp.status.status !== 1) throw new Error('Zeitstempel abgelehnt');
-  if (!resp.timeStampToken) throw new Error('Zeitstempel fehlt in der Antwort');
-  return resp.timeStampToken;
-}
-
 export interface CmsResult {
   der: Buffer;
   timestamped: boolean;
   timestampError?: string;
+  timestamp?: TimestampInfo;
 }
 
 /** Erzeugt eine abgesetzte CMS-Signatur (CAdES-BES-Profil) über die übergebenen Daten. */
@@ -149,21 +126,24 @@ export async function cmsSignDetached(key: SealKey, data: Buffer, tsaUrl?: strin
 
   let timestamped = false;
   let timestampError: string | undefined;
+  let timestamp: TimestampInfo | undefined;
   if (tsaUrl) {
     try {
+      // Signaturzeitstempel (CAdES): gestempelt wird der Signaturwert; die Antwort wird vollständig geprüft
       const sigValue = signedData.signerInfos[0].signature.valueBlock.valueHexView;
-      const token = await requestTimestamp(tsaUrl, sigValue.slice().buffer);
+      const ts = await requestTimestamp(tsaUrl, sha256(sigValue));
       signedData.signerInfos[0].unsignedAttrs = new pkijs.SignedAndUnsignedAttributes({
         type: 1,
-        attributes: [new pkijs.Attribute({ type: OID.sigTimeStamp, values: [token.toSchema()] })],
+        attributes: [new pkijs.Attribute({ type: OID.sigTimeStamp, values: [ts.token.toSchema()] })],
       });
       timestamped = true;
+      timestamp = ts.info;
     } catch (e: any) {
       timestampError = String(e?.message ?? e);
     }
   }
   const ci = new pkijs.ContentInfo({ contentType: OID.signedData, content: signedData.toSchema(true) });
-  return { der: Buffer.from(ci.toSchema().toBER(false)), timestamped, timestampError };
+  return { der: Buffer.from(ci.toSchema().toBER(false)), timestamped, timestampError, timestamp };
 }
 
 const SIG_BYTES = 24576;

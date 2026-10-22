@@ -21,6 +21,7 @@ const stop = startWorker(ctx, [
   { type: 'reminder_scan', everyMs: 60 * 60_000 },
   { type: 'retention_purge', everyMs: 12 * 60 * 60_000 },
   { type: 'cleanup', everyMs: 6 * 60 * 60_000 },
+  { type: 'audit_anchor', everyMs: cfg.anchorIntervalMinutes * 60_000 },
   ...(cfg.backup.intervalHours > 0 ? [{ type: 'backup_auto', everyMs: cfg.backup.intervalHours * 3600_000 }] : []),
 ]);
 

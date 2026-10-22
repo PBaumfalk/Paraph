@@ -250,17 +250,30 @@ describe('TEST E – Widerruf und Ablauf', () => {
     expect([404, 410]).toContain((await new Signer(s).open(link)).status);
   });
 
-  it('Erinnerung erzeugt neuen Link, der alte wird ungültig', async () => {
+  it('Erinnerung erzeugt neuen Link, der vorherige bleibt gültig; „Neuer Link“ widerruft beide', async () => {
     const d = await draftWithDoc(admin, 'Erinnerungstest');
     const recs = await admin.put(`/api/v1/envelopes/${d.id}/recipients`, [{ ref: 'z', name: 'Zoe', email: 'zoe@example.org' }]);
-    await admin.put(`/api/v1/envelopes/${d.id}/fields`, [{ type: 'signature', document: 0, recipient: recs.json.refs.z, page: 0, x: 0.1, y: 0.8, w: 0.3, h: 0.06 }]);
+    const rid = recs.json.refs.z;
+    await admin.put(`/api/v1/envelopes/${d.id}/fields`, [{ type: 'signature', document: 0, recipient: rid, page: 0, x: 0.1, y: 0.8, w: 0.3, h: 0.06 }]);
     await admin.post(`/api/v1/envelopes/${d.id}/send`);
-    const old = lastMail(s, 'zoe@example.org')!.link!;
-    expect((await admin.post(`/api/v1/envelopes/${d.id}/recipients/${recs.json.refs.z}/remind`)).status).toBe(200);
-    const neu = lastMail(s, 'zoe@example.org', 'Erinnerung')!.link!;
-    expect(neu).not.toBe(old);
-    expect((await new Signer(s).open(old)).status).toBe(404);
-    expect((await new Signer(s).open(neu)).status).toBe(200);
+    const first = lastMail(s, 'zoe@example.org')!.link!;
+    expect((await admin.post(`/api/v1/envelopes/${d.id}/recipients/${rid}/remind`)).status).toBe(200);
+    const second = lastMail(s, 'zoe@example.org', 'Erinnerung')!.link!;
+    expect(second).not.toBe(first);
+    // Die ursprüngliche Einladung funktioniert nach einer Erinnerung weiter
+    expect((await new Signer(s).open(first)).status).toBe(200);
+    expect((await new Signer(s).open(second)).status).toBe(200);
+    // Nach der zweiten Erinnerung verfällt der älteste Link
+    expect((await admin.post(`/api/v1/envelopes/${d.id}/recipients/${rid}/remind`)).status).toBe(200);
+    const third = lastMail(s, 'zoe@example.org', 'Erinnerung')!.link!;
+    expect((await new Signer(s).open(first)).status).toBe(404);
+    expect((await new Signer(s).open(second)).status).toBe(200);
+    // Ausdrücklicher Widerruf: neuer Link, alle bisherigen ungültig
+    const issued = await admin.post(`/api/v1/envelopes/${d.id}/recipients/${rid}/link`);
+    expect(issued.status).toBe(200);
+    expect((await new Signer(s).open(second)).status).toBe(404);
+    expect((await new Signer(s).open(third)).status).toBe(404);
+    expect((await new Signer(s).open(issued.json.url)).status).toBe(200);
   });
 });
 

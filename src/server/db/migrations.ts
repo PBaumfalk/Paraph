@@ -470,4 +470,55 @@ CREATE TABLE seal_keys (
 ALTER TABLE envelopes ADD COLUMN notify INTEGER NOT NULL DEFAULT 1;
 `,
   },
+  {
+    id: 3,
+    name: 'audit_anchors',
+    sql: `
+-- Externe Verankerung der Audit-Ketten (siehe domain/anchor.ts). Anker sind unveränderlich;
+-- einzig der Zeitstempel darf einmalig nachgetragen werden.
+CREATE TABLE audit_anchors (
+  id INTEGER PRIMARY KEY,
+  created_at TEXT NOT NULL,
+  prev_hash TEXT NOT NULL,
+  root TEXT NOT NULL,
+  leaves INTEGER NOT NULL,
+  anchor_hash TEXT NOT NULL UNIQUE,
+  tsa_token BLOB,
+  tsa_time TEXT,
+  tsa_error TEXT
+);
+CREATE TABLE audit_anchor_leaves (
+  anchor_id INTEGER NOT NULL REFERENCES audit_anchors(id),
+  idx INTEGER NOT NULL,
+  envelope_id TEXT NOT NULL,
+  seq INTEGER NOT NULL,
+  head TEXT NOT NULL,
+  PRIMARY KEY (anchor_id, idx)
+);
+CREATE INDEX audit_anchor_leaves_env ON audit_anchor_leaves(envelope_id, seq);
+CREATE TRIGGER audit_anchors_immutable BEFORE UPDATE ON audit_anchors
+WHEN OLD.tsa_token IS NOT NULL OR NEW.id IS NOT OLD.id OR NEW.created_at IS NOT OLD.created_at OR NEW.prev_hash IS NOT OLD.prev_hash
+  OR NEW.root IS NOT OLD.root OR NEW.leaves IS NOT OLD.leaves OR NEW.anchor_hash IS NOT OLD.anchor_hash
+BEGIN SELECT RAISE(ABORT, 'Anker sind unveränderlich'); END;
+CREATE TRIGGER audit_anchors_no_delete BEFORE DELETE ON audit_anchors
+BEGIN SELECT RAISE(ABORT, 'Anker sind unveränderlich'); END;
+CREATE TRIGGER audit_anchor_leaves_no_update BEFORE UPDATE ON audit_anchor_leaves
+BEGIN SELECT RAISE(ABORT, 'Anker sind unveränderlich'); END;
+CREATE TRIGGER audit_anchor_leaves_no_delete BEFORE DELETE ON audit_anchor_leaves
+BEGIN SELECT RAISE(ABORT, 'Anker sind unveränderlich'); END;
+`,
+  },
+  {
+    id: 4,
+    name: 'vorheriger_link',
+    sql: `
+-- Erinnerungen erzeugen einen neuen Link, ohne den bisherigen zu entwerten (genau ein Vorgänger bleibt gültig).
+-- Widerruf, Abschluss, Ablauf, Ablehnung und Vertretung entwerten beide.
+ALTER TABLE recipients ADD COLUMN prev_token_hash TEXT;
+CREATE UNIQUE INDEX recipients_prev_token ON recipients(prev_token_hash) WHERE prev_token_hash IS NOT NULL;
+CREATE TRIGGER recipients_token_revoked AFTER UPDATE OF token_hash ON recipients
+WHEN NEW.token_hash IS NULL AND NEW.prev_token_hash IS NOT NULL
+BEGIN UPDATE recipients SET prev_token_hash = NULL WHERE id = NEW.id; END;
+`,
+  },
 ];

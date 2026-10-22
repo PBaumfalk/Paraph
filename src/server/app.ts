@@ -22,6 +22,8 @@ import './domain/webhooks.js';
 import './domain/finalize.js';
 import './domain/maintenance.js';
 import './domain/backup.js';
+import './domain/anchor.js';
+import './domain/alerts.js';
 
 function webRoot(): string | null {
   const here = dirname(fileURLToPath(import.meta.url));

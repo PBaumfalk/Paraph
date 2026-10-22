@@ -612,7 +612,7 @@ export function senderName(ctx: Ctx, env: EnvelopeRow) {
 export function activateRecipient(ctx: Ctx, env: EnvelopeRow, rec: any, opts: { notify: boolean; actor: any }) {
   const token = secretToken();
   const now = ctx.now().toISOString();
-  ctx.db.prepare(`UPDATE recipients SET status = 'sent', token_hash = ?, token_issued_at = ?, sent_at = ? WHERE id = ?`).run(hashToken(token), now, now, rec.id);
+  ctx.db.prepare(`UPDATE recipients SET status = 'sent', token_hash = ?, prev_token_hash = NULL, token_issued_at = ?, sent_at = ? WHERE id = ?`).run(hashToken(token), now, now, rec.id);
   const url = signingUrl(ctx, env.org_id, token);
   const org = getOrg(ctx, env.org_id);
   const willMail = opts.notify && !env.test_mode;
@@ -755,10 +755,11 @@ export function remindRecipient(ctx: Ctx, p: Principal | null, envelopeId: strin
     if (!rec) throw notFound('Empfänger nicht gefunden');
     if (!['sent', 'opened'].includes(rec.status)) throw conflict('not_pending', 'Diese Person ist gerade nicht am Zug.');
     const org = getOrg(ctx, e.org_id);
-    // Erinnerung erzeugt immer einen neuen Link: der alte wird ungültig (er stand ggf. in einer weitergeleiteten E-Mail)
+    // Erinnerung erzeugt einen neuen Link; der bisherige bleibt gültig, damit die erste E-Mail weiter funktioniert.
+    // Ältere Links verfallen. Ausdrücklich widerrufen lässt sich ein Link über „Neuer Link“ (issueLink).
     const token = secretToken();
     const now = ctx.now().toISOString();
-    ctx.db.prepare('UPDATE recipients SET token_hash = ?, token_issued_at = ?, last_reminded_at = ? WHERE id = ?').run(hashToken(token), now, now, rec.id);
+    ctx.db.prepare('UPDATE recipients SET prev_token_hash = token_hash, token_hash = ?, token_issued_at = ?, last_reminded_at = ? WHERE id = ?').run(hashToken(token), now, now, rec.id);
     const url = signingUrl(ctx, e.org_id, token);
     queueMail(ctx, {
       orgId: e.org_id,
@@ -771,7 +772,7 @@ export function remindRecipient(ctx: Ctx, p: Principal | null, envelopeId: strin
       suppress: !!e.test_mode,
       vars: { sender: senderName(ctx, e), title: e.title, recipient: rec.name, expires: fmtDate(e.expires_at, e.locale, org.settings.timezone) },
     });
-    appendAudit(ctx.db, e.id, e.org_id, 'recipient.reminded', p ? actorOf(p) : { type: 'system' }, { recipient_id: rec.id, email: rec.email, link_rotated: true });
+    appendAudit(ctx.db, e.id, e.org_id, 'recipient.reminded', p ? actorOf(p) : { type: 'system' }, { recipient_id: rec.id, email: rec.email, new_link: true, previous_link_valid: true });
     return { url: e.test_mode || opts.rotate ? url : undefined };
   });
 }
@@ -786,7 +787,7 @@ export function issueLink(ctx: Ctx, p: Principal, envelopeId: string, recipientI
     if (!rec) throw notFound('Empfänger nicht gefunden');
     if (!['sent', 'opened'].includes(rec.status)) throw conflict('not_pending', 'Diese Person ist gerade nicht am Zug.');
     const token = secretToken();
-    ctx.db.prepare('UPDATE recipients SET token_hash = ?, token_issued_at = ? WHERE id = ?').run(hashToken(token), ctx.now().toISOString(), rec.id);
+    ctx.db.prepare('UPDATE recipients SET token_hash = ?, prev_token_hash = NULL, token_issued_at = ? WHERE id = ?').run(hashToken(token), ctx.now().toISOString(), rec.id);
     appendAudit(ctx.db, e.id, e.org_id, 'recipient.link_issued', actorOf(p), { recipient_id: rec.id, previous_link_revoked: true });
     return { url: signingUrl(ctx, e.org_id, token) };
   });

@@ -8,7 +8,6 @@ import { canonicalJson, sha256Hex } from '../lib/crypto.js';
 import { appendAudit, listAudit, verifyChain } from './audit.js';
 import { documentsOf, envRow, fieldsOf, recipientsOf, senderName, signingUrl } from './envelopes.js';
 import { getOrg } from './orgs.js';
-import { registerJob } from './jobs.js';
 import { queueMail } from './mail.js';
 import { emit } from './webhooks.js';
 import { getSealKey } from './sealkeys.js';
@@ -19,6 +18,8 @@ import { activeKeys, type LogicField } from '../../shared/fieldlogic.js';
 import { ruleById, LEVEL_TEXT } from '../../shared/formrules.js';
 import { hashToken, secretToken } from '../lib/crypto.js';
 import { VERIFY_AUDIT_PY } from './verify-audit-script.js';
+import { anchorEvidence } from './anchor.js';
+import { enqueue, registerJob } from './jobs.js';
 
 const AUTH_LABEL: Record<string, { de: [string, string]; en: [string, string] }> = {
   link: { de: ['Persönlicher Link', 'Besitz des per E-Mail zugestellten Links'], en: ['Personal link', 'Possession of the link delivered by email'] },
@@ -71,6 +72,25 @@ export async function finalizeEnvelope(ctx: Ctx, envelopeId: string) {
     if (s) sigRows.set(s.id, { ...s, png: await ctx.blobs.get(s.blob_id) });
   }
   const attRows = ctx.db.prepare(`SELECT a.* FROM recipient_attachments a JOIN recipients r ON r.id = a.recipient_id WHERE r.envelope_id = ?`).all(envelopeId) as any[];
+
+  // Integritätsprüfung gegen die Audit-Kette: Was eingebrannt wird, muss exakt dem entsprechen, was jede
+  // Person abgegeben hat (Dokumentfassung, eigene Eingaben, Unterschriftsbilder). Eine Änderung direkt in der
+  // Datenbank nach der Unterschrift bricht den Abschluss ab, statt sie in das finale PDF zu übernehmen.
+  const docHashes = docs.map((d) => d.sha256);
+  for (const e of events) {
+    if (!['recipient.signed', 'recipient.approved', 'recipient.submitted'].includes(e.type)) continue;
+    const rid = String(e.data.recipient_id);
+    const dh = e.data.document_hashes as string[] | undefined;
+    if (dh && (dh.length !== docHashes.length || dh.some((x, i) => x !== docHashes[i]))) throw new Error(`Integritätsfehler: Dokumentfassung weicht von der unterschriebenen Fassung ab (Empfänger ${rid}) – Abschluss abgebrochen`);
+    if (typeof e.data.inputs_sha256 === 'string') {
+      const inputs = Object.fromEntries(fields.filter((f) => f.recipient_id === rid && f.type !== 'formula').map((f) => [f.key, f.value ?? '']));
+      if (sha256Hex(canonicalJson(inputs)) !== e.data.inputs_sha256) throw new Error(`Integritätsfehler: Eingaben von Empfänger ${rid} wurden nach der Unterschrift verändert – Abschluss abgebrochen`);
+    }
+    for (const s of (e.data.signatures as any[] | undefined) ?? []) {
+      const row = sigRows.get(s.signature_id);
+      if (!row || row.sha256 !== s.image_sha256 || sha256Hex(row.png) !== s.image_sha256) throw new Error(`Integritätsfehler: Unterschriftsbild ${s.signature_id} weicht vom unterschriebenen Stand ab – Abschluss abgebrochen`);
+    }
+  }
 
   // Abschlussbestätigung
   const signerEvents = new Map<string, any>();
@@ -215,6 +235,9 @@ export async function finalizeEnvelope(ctx: Ctx, envelopeId: string) {
     files.push({ path: `05_hochgeladen/${safe(d.name)}.${d.source_kind}`, data: await ctx.blobs.get(d.source_blob_id) });
   }
   for (const [, s] of sigRows) files.push({ path: `06_unterschriften/${s.id}.png`, data: s.png });
+  // Bisherige externe Verankerungen dieses Vorgangs (Merkle-Prüfpfad und RFC-3161-Zeitstempel)
+  const anchors = anchorEvidence(ctx, envelopeId);
+  if (anchors.length) files.push({ path: '08_verankerung.json', data: Buffer.from(JSON.stringify({ format: 'paraph-anchor-evidence/1', merkle: 'RFC 6962 (Blatt = SHA-256(0x00 ‖ envelope_id:seq:head), Knoten = SHA-256(0x01 ‖ links ‖ rechts))', anchors }, null, 2)) });
   for (const a of attRows) files.push({ path: `07_anhaenge/${a.id}_${safe(a.name)}`, data: await ctx.blobs.get(a.blob_id) });
   files.push({ path: 'siegelzertifikat.pem', data: Buffer.from(seal.info.pem) });
   files.push({ path: 'pruefen/verify-audit.py', data: Buffer.from(VERIFY_AUDIT_PY) });
@@ -322,7 +345,7 @@ export async function finalizeEnvelope(ctx: Ctx, envelopeId: string) {
     for (const r of recipientsOf(ctx, envelopeId)) {
       if (!['completed'].includes(r.status) && r.kind !== 'viewer') continue;
       const token = secretToken();
-      ctx.db.prepare('UPDATE recipients SET token_hash = ?, token_issued_at = ?, status = CASE WHEN kind = ? THEN ? ELSE status END WHERE id = ?').run(hashToken(token), now, 'viewer', 'completed', r.id);
+      ctx.db.prepare('UPDATE recipients SET token_hash = ?, prev_token_hash = NULL, token_issued_at = ?, status = CASE WHEN kind = ? THEN ? ELSE status END WHERE id = ?').run(hashToken(token), now, 'viewer', 'completed', r.id);
       queueMail(ctx, {
         orgId: env.org_id,
         envelopeId,
@@ -332,13 +355,15 @@ export async function finalizeEnvelope(ctx: Ctx, envelopeId: string) {
         locale,
         link: signingUrl(ctx, env.org_id, token),
         suppress: !!env.test_mode,
-        vars: { title: env.title, recipient: r.name, sender: senderName(ctx, env) },
+        vars: { title: env.title, recipient: r.name, sender: senderName(ctx, env), checksum: blobs.combined.sha256, verify_url: `${ctx.cfg.appUrl}/verify` },
         attachments: org.settings.attachCompletedPdf ? [{ filename: `${safe(env.title)}.pdf`, blobId: blobs.combined.id }] : [],
       });
     }
     const owner = env.owner_id ? (ctx.db.prepare('SELECT email FROM users WHERE id = ?').get(env.owner_id) as any) : null;
     if (owner) queueMail(ctx, { orgId: env.org_id, envelopeId, to: owner.email, kind: 'owner_completed', link: `${ctx.cfg.appUrl}/envelopes/${envelopeId}`, suppress: !!env.test_mode, vars: { title: env.title } });
     emit(ctx, env.org_id, 'envelope.completed', { envelope_id: envelopeId, final_sha256: blobs.combined.sha256 }, { testMode: !!env.test_mode });
+    // Abschluss zeitnah extern verankern
+    enqueue(ctx, 'audit_anchor', {}, { uniqueKey: 'periodic:audit_anchor' });
     return true;
   });
   if (!done) {
