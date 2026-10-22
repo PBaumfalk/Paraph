@@ -267,7 +267,10 @@ export async function finalizeEnvelope(ctx: Ctx, envelopeId: string) {
         `4. Ereigniskette: 03_audit-trail.json enthält alle Ereignisse; jeder Hash ergibt sich aus dem kanonischen JSON\n` +
         `   des Eintrags inklusive des vorherigen Hashes. Kettenkopf: ${chain.head}\n` +
         `   Unabhängig prüfen: python3 pruefen/verify-audit.py 03_audit-trail.json\n` +
-        `5. Online-Prüfung: ${ctx.cfg.appUrl}/verify (die Datei verlässt dabei den Browser nicht).\n\n` +
+        `5. Verankerung (08_verankerung.json, falls vorhanden): Das Skript aus Schritt 4 prüft auch, dass der Kettenkopf per\n` +
+        `   Merkle-Prüfpfad in einem Anker enthalten ist, legt die RFC-3161-Zeitstempel als anker-N.tsr ab und nennt den\n` +
+        `   OpenSSL-Befehl zu ihrer Prüfung. Ein externer Zeitstempel belegt, dass dieser Stand spätestens zu diesem Zeitpunkt existierte.\n` +
+        `6. Online-Prüfung: ${ctx.cfg.appUrl}/verify (die Datei verlässt dabei den Browser nicht).\n\n` +
         `Hinweis: Das Plattformsiegel weist die Unversehrtheit seit Abschluss nach. Es ist keine persönliche Signatur\n` +
         `der Unterzeichner und kein qualifiziertes Siegel. Die Unterschriften sind einfache elektronische Signaturen (EES).\n`,
     ),
