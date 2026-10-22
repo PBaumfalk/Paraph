@@ -3,8 +3,9 @@ import { z } from 'zod';
 import * as oidc from 'openid-client';
 import type { Ctx } from '../context.js';
 import { authenticate, checkOrigin, cookieOpts, meta, SESSION_COOKIE } from '../http.js';
-import { AppError, badRequest, forbidden, unauthorized } from '../lib/errors.js';
+import { forbidden, unauthorized } from '../lib/errors.js';
 import { secretToken, sealString, openString, id } from '../lib/crypto.js';
+import { tx } from '../db/index.js';
 import {
   acceptInvitation,
   changePassword,
@@ -164,63 +165,153 @@ export function authRoutes(app: FastifyInstance, ctx: Ctx) {
   });
 
   // ───────────── OIDC (z. B. authentik) ─────────────
+  // Fehler enden nie als JSON, sondern als Redirect auf /login?error=<code>; Details nur ins Log.
+  // Lokale Zwei-Faktor-Pflicht gilt auch hier: Hat ein Benutzer TOTP aktiviert, wird der Code nach
+  // der SSO-Anmeldung zusätzlich abgefragt. Empfehlung bleibt MFA beim IdP.
+  const OIDC_COOKIE = 'paraph_oidc';
+  const OIDC_PATH = '/api/auth/oidc';
   let oidcConfig: Promise<oidc.Configuration> | null = null;
   const getOidc = () => {
-    if (!ctx.cfg.oidc) throw new AppError(404, 'oidc_disabled', 'Anmeldung per SSO ist nicht eingerichtet.');
-    oidcConfig ??= oidc.discovery(new URL(ctx.cfg.oidc.issuer), ctx.cfg.oidc.clientId, ctx.cfg.oidc.clientSecret).catch((e) => {
+    const c = ctx.cfg.oidc!;
+    const url = new URL(c.issuer);
+    // Unverschlüsseltes HTTP nur für lokale Tests (Loopback) oder im DEV_MODE; produktiv immer HTTPS
+    const insecure = url.protocol === 'http:' && (ctx.cfg.devMode || ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname));
+    oidcConfig ??= oidc.discovery(url, c.clientId, c.clientSecret, undefined, insecure ? { execute: [oidc.allowInsecureRequests] } : undefined).catch((e) => {
       oidcConfig = null;
       throw e;
     });
     return oidcConfig;
   };
   const redirectUri = () => `${ctx.cfg.appUrl}/api/auth/oidc/callback`;
+  const fail = (reply: any, code: string, detail?: unknown) => {
+    if (detail !== undefined) ctx.log.warn({ err: detail, code }, 'OIDC-Anmeldung fehlgeschlagen');
+    return reply.redirect(`/login?error=${code}`);
+  };
+  // Nur relative Pfade innerhalb der App (kein //host, kein Schema)
+  const safeNext = (v: unknown) => (typeof v === 'string' && /^\/(?![/\\])/.test(v) && v.length <= 500 ? v : '/');
 
-  app.get('/api/auth/oidc/start', async (_req, reply) => {
-    const config = await getOidc();
+  app.get('/api/auth/oidc/start', async (req, reply) => {
+    if (!ctx.cfg.oidc) return fail(reply, 'sso_disabled');
+    let config: oidc.Configuration;
+    try {
+      config = await getOidc();
+    } catch (e) {
+      return fail(reply, 'sso_unavailable', e);
+    }
     const verifier = oidc.randomPKCECodeVerifier();
     const state = oidc.randomState();
     const nonce = oidc.randomNonce();
     const url = oidc.buildAuthorizationUrl(config, {
       redirect_uri: redirectUri(),
-      scope: 'openid email profile',
+      scope: ctx.cfg.oidc.scopes,
       code_challenge: await oidc.calculatePKCECodeChallenge(verifier),
       code_challenge_method: 'S256',
       state,
       nonce,
     });
-    const blob = sealString(ctx.keys.session, JSON.stringify({ verifier, state, nonce, exp: Date.now() + 600_000 }), 'oidc');
-    reply.setCookie('paraph_oidc', blob, cookieOpts(ctx, 600, '/api/auth/oidc'));
+    const next = safeNext((req.query as any)?.next);
+    const blob = sealString(ctx.keys.session, JSON.stringify({ verifier, state, nonce, next, exp: Date.now() + 600_000 }), 'oidc');
+    reply.setCookie(OIDC_COOKIE, blob, cookieOpts(ctx, 600, OIDC_PATH));
     return reply.redirect(url.href);
   });
 
   app.get('/api/auth/oidc/callback', async (req, reply) => {
-    const config = await getOidc();
-    const raw = req.cookies?.paraph_oidc;
-    reply.clearCookie('paraph_oidc', { path: '/api/auth/oidc' });
-    if (!raw) throw badRequest('oidc_state', 'Anmeldevorgang abgelaufen. Bitte erneut versuchen.');
-    const st = JSON.parse(openString(ctx.keys.session, raw, 'oidc'));
-    if (st.exp < Date.now()) throw badRequest('oidc_state', 'Anmeldevorgang abgelaufen.');
-    const current = new URL(req.url, ctx.cfg.appUrl);
-    const tokens = await oidc.authorizationCodeGrant(config, current, { pkceCodeVerifier: st.verifier, expectedState: st.state, expectedNonce: st.nonce });
-    const claims = tokens.claims();
-    if (!claims?.sub) throw badRequest('oidc_claims', 'Keine Benutzerkennung erhalten.');
-    const email = String(claims.email ?? '').toLowerCase();
-    let user = ctx.db.prepare('SELECT * FROM users WHERE oidc_subject = ?').get(`${ctx.cfg.oidc!.issuer}|${claims.sub}`) as any;
-    if (!user && email && claims.email_verified !== false) {
-      user = ctx.db.prepare('SELECT * FROM users WHERE email = ?').get(email);
-      if (user) ctx.db.prepare('UPDATE users SET oidc_subject = ? WHERE id = ?').run(`${ctx.cfg.oidc!.issuer}|${claims.sub}`, user.id);
+    // Der Zustands-Cookie ist einmalig: in jedem Fall sofort löschen (gleiche Attribute wie beim Setzen)
+    const raw = req.cookies?.[OIDC_COOKIE];
+    const { maxAge: _m, ...clearOpts } = cookieOpts(ctx, 0, OIDC_PATH);
+    reply.clearCookie(OIDC_COOKIE, clearOpts);
+    const c = ctx.cfg.oidc;
+    if (!c) return fail(reply, 'sso_disabled');
+    const q = req.query as Record<string, string | undefined>;
+    if (q.error) return fail(reply, q.error === 'access_denied' ? 'sso_denied' : 'sso_failed', { idp_error: q.error, description: q.error_description });
+    let st: { verifier: string; state: string; nonce: string; next?: string; exp: number };
+    try {
+      if (!raw) throw new Error('Zustands-Cookie fehlt');
+      st = JSON.parse(openString(ctx.keys.session, raw, 'oidc'));
+      if (st.exp < Date.now()) throw new Error('Zustand abgelaufen');
+    } catch (e) {
+      return fail(reply, 'sso_expired', e);
     }
-    if (!user && ctx.cfg.oidc!.autoCreate && email) {
-      // Neue SSO-Benutzer erhalten nur ein Konto; einer Organisation treten sie per Einladung bei
+    let config: oidc.Configuration;
+    try {
+      config = await getOidc();
+    } catch (e) {
+      return fail(reply, 'sso_unavailable', e);
+    }
+    let claims: Record<string, unknown>;
+    try {
+      const current = new URL(req.url, ctx.cfg.appUrl);
+      const tokens = await oidc.authorizationCodeGrant(config, current, { pkceCodeVerifier: st.verifier, expectedState: st.state, expectedNonce: st.nonce });
+      claims = { ...(tokens.claims() ?? {}) };
+      if (!claims.sub) throw new Error('ID-Token ohne sub');
+      // Fehlen E-Mail oder Gruppen im ID-Token, ergänzt der UserInfo-Endpunkt sie (Subjekt wird geprüft)
+      if ((!claims.email || (c.allowedGroups.length && !Array.isArray(claims.groups))) && config.serverMetadata().userinfo_endpoint) {
+        const info = await oidc.fetchUserInfo(config, tokens.access_token, String(claims.sub));
+        claims = { ...info, ...claims, email: claims.email ?? info.email, email_verified: claims.email_verified ?? info.email_verified, groups: claims.groups ?? info.groups };
+      }
+    } catch (e) {
+      // Zustand passt nicht (z. B. alter Tab) → wie abgelaufen behandeln; sonst Tokenaustausch gescheitert
+      const msg = String((e as any)?.message ?? '');
+      return fail(reply, /state/i.test(msg) ? 'sso_expired' : 'sso_failed', e);
+    }
+
+    const subject = `${c.issuer}|${claims.sub}`;
+    const email = String(claims.email ?? '').trim().toLowerCase();
+    if (c.allowedGroups.length) {
+      const groups = Array.isArray(claims.groups) ? claims.groups.map(String) : [];
+      if (!groups.some((g) => c.allowedGroups.includes(g))) {
+        ctx.log.info({ sub: claims.sub }, 'OIDC: keine zugelassene Gruppe');
+        return fail(reply, 'sso_group');
+      }
+    }
+
+    let user = ctx.db.prepare('SELECT * FROM users WHERE oidc_subject = ?').get(subject) as any;
+    if (!user && email) {
+      const byMail = ctx.db.prepare('SELECT * FROM users WHERE email = ?').get(email) as any;
+      if (byMail) {
+        if (byMail.disabled_at) return fail(reply, 'sso_disabled_user');
+        // Verknüpfung nur bei bestätigter E-Mail (oder ausdrücklich vertrauenswürdigem IdP), sonst Kontoübernahme möglich
+        if (claims.email_verified !== true && !c.trustEmail) return fail(reply, 'sso_email_unverified', { sub: claims.sub, reason: 'email_verified fehlt oder false' });
+        if (byMail.oidc_subject) return fail(reply, 'sso_no_account', { sub: claims.sub, reason: 'Konto bereits mit anderem SSO-Subjekt verknüpft' });
+        ctx.db.prepare('UPDATE users SET oidc_subject = ? WHERE id = ?').run(subject, byMail.id);
+        // In jeder Organisation des Benutzers protokollieren, damit die Verwaltung die Verknüpfung sieht
+        const orgs = ctx.db.prepare('SELECT org_id FROM memberships WHERE user_id = ?').all(byMail.id) as any[];
+        for (const o of orgs.length ? orgs : [{ org_id: null }]) logActivity(ctx, { orgId: o.org_id, userId: byMail.id }, 'auth.oidc_linked', email, { issuer: c.issuer, email_verified: claims.email_verified === true }, req.ip);
+        user = byMail;
+      }
+    }
+    if (!user && c.autoCreate && email) {
       const uid = id('usr');
-      ctx.db.prepare('INSERT INTO users (id, email, name, oidc_subject, created_at) VALUES (?, ?, ?, ?, ?)').run(uid, email, String(claims.name ?? email), `${ctx.cfg.oidc!.issuer}|${claims.sub}`, ctx.now().toISOString());
+      const now = ctx.now().toISOString();
+      tx(ctx.db, () => {
+        ctx.db.prepare('INSERT INTO users (id, email, name, oidc_subject, created_at) VALUES (?, ?, ?, ?, ?)').run(uid, email, String(claims.name ?? email).slice(0, 120), subject, now);
+        logActivity(ctx, { userId: uid }, 'auth.oidc_user_created', undefined, { issuer: c.issuer }, req.ip);
+        // Ohne OIDC_DEFAULT_ROLE treten neue SSO-Benutzer einer Organisation nur per Einladung bei
+        if (c.defaultRole) {
+          const org = ctx.db.prepare('SELECT id FROM orgs ORDER BY created_at, rowid LIMIT 1').get() as any;
+          if (org) {
+            ctx.db.prepare('INSERT INTO memberships (org_id, user_id, role, created_at) VALUES (?, ?, ?, ?)').run(org.id, uid, c.defaultRole, now);
+            logActivity(ctx, { orgId: org.id, userId: uid }, 'member.joined', email, { role: c.defaultRole, via: 'sso' });
+          }
+        }
+      });
       user = ctx.db.prepare('SELECT * FROM users WHERE id = ?').get(uid);
     }
-    if (!user || user.disabled_at) return reply.redirect('/login?error=sso_no_account');
-    const s = createUserSession(ctx, user.id, meta(req), false);
-    logActivity(ctx, { userId: user.id }, 'auth.login_oidc', undefined, {}, req.ip);
+    if (!user) return fail(reply, 'sso_no_account');
+    if (user.disabled_at) return fail(reply, 'sso_disabled_user');
+
+    // Sitzungsfixierung: eine mitgebrachte Sitzung wird verworfen, die neue erhält ein frisches Token
+    const prev = readSession(ctx, req.cookies?.[SESSION_COOKIE]);
+    if (prev) revokeSession(ctx, prev.idHash);
+    const s = createUserSession(ctx, user.id, meta(req), !!user.totp_enabled);
+    logActivity(ctx, { userId: user.id }, 'auth.login_oidc', undefined, { mfa: !!user.totp_enabled }, req.ip);
     setCookie(reply, s.token);
-    return reply.redirect('/');
+    const next = safeNext(st.next);
+    if (user.totp_enabled) return reply.redirect(`/login?next=${encodeURIComponent(next)}`);
+    const hasOrg = ctx.db.prepare('SELECT 1 FROM memberships WHERE user_id = ? LIMIT 1').get(user.id);
+    // Ohne Organisation bleibt die Sitzung bestehen (für Einladungslinks), der Login zeigt einen Hinweis
+    if (!hasOrg && !next.startsWith('/invite/')) return reply.redirect('/login?error=sso_no_org');
+    return reply.redirect(next);
   });
 
   void secretToken;

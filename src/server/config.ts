@@ -30,6 +30,14 @@ function int(name: string, fallback: number): number {
   return n;
 }
 
+function oidcRole(v: string | undefined): 'member' | 'viewer' | undefined {
+  if (!v) return undefined;
+  const r = v.trim().toLowerCase();
+  // Bewusst keine admin/owner-Rolle: Verwaltungsrechte nur per Einladung oder Rollenänderung
+  if (r !== 'member' && r !== 'viewer') throw new Error('OIDC_DEFAULT_ROLE darf nur „member“ oder „viewer“ sein');
+  return r;
+}
+
 export interface Config {
   appUrl: string;
   host: string;
@@ -47,7 +55,20 @@ export interface Config {
   tsaUrl?: string;
   webhookAllowPrivate: boolean;
   webhookAllowHosts: string[];
-  oidc?: { issuer: string; clientId: string; clientSecret: string; name: string; autoCreate: boolean };
+  oidc?: {
+    issuer: string;
+    clientId: string;
+    clientSecret: string;
+    name: string;
+    autoCreate: boolean;
+    /** E-Mail auch ohne email_verified=true als Verknüpfungsmerkmal akzeptieren (nur bei vertrauenswürdigem IdP). */
+    trustEmail: boolean;
+    scopes: string;
+    /** Leer = keine Einschränkung; sonst muss der Claim „groups“ mindestens eine davon enthalten. */
+    allowedGroups: string[];
+    /** Rolle für automatisch angelegte Benutzer in der ältesten Organisation (nur member/viewer). */
+    defaultRole?: 'member' | 'viewer';
+  };
   s3?: { endpoint?: string; region: string; bucket: string; accessKeyId: string; secretAccessKey: string; forcePathStyle: boolean };
   sms?: { url: string; token?: string; sender?: string };
   qes?: { name: string; baseUrl: string; clientId: string; clientSecret: string; tokenUrl?: string };
@@ -118,6 +139,10 @@ export function loadConfig(overrides: Partial<Config> = {}): Config {
           clientSecret: env('OIDC_CLIENT_SECRET', '')!,
           name: env('OIDC_NAME', 'SSO')!,
           autoCreate: bool('OIDC_AUTO_CREATE_USERS', false),
+          trustEmail: bool('OIDC_TRUST_EMAIL', false),
+          scopes: env('OIDC_SCOPES', 'openid email profile')!,
+          allowedGroups: (env('OIDC_ALLOWED_GROUPS', '') ?? '').split(',').map((s) => s.trim()).filter(Boolean),
+          defaultRole: oidcRole(env('OIDC_DEFAULT_ROLE')),
         }
       : undefined,
     s3: s3Bucket

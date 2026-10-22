@@ -26,7 +26,8 @@ import './domain/backup.js';
 function webRoot(): string | null {
   const here = dirname(fileURLToPath(import.meta.url));
   for (const p of [join(here, '../web'), join(here, '../../dist/web'), join(process.cwd(), 'dist/web')]) {
-    if (existsSync(join(p, 'index.html'))) return p;
+    // Nur gebaute Oberflächen (mit assets/); src/web/index.html ist die Vite-Quelle (Start per tsx)
+    if (existsSync(join(p, 'index.html')) && existsSync(join(p, 'assets'))) return p;
   }
   return null;
 }
