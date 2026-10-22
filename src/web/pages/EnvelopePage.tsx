@@ -146,7 +146,7 @@ export default function EnvelopePage() {
         </div>
         <div className="row">
           {env.status === 'sent' && canWrite && (
-            <button className="btn" onClick={() => setVoidOpen(true)}><Ban /> {t('Widerrufen')}</button>
+            <button className="btn" onClick={() => setVoidOpen(true)}><Ban /> {t('Vorgang widerrufen')}</button>
           )}
           {canWrite && (
             <button className="btn" onClick={() => act(async () => { const r = await post(`/api/v1/envelopes/${id}/duplicate`); nav(`/envelopes/${r.id}/edit`); }, t('Kopie angelegt'))}>
@@ -305,7 +305,7 @@ export default function EnvelopePage() {
           footer={
             <>
               <button className="btn" onClick={() => setVoidOpen(false)}>{t('Abbrechen')}</button>
-              <button className="btn btn-ink" onClick={() => act(async () => { await post(`/api/v1/envelopes/${id}/void`, { reason }); setVoidOpen(false); }, t('Widerrufen'))}><Ban /> {t('Widerrufen')}</button>
+              <button className="btn btn-ink" onClick={() => act(async () => { await post(`/api/v1/envelopes/${id}/void`, { reason }); setVoidOpen(false); }, t('Vorgang widerrufen'))}><Ban /> {t('Vorgang widerrufen')}</button>
             </>
           }
         >
