@@ -104,7 +104,7 @@ export function publicRoutes(app: FastifyInstance, ctx: Ctx) {
         const intact = s.signatureOk && s.digestOk && s.contentsOk && !s.error;
         // Gesamturteil: nur die letzte Signatur muss die ganze Datei abdecken; Zeitstempel muss – falls vorhanden – geprüft sein
         const last = i === sigs.length - 1;
-        const verdict = !intact ? 'invalid' : !own ? 'foreign' : last && !s.coversWholeFile ? 'modified' : s.timestampOk === false ? 'timestamp_invalid' : 'valid';
+        const verdict = !intact ? 'invalid' : !own ? 'foreign' : last && !s.coversWholeFile ? 'modified' : s.timestampOk === false || s.timestampTrusted === false ? 'timestamp_invalid' : 'valid';
         return { ...s, issued_by_this_instance: own, verdict };
       }),
     };

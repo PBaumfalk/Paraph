@@ -51,7 +51,9 @@ Vor dem Abschluss bestätigt jede handelnde Person einen festen Erklärungstext 
 | `none` | Der persönliche Link genügt. |
 | `email_otp` | Sechsstelliger Einmalcode per E-Mail, 10 Minuten gültig. |
 | `sms_otp` | Sechsstelliger Einmalcode per SMS. Erfordert `SMS_GATEWAY_URL` und eine Mobilnummer. |
-| `access_code` | Zugangscode, den der Absender auf anderem Weg mitteilt. Gespeichert wird nur ein Argon2id-Hash. |
+| `access_code` | Zugangscode (mindestens 6 Zeichen), den der Absender auf anderem Weg mitteilt. Gespeichert wird nur ein Argon2id-Hash. |
+
+Nach 5 falschen Codes in 15 Minuten sperrt Paraph die Prüfung für diese Person für 15 Minuten. Fehlversuche und Sperre stehen im Audit-Trail.
 
 ## Reihenfolge
 
@@ -145,7 +147,9 @@ Erlaubt der Absender Vertretung (`allow_delegation`), kann eine Person den Vorga
 - **automatisch:** alle `reminder_days` Tage (Standard aus den Organisationseinstellungen: 3; 0 schaltet ab)
 - **manuell:** über den Vorgang
 
-Jede Erinnerung erzeugt einen **neuen Link**. Der alte wird ungültig. So bleibt ein Link in einer weitergeleiteten E-Mail nicht dauerhaft nutzbar.
+Jede Erinnerung erzeugt einen **neuen Link**. Der unmittelbar vorherige Link bleibt gültig, damit die vorige E-Mail weiter funktioniert; alle älteren Links verfallen. Je Person sind also höchstens zwei Links gültig.
+
+„Link selbst weitergeben“ im Vorgang stellt einen neuen Link aus, den Sie auf anderem Weg übergeben. Alle bisherigen Links werden ungültig, bereits geöffnete Sitzungen dieser Person enden.
 
 ## Ablauf
 
@@ -166,9 +170,21 @@ Wenn die letzte Person fertig ist, erzeugt Paraph:
 - das **finale PDF** mit eingesetzten Feldwerten und Unterschriften, versiegelt mit dem Plattformsiegel (PAdES, `ETSI.CAdES.detached`),
 - die **Abschlussbestätigung** (Zertifikat) mit Beteiligten, Zeitpunkten und Hashes; je nach Einstellung an das finale PDF angehängt,
 - den **Audit-Trail** als Hash-Kette,
-- ein **Nachweispaket** (ZIP) mit allem zusammen.
+- ein **Nachweispaket** (ZIP) mit allem zusammen, einschließlich der bisherigen externen Verankerungen des Vorgangs (`08_verankerung.json`) und eines Prüfskripts (`pruefen/verify-audit.py`).
 
-Die Hashes stehen in einem Register. Unter `/verify` kann jeder prüfen, ob eine Datei von dieser Instanz stammt und unverändert ist.
+Vor dem Einbrennen prüft Paraph, dass Dokumentfassung, Feldwerte und Unterschriftsbilder genau dem Stand entsprechen, den jede Person unterschrieben hat. Bei einer Abweichung bricht der Abschluss ab ([Kapitel 7](07-sicherheit.md#integritätsprüfung-beim-abschluss)).
+
+Die Abschluss-E-Mail an die Beteiligten nennt den SHA-256-Prüfwert des unterschriebenen Dokuments.
+
+Die Hashes stehen in einem Register. Unter `/verify` (Prüfstelle) kann jeder prüfen, ob eine Datei von dieser Instanz stammt und unverändert ist. Die Datei verlässt dabei den Browser nicht; nur ihr Hash wird abgefragt. Je Vorgang erscheint ein Treffer. Auf Wunsch prüft die Prüfstelle zusätzlich die eingebetteten Siegel; dafür wird die Datei an den Server übertragen, nur im Arbeitsspeicher geprüft und nicht gespeichert. Sie nennt je Siegel ein Gesamturteil:
+
+| Urteil | Bedeutung |
+|---|---|
+| gültig | Siegel dieser Instanz gültig, Datei seit dem Siegel unverändert |
+| fremd | Signatur rechnerisch korrekt, aber nicht von dieser Instanz |
+| verändert | Nach dem Siegel wurden Daten angehängt oder geändert |
+| Zeitstempel ungültig | Siegel gültig, eingebetteter Zeitstempel jedoch ungültig |
+| ungültig | Siegel ungültig |
 
 ## Testmodus
 

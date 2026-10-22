@@ -21,7 +21,7 @@ Im deutschen Recht ersetzt nur die QES die gesetzliche Schriftform (§ 126 Abs. 
 Paraph erzeugt **einfache elektronische Signaturen (EES)**. Die Unterzeichnung wird dokumentiert durch:
 
 - persönlichen Link, optional Einmalcode per E-Mail oder SMS oder Zugangscode,
-- ausdrückliche Erklärung vor dem Abschluss (versionierter Text, Version und Hash protokolliert),
+- ausdrückliche Erklärung vor dem Abschluss (versionierter Text, Version und Hash protokolliert); der Text nennt die Stufe EES, stellt klar, dass sie keine qualifizierte Signatur ist und Schrift- oder notarielle Form nicht ersetzt, und zählt die protokollierten Merkmale auf (`src/shared/consent.ts`),
 - Bindung an die maßgebliche Fassung über SHA-256,
 - Audit-Trail als Hash-Kette mit Zeitpunkten, IP-Adresse und Browserkennung,
 - Plattformsiegel und Abschlussbestätigung.
@@ -45,7 +45,7 @@ Sie belegt **nicht** die Identität der Unterzeichner. Mit dem standardmäßig s
 
 ### Katalog
 
-Paraph enthält einen regelbasierten Katalog deutscher Formvorschriften (`src/shared/formrules.ts`). Grundlage ist die Recherche `docs/recherche/formvorschriften-und-markt.md`, Stand 22.10.2026, mit Gesetzestexten von gesetze-im-internet.de. **Der Katalog ist vor dem Produktiveinsatz anwaltlich freizugeben.**
+Paraph enthält einen regelbasierten Katalog deutscher Formvorschriften (`src/shared/formrules.ts`). Grundlage ist die Recherche `docs/recherche/formvorschriften-und-markt.md`, Stand 22.10.2026, mit Gesetzestexten von gesetze-im-internet.de. **Der Katalog ist vor dem Produktiveinsatz anwaltlich freizugeben.** Die anwaltliche Freigabe steht noch aus. Die einzelnen Prüfpunkte (Formhinweise, Erklärungstext, Texte der Abschlussbestätigung und weitere) stehen in `docs/recht/FREIGABELISTE.md`, die Begründungen in `docs/recht/formhinweise-analyse.md`.
 
 | Regel | Norm | Mindestform laut Katalog |
 |---|---|---|
@@ -69,6 +69,8 @@ Paraph enthält einen regelbasierten Katalog deutscher Formvorschriften (`src/sh
 | Arbeitsvertrag / Nachweis der Arbeitsbedingungen | § 2 NachwG | Textform |
 | Datenschutz-Einwilligung | Art. 7 DSGVO | keine |
 | Mandatsvertrag, Auftrag, Schweigepflichtentbindung | – | keine |
+
+Bei Textform zeigt Paraph: „Textform genügt – einfache elektronische Signatur reicht, wenn alle Parteien das unterschriebene PDF dauerhaft erhalten“. Ein Link allein ist dafür möglicherweise nicht ausreichend; die Organisationseinstellungen weisen darauf hin.
 
 Die Begründung, Fundstellen und Prüfpunkte je Regel stehen im Katalog und in der Recherche. Der Katalog ist über `GET /api/v1/form-rules` abrufbar.
 
@@ -107,14 +109,21 @@ Mitgelieferte oder in der Oberfläche vorgeschlagene Vorlagen und Texte (z. B. M
 - E-Mail-Datensätze: 90 Tage. Webhook-Zustellungen: 30 Tage.
 - Sicherungen enthalten den Stand zum Zeitpunkt der Sicherung, bis sie rotiert oder gelöscht werden.
 
+Bei der Löschung nach Aufbewahrungsfrist entfernt Paraph außer Dateien und Feldwerten auch Textauszüge, die Nachricht des Absenders, Ablehnungsgründe, Mobilnummern und die E-Mail-Datensätze des Vorgangs. Ereignisdaten im Audit-Trail bleiben unverändert.
+
 Rechtsgrundlage, Informationspflichten (Art. 13, 14 DSGVO) und Löschkonzept legen Sie als Verantwortlicher fest.
+
+### Datenschutzhinweise auf der Signaturseite
+
+Je Organisation lässt sich unter Einstellungen → Organisation ein Link auf Ihre Datenschutzhinweise nach Art. 13 DSGVO hinterlegen. Die Signaturseite zeigt ihn neben der Erklärung („Hinweise zum Datenschutz“); die Adresse wird beim Abschluss im Audit-Trail vermerkt. Den Inhalt der Hinweise erstellen Sie selbst. Ohne Link meldet die Betriebsdiagnose einen Hinweis.
 
 ### Auftragsverarbeitung
 
 Paraph selbst ist Software auf Ihrem Server; es gibt keinen Anbieter, der Daten verarbeitet. Ein Vertrag zur Auftragsverarbeitung (Art. 28 DSGVO) ist nur nötig, soweit Sie externe Dienste einbinden, z. B.:
 
-- **SMTP-Anbieter:** erhält Empfängeradresse, Betreff, Text mit Link; bei Abschluss optional das PDF als Anhang.
-- **SMS-Gateway:** erhält Mobilnummer und Code.
-- **Zeitstempeldienst (TSA):** erhält nur einen Hashwert, keine Inhalte. Ob hierfür ein Vertrag nötig ist, prüfen Sie im Einzelfall.
+- **SMTP-Anbieter:** erhält Empfängeradresse, Betreff, Text mit Link; bei Abschluss den Prüfwert und optional das PDF als Anhang.
+- **SMS-Gateway:** erhält Mobilnummer, Code und den Namen der Organisation, nicht den Titel des Dokuments.
+- **Zeitstempeldienst (TSA):** erhält nur Hashwerte (des Siegels und der Anker der Audit-Ketten), keine Inhalte. Ob hierfür ein Vertrag nötig ist, prüfen Sie im Einzelfall.
 - **S3-Speicher:** erhält verschlüsselte Dateien.
+- **Sicherungen** verlassen den Server nur vollständig verschlüsselt, sofern Sie die Dateien aus `backups/` kopieren (Format seit 0.2.0).
 - **Hoster** des Servers, falls nicht selbst betrieben.

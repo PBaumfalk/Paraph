@@ -23,7 +23,8 @@ Regeln:
 
 - Nur Inhaber laden weitere Inhaber ein oder ändern Inhaberrechte.
 - Eine Organisation braucht mindestens einen Inhaber; den letzten kann niemand herabstufen oder entfernen.
-- Entfernte Mitglieder verlieren sofort ihre Sitzungen in dieser Organisation. Ihre privaten Vorlagen werden für die Organisation sichtbar.
+- Entfernte Mitglieder verlieren sofort ihre Sitzungen in dieser Organisation. Ihre privaten Vorlagen werden für die Organisation sichtbar. Die von ihnen angelegten API-Schlüssel werden widerrufen.
+- API-Schlüssel einer Person, die gesperrt oder nicht mehr Mitglied ist, wirken nicht mehr (HTTP 401).
 - Einladungen gelten 7 Tage und werden per E-Mail versendet. Ohne SMTP zeigt die Oberfläche den Einladungslink an.
 
 ### Sichtbarkeit der Vorgänge („own“ / „org“)
@@ -39,12 +40,66 @@ Fremde oder nicht sichtbare Vorgänge beantwortet Paraph mit „nicht gefunden�
 
 ## Organisationen (Instanz-Administrator)
 
-Das bei der Ersteinrichtung angelegte Konto ist **Instanz-Administrator**. Nur diese Person kann
+Das bei der Ersteinrichtung angelegte Konto ist **Instanz-Administrator**. Weitere Instanz-Administratoren lassen sich unter Einstellungen → System → „Benutzerkonten der Instanz“ ernennen. Nur Instanz-Administratoren können
 
-- weitere Organisationen anlegen (Einstellungen → Organisation → „Weitere Organisation anlegen“); sie wird dort Inhaber,
-- die Systemübersicht sehen (Einstellungen → System): Version, Speicherart, Herkunft des Hauptschlüssels, eingerichtete Dienste, letzte Sicherung, fehlgeschlagene Aufträge und E-Mails.
+- weitere Organisationen anlegen (Einstellungen → Organisation → „Weitere Organisation anlegen“); die Person wird dort Inhaber,
+- Einstellungen → System öffnen (siehe unten).
 
 Organisationen sind strikt getrennt. Jede hat eigene Vorgänge, Vorlagen, Kontakte, API-Schlüssel, Webhooks, Einstellungen und ein eigenes Aktivitätsprotokoll. Eine Person kann mehreren Organisationen angehören und in der Oberfläche wechseln.
+
+## System (Instanz-Administrator)
+
+Einstellungen → System bündelt den Betrieb (`src/web/pages/settings/Settings.tsx`, Schnittstellen unter `/api/v1/system` und `/api/v1/admin/users`).
+
+### Betriebszustand
+
+Beim Öffnen läuft eine **Schnellprüfung**. Sie zeigt je Bereich (Instanz, Schlüssel, Speicher, Sicherung, Hintergrund, E-Mail, Nachweis, Anmeldung, Dienste) einen Status: in Ordnung, Hinweis, Fehler oder Information. Geprüft werden unter anderem HTTPS in `APP_URL`, `TRUST_PROXY`, `DEV_MODE`, fehlende Datenschutzhinweise je Organisation, Herkunft und Dateirechte des Hauptschlüssels, Laufzeit des Siegelzertifikats, freier Speicher, Alter der letzten Sicherung, Wiederherstellungs-Passphrase, fehlgeschlagene und überfällige Aufgaben, nicht zugestellte E-Mails der letzten 7 Tage, Zeitstempeldienst und Verankerung.
+
+**Tiefenprüfung** (Schaltfläche, höchstens 6 je Minute) kontaktiert zusätzlich Mailserver (Verbindung und Anmeldung, ohne Versand), Zeitstempeldienst (Probestempel mit Prüfung und Uhrabweichung), OIDC-Anbieter (Discovery), Dateiablage bzw. S3 (schreiben, lesen, löschen) und Gotenberg. Sie prüft die Integrität der Datenbank, alle Audit-Ketten und deren Abgleich mit der Verankerung. Das SMS-Gateway wird nicht geprüft, weil ein Testversand Kosten verursacht.
+
+Dieselben Prüfungen auf der Kommandozeile:
+
+```sh
+docker compose exec paraph paraph doctor --quick   # Schnellprüfung
+docker compose exec paraph paraph doctor           # Tiefenprüfung
+```
+
+`paraph doctor` endet mit Exit-Code 1, wenn mindestens eine Prüfung „Fehler“ meldet.
+
+### Test-E-Mail
+
+„Test-E-Mail senden“ verschickt sofort, ohne Warteschlange, eine Test-E-Mail an die eigene oder eine eingegebene Adresse (höchstens 5 je Minute). Angezeigt wird die Antwort des Mailservers oder eine verständliche Fehlermeldung. Der Versuch steht im Aktivitätsprotokoll.
+
+### Sicherung
+
+Zeigt letzte Sicherung, Abstand, Anzahl der aufbewahrten Sicherungen und ob die Sicherungen den Hauptschlüssel enthalten. „Jetzt sichern“ reiht eine Sicherung als Hintergrundaufgabe ein. Siehe [Kapitel 6](06-sicherung.md).
+
+### Hintergrundaufgaben und E-Mails
+
+Listet endgültig fehlgeschlagene Aufgaben (bis zu 20) mit Fehlermeldung und nicht zugestellte E-Mails (bis zu 20). „Erneut versuchen“ setzt eine fehlgeschlagene Aufgabe zurück in die Warteschlange. Darunter: wartende, in Wiederholung befindliche und überfällige Aufgaben.
+
+**Alarm per E-Mail:** Scheitert eine Hintergrundaufgabe endgültig (nach 8 Versuchen), erhalten alle aktiven Instanz-Administratoren eine E-Mail mit Aufgabe und Fehler. Höchstens eine E-Mail je Aufgabentyp in 24 Stunden. Der E-Mail-Versand selbst löst keinen Alarm aus; nicht zustellbare E-Mails erscheinen im Vorgang und in dieser Liste.
+
+### Benutzerkonten der Instanz
+
+Tabelle aller Konten mit Organisationen und Rollen, Anmeldeart (Passwort, SSO, 2FA) und letzter Anmeldung. Für andere Konten als das eigene:
+
+| Aktion | Wirkung |
+|---|---|
+| Sperren / Entsperren | Gesperrte Konten werden sofort abgemeldet und können sich nicht anmelden, auch nicht per SSO. Ihre API-Schlüssel wirken nicht mehr. |
+| 2FA zurücksetzen | Schaltet TOTP ab und beendet alle Sitzungen. Nur nach sicherer Prüfung der Identität. |
+| Passwort-Link | Erzeugt einen Link zum Zurücksetzen, 60 Minuten gültig. Paraph versendet ihn nicht; Sie geben ihn auf sicherem Weg weiter. Nur für Konten mit Passwort. |
+| Zum Admin / Admin entziehen | Vergibt oder entzieht die Instanz-Administration. Die letzte aktive Instanz-Administration lässt sich nicht entziehen. |
+
+Das eigene Konto lässt sich hier weder sperren noch herabstufen. Jede Aktion steht im Aktivitätsprotokoll. Rollen innerhalb einer Organisation verwalten Sie unter „Team“.
+
+### Metriken
+
+Mit `METRICS_TOKEN` stellt Paraph Zählwerte unter `/metrics` im Prometheus-Format bereit. Siehe [Kapitel 3](03-konfiguration.md#monitoring).
+
+## Datenschutzhinweise für Unterzeichner
+
+Einstellungen → Organisation → „Datenschutzhinweise für Unterzeichner (Art. 13 DSGVO)“: eine `https://`-Adresse Ihrer Datenschutzhinweise. Die Signaturseite verlinkt sie neben der Erklärung („Hinweise zum Datenschutz“). Die Adresse wird beim Abschluss mit der Erklärung im Audit-Trail vermerkt. Den Inhalt der Hinweise stellt Paraph nicht bereit. Fehlt der Link, meldet die Betriebsdiagnose einen Hinweis.
 
 ## Branding
 
@@ -56,6 +111,10 @@ Je Organisation (Einstellungen → Erscheinungsbild und E-Mails):
 - Fußzeile der E-Mails
 
 Die Absenderadresse muss zu Ihrem SMTP-Konto und Ihren SPF/DKIM-Einträgen passen, sonst landen E-Mails im Spam.
+
+## Zustellung im Vorgang
+
+Im Vorgang steht bei jeder Person, an der Reihe ist, ob die letzte Einladung oder Erinnerung nicht zugestellt wurde („E-Mail nicht zugestellt“ mit Grund) oder gerade wiederholt wird. Bei einem endgültigen Fehler erhält die versendende Person zusätzlich eine E-Mail. Abhilfe: Adresse prüfen und erneut erinnern oder den Link selbst weitergeben.
 
 ## E-Mail-Texte
 
@@ -69,7 +128,7 @@ Betreff und Text lassen sich für drei E-Mails anpassen: Signaturanfrage (`signi
 | `{{message}}` | Nachricht des Absenders (nur Signaturanfrage) |
 | `{{expires}}` | Ablaufdatum (Signaturanfrage, Erinnerung) |
 
-Der persönliche Link wird immer von Paraph eingefügt. Übrige E-Mails (Ablehnung, Widerruf, Ablauf, Einmalcodes, Einladung, Passwort) verwenden feste Texte.
+Der persönliche Link wird immer von Paraph eingefügt. Die Abschluss-E-Mail nennt zusätzlich den SHA-256-Prüfwert des unterschriebenen Dokuments und die Adresse der Prüfstelle (`/verify`). Übrige E-Mails (Ablehnung, Widerruf, Ablauf, Einmalcodes, Einladung, Passwort, Zustellfehler, Systemalarm, Test-E-Mail) verwenden feste Texte.
 
 ## Aufbewahrung und Löschung
 
@@ -80,6 +139,8 @@ Ein Hintergrundauftrag läuft alle 12 Stunden. Für beendete Vorgänge (abgeschl
 - Original- und PDF-Dateien, finales PDF, Abschlussbestätigung, Nachweispaket,
 - Unterschriftsbilder und Anhänge der Beteiligten,
 - alle Feldwerte.
+
+Außerdem leert er den Textauszug der Dokumente, die Nachricht des Absenders, Ablehnungsgründe und Mobilnummern der Beteiligten und löscht die E-Mail-Datensätze des Vorgangs.
 
 Erhalten bleiben: der Datensatz des Vorgangs (Titel, Beteiligte mit Name und E-Mail, Zeitpunkte, Hashes) und der vollständige Audit-Trail. Die Löschung selbst wird als Ereignis `envelope.content_purged` im Audit-Trail vermerkt. Dateien, die noch von einer Vorlage oder einem anderen Vorgang genutzt werden, bleiben.
 
@@ -109,7 +170,7 @@ Kurz:
 
 ## Notfallzugang
 
-Für Fälle ohne funktionierende E-Mail oder ohne Zugang zum Konto gibt es zwei Befehle im Container:
+Ist noch ein Instanz-Administrator angemeldet, genügt Einstellungen → System → „Benutzerkonten der Instanz“ (Passwort-Link, 2FA zurücksetzen). Für Fälle ohne Zugang zur Oberfläche gibt es zwei Befehle im Container:
 
 ```sh
 # Link zum Zurücksetzen des Passworts, 60 Minuten gültig
@@ -121,11 +182,22 @@ docker compose exec paraph paraph setup-code
 
 Der Rücksetzlink beendet nach Benutzung alle Sitzungen der Person und hebt eine Sperre wegen Fehlversuchen auf. Zwei-Faktor bleibt eingeschaltet. Wer Zugriff auf den Container hat, kann damit jedes Konto übernehmen; schützen Sie den Server-Zugang entsprechend.
 
-Weitere Befehle: `paraph health`, `paraph backup`, `paraph verify-backup`, `paraph restore`, `paraph verify-audit` (prüft die Audit-Ketten aller Vorgänge).
+Weitere Befehle (`src/server/cli.ts`):
+
+| Befehl | Zweck |
+|---|---|
+| `paraph version` | Version und Datenbankschema |
+| `paraph health` | Bereitschaft (Healthcheck) |
+| `paraph doctor [--quick]` | Betriebsdiagnose wie unter Einstellungen → System |
+| `paraph backup [--out DIR]` | Sicherung erstellen |
+| `paraph verify-backup DATEI` | Sicherung vollständig prüfen |
+| `paraph restore-key DATEI --out PFAD` | Hauptschlüssel aus einer Sicherung mit Passphrase schreiben |
+| `paraph restore DATEI [--force]` | Sicherung wiederherstellen |
+| `paraph verify-audit` | alle Audit-Ketten und ihre Verankerung prüfen; Exit-Code 2 bei Abweichungen |
 
 ## Siegelzertifikat
 
-Unter „Siegel und Signaturstufen“ zeigt Paraph das verwendete Plattformsiegel. Standard ist ein beim ersten Start erzeugtes, selbst signiertes Instanzzertifikat (RSA 3072). Eine Organisation kann ein eigenes Zertifikat importieren (privater Schlüssel und Zertifikatskette als PEM, RSA). Paraph prüft beim Import, dass Schlüssel und Zertifikat zusammenpassen.
+Unter „Siegel und Signaturstufen“ zeigt Paraph das verwendete Plattformsiegel. Standard ist ein beim ersten Start erzeugtes, selbst signiertes Instanzzertifikat (RSA 3072). Es ist ein technisches Integritätssiegel, kein qualifiziertes Siegel und keine persönliche Signatur der Unterzeichner. Die Betriebsdiagnose warnt, wenn das Zertifikat in weniger als 365 Tagen abläuft. Eine Organisation kann ein eigenes Zertifikat importieren (privater Schlüssel und Zertifikatskette als PEM, RSA). Paraph prüft beim Import, dass Schlüssel und Zertifikat zusammenpassen.
 
 ## Aktivitätsprotokoll
 

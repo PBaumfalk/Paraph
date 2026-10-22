@@ -3,7 +3,7 @@
 import { webcrypto, createHash } from 'node:crypto';
 import * as pkijs from 'pkijs';
 import * as asn1js from 'asn1js';
-import { sha256, verifyTimestampToken } from './timestamp.js';
+import { sha256, verifyTimestampToken, findSignerCert, essCertBound } from './timestamp.js';
 
 pkijs.setEngine('node', new pkijs.CryptoEngine({ name: 'node', crypto: webcrypto as any }) as any);
 
@@ -53,8 +53,10 @@ export async function verifyPdfSignatures(pdf: Buffer): Promise<SigCheck[]> {
       const md = si.signedAttrs?.attributes.find((x) => x.type === '1.2.840.113549.1.9.4');
       const digest = createHash('sha256').update(signedData).digest();
       check.digestOk = !!md && Buffer.from((md.values[0] as asn1js.OctetString).valueBlock.valueHexView).equals(digest);
-      check.signatureOk = await sd.verify({ signer: 0, data: new Uint8Array(signedData).buffer, checkChain: false });
-      const cert = (sd.certificates ?? []).find((x): x is pkijs.Certificate => x instanceof pkijs.Certificate);
+      // Zertifikat über die Signer-ID bestimmen und per ESS an die Signatur gebunden prüfen – ein vorangestelltes
+      // fremdes (z. B. das öffentliche Instanz-)Zertifikat darf das Ergebnis nicht beeinflussen
+      const cert = findSignerCert(sd);
+      check.signatureOk = !!cert && essCertBound(si, cert) && (await sd.verify({ signer: 0, data: new Uint8Array(signedData).buffer, checkChain: false }).catch(() => false));
       if (cert) {
         check.signerSubject = cert.subject.typesAndValues.map((t) => String(t.value.valueBlock.value)).join(', ');
         check.certSha256 = createHash('sha256').update(Buffer.from(cert.toSchema(true).toBER(false))).digest('hex');

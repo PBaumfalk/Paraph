@@ -16,7 +16,7 @@ Leere Werte (`SMTP_URL=`) gelten als nicht gesetzt. Ja/Nein-Werte akzeptieren `1
 | `HOST` | `0.0.0.0` | Adresse, an die der Server im Container bindet. |
 | `PORT` | `8080` | Port im Container. |
 | `DATA_DIR` | `./data` (im Image `/data`) | Datenbank `paraph.db` und verschlüsselte Dateien `blobs/`. |
-| `TRUST_PROXY` | `false` | Client-IP aus `X-Forwarded-For` übernehmen. Nur hinter einem Reverse Proxy setzen. |
+| `TRUST_PROXY` | `false` | Client-IP aus `X-Forwarded-For` übernehmen. Nur hinter einem Reverse Proxy setzen. `true` bedeutet genau **einen** vertrauenswürdigen Proxy-Hop (nicht „allen vertrauen“). Alternativ eine Zahl (Anzahl der Hops, z. B. `2` bei CDN und Proxy) oder kommagetrennte Proxy-Adressen bzw. Netze (z. B. `172.16.0.0/12`). `install.sh` setzt `true`. |
 | `LOG_LEVEL` | `info` | Protokollstufe (`fatal`, `error`, `warn`, `info`, `debug`, `trace`). |
 | `MAX_UPLOAD_MB` | `25` | Höchstgröße einer hochgeladenen Datei. |
 | `MAX_PAGES` | `500` | Höchstzahl Seiten je Dokument. |
@@ -30,23 +30,40 @@ Leere Werte (`SMTP_URL=`) gelten als nicht gesetzt. Ja/Nein-Werte akzeptieren `1
 | `MASTER_KEY` | – | 32 Byte als Base64 (`openssl rand -base64 32`). Aus ihm leitet Paraph alle Teilschlüssel für die Verschlüsselung ab. |
 | `MASTER_KEY_FILE` | in Docker `/run/secrets/master_key` | Datei mit dem Hauptschlüssel. `docker-compose.yml` bindet `secrets/master.key` als Docker-Secret ein. |
 
-Ist keins von beiden gesetzt, erzeugt Paraph einmalig `DATA_DIR/secrets/master.key` und warnt im Log. Dieser Schlüssel liegt dann im Datenvolume und ist **nicht** Teil der Sicherung. Für den Produktivbetrieb `MASTER_KEY_FILE` verwenden.
+Ist keins von beiden gesetzt, erzeugt Paraph einmalig `DATA_DIR/secrets/master.key` und warnt im Log. Dieser Schlüssel liegt dann im Datenvolume. Für den Produktivbetrieb `MASTER_KEY_FILE` verwenden. Ob der Hauptschlüssel in der Sicherung enthalten ist, hängt von der Wiederherstellungs-Passphrase ab (siehe [Sicherung](#sicherung)).
 
 ## E-Mail
 
 | Variable | Standard | Zweck |
 |---|---|---|
-| `SMTP_URL` | – | SMTP-Zugang als URL, z. B. `smtps://benutzer:passwort@smtp.example.org:465` oder `smtp://host:587`. Ohne SMTP versendet Paraph keine E-Mails; Einladungslinks für neue Teammitglieder zeigt die Oberfläche dann direkt an. |
+| `SMTP_URL` | – | SMTP-Zugang als URL, z. B. `smtps://benutzer:passwort@smtp.example.org:465` (TLS) oder `smtp://benutzer:passwort@host:587` (STARTTLS). Sonderzeichen im Passwort URL-kodieren (z. B. `@` → `%40`). Ohne SMTP versendet Paraph keine E-Mails; Einladungslinks für neue Teammitglieder zeigt die Oberfläche dann direkt an. |
 | `MAIL_FROM` | `Paraph <no-reply@localhost>` | Absender. Wirkt nur mit `SMTP_URL`. Absendername und Antwortadresse lassen sich je Organisation im Branding überschreiben. |
+| `SMTP_ALLOW_INSECURE` | `false` | Nur `true` schaltet die Pflicht zur Verschlüsselung ab und erlaubt `rejectUnauthorized=false` in `SMTP_URL`. Wird direkt aus der Umgebung gelesen; `SMTP_ALLOW_INSECURE_FILE` wirkt nicht. Nicht produktiv verwenden. |
+
+Verschlüsselung (`src/server/domain/mail.ts`):
+
+- Bei `smtp://` verlangt Paraph STARTTLS. Bietet der Server kein STARTTLS an, schlägt der Versand fehl, statt unverschlüsselt zu senden. Ausnahme: lokale Testserver (`localhost`, `127.0.0.1`, `::1`, `mailpit`, `mailhog`).
+- TLS mindestens in Version 1.2; Zertifikate werden geprüft.
+- Eine `SMTP_URL` mit `rejectUnauthorized=false` verhindert den Versand, außer `SMTP_ALLOW_INSECURE=true`.
+
+Fehlerbehandlung:
+
+- Paraph ordnet Fehler ein: Anmeldung, TLS, Verbindung, vorübergehend abgewiesen (4xx) oder dauerhaft abgewiesen (5xx, z. B. unbekannte Empfängeradresse). Die Meldungen enthalten keine Zugangsdaten.
+- Vorübergehende Fehler wiederholt Paraph bis zu 8-mal mit wachsendem Abstand. Dauerhafte Fehler werden nicht wiederholt.
+- Ist eine E-Mail an Beteiligte endgültig gescheitert, vermerkt Paraph `recipient.delivery_failed` im Audit-Trail, löst den gleichnamigen Webhook aus und benachrichtigt die versendende Person per E-Mail. Der Zustellstatus steht im Vorgang bei der jeweiligen Person.
 
 SPF, DKIM und DMARC für die Absenderdomain richten Sie beim Mailanbieter ein.
 
-## Dokumentenumwandlung und Zeitstempel
+## Dokumentenumwandlung, Zeitstempel und Verankerung
 
 | Variable | Standard | Zweck |
 |---|---|---|
 | `GOTENBERG_URL` | – (in Docker `http://gotenberg:3000`) | Gotenberg-Dienst für Word/DOC/ODT/RTF → PDF. Fehlt er, nimmt Paraph nur PDF an. |
-| `TSA_URL` | – | RFC-3161-Zeitstempeldienst für das Plattformsiegel, z. B. `https://freetsa.org/tsr`. An den Dienst geht nur ein Hashwert. Ist der Dienst nicht erreichbar, wird ohne Zeitstempel versiegelt (PAdES-B-B statt B-T). |
+| `TSA_URL` | – | RFC-3161-Zeitstempeldienst, z. B. der Dienst Ihres Vertrauensdiensteanbieters oder `https://freetsa.org/tsr` (kostenlos, ohne Gewähr). An den Dienst geht nur ein Hashwert. Verwendet für das Plattformsiegel (PAdES-B-T) und für die externe Verankerung der Audit-Ketten. Ist der Dienst beim Abschluss nicht erreichbar, wird ohne Zeitstempel versiegelt (PAdES-B-B). |
+| `TSA_CA_FILE` | – | PEM-Datei mit Wurzel- und ggf. Zwischenzertifikaten des Zeitstempeldienstes (Vertrauensanker). Dann prüft Paraph zusätzlich die Zertifikatskette des Dienstes. Ohne Anker ist nur belegt, dass ein Dienst gestempelt hat, nicht welcher vertrauenswürdige. |
+| `ANCHOR_INTERVAL_MINUTES` | `60` | Abstand der externen Verankerung in Minuten, mindestens 5. Zusätzlich wird jeder Abschluss zeitnah verankert. |
+
+Jeden Zeitstempel prüft Paraph vollständig, bevor er zählt (`src/server/pdf/timestamp.ts`): Signatur des Dienstes, Hashwert (Imprint), Nonce der eigenen Anfrage und Verwendungszweck des Zertifikats. Eine Antwort, die nicht zur Anfrage passt, wird verworfen. Zur Verankerung siehe [Kapitel 7](07-sicherheit.md#externe-verankerung).
 
 ## Webhooks
 
@@ -133,7 +150,7 @@ Weitere Hinweise: [Kapitel 4](04-administration.md#anmeldung-per-oidc-authentik)
 | `S3_FORCE_PATH_STYLE` | `true` mit `S3_ENDPOINT`, sonst `false` | Pfadstil (`endpoint/bucket/objekt`), wie bei MinIO, Garage und Ceph üblich. `false` = virtual-hosted (`bucket.endpoint/objekt`), Standard bei AWS. Bucketnamen mit Punkt oder Großbuchstaben werden immer im Pfadstil angesprochen, weil sie nicht zum TLS-Zertifikat der Subdomain passen. |
 | `S3_PREFIX` | leer | Schlüsselpräfix im Bucket, z. B. `paraph/`. Erlaubt einen gemeinsamen Bucket für mehrere Dienste und eine auf das Präfix beschränkte Policy. Nachträglich nicht ändern: vorhandene Objekte werden nicht verschoben. |
 
-Dateien werden vor dem Hochladen verschlüsselt (AES-256-GCM, Schlüssel je Datei aus dem Hauptschlüssel abgeleitet); der Bucket enthält nur Chiffrat. Mit S3 enthält die Sicherung nur die Datenbank, nicht die Dateien. Siehe [Kapitel 6](06-sicherung.md#s3).
+Dateien werden vor dem Hochladen verschlüsselt (AES-256-GCM, Schlüssel je Datei aus dem Hauptschlüssel abgeleitet); der Bucket enthält nur Chiffrat. Seit 0.2.0 enthält die Sicherung auch bei S3 alle Dokumente. Siehe [Kapitel 6](06-sicherung.md#s3).
 
 ### Startprüfung und Fehlerverhalten
 
@@ -154,7 +171,7 @@ Im Betrieb wiederholt Paraph Anfragen bei Serverfehlern (5xx, `SlowDown`), Zeit�
 - **Transportverschlüsselung:** `S3_ENDPOINT` mit `https://`, außer der Speicher läuft im selben abgeschotteten Netz (z. B. MinIO im Docker-Netz). Optional per Policy erzwingen (`aws:SecureTransport`).
 - **Versionierung** (optional, empfohlen) schützt vor versehentlichem Löschen und Überschreiben. Paraph löscht Dateien nach Ablauf der Aufbewahrungsfrist; mit Versionierung bleiben alte Versionen bestehen, bis eine Lifecycle-Regel sie entfernt – die Regel passend zur Löschpflicht (DSGVO) wählen, z. B. nicht aktuelle Versionen nach 30 Tagen löschen.
 - **Object Lock** (optional, nur bei neu angelegten Buckets mit Versionierung) macht Objekte für eine Frist unveränderbar und schützt so auch gegen Ransomware mit gestohlenen Schlüsseln. Im Modus „Governance“ beginnen; „Compliance“ verhindert jede Löschung vor Fristende, auch die nach Aufbewahrungsfrist.
-- **Sicherung:** Die Paraph-Sicherung erfasst den Bucket nicht. Sichern Sie ihn gesondert und zeitlich passend zur Datenbank (Replikation in einen zweiten Bucket/Standort, `mc mirror`, `rclone sync`). Ohne den Hauptschlüssel ist auch die Bucket-Kopie unlesbar – Schlüssel getrennt aufbewahren.
+- **Sicherung:** Die Paraph-Sicherung liest alle Dokumente, die die Datenbank kennt, aus dem Bucket und schreibt sie in die verschlüsselte Sicherungsdatei. Eine zusätzliche Replikation des Buckets (zweiter Standort, `mc mirror`, `rclone sync`) bleibt sinnvoll, ist aber nicht Voraussetzung für die Wiederherstellung. Ohne den Hauptschlüssel ist auch eine Bucket-Kopie unlesbar.
 
 Beispiel-Policy (AWS-IAM-Syntax; MinIO und Ceph RGW verstehen dieselbe Form, Garage vergibt Rechte stattdessen je Schlüssel mit `garage bucket allow --read --write`) für Bucket `kanzlei-paraph` mit `S3_PREFIX=paraph/`. Ohne Präfix die `Condition` weglassen und `paraph/*` durch `*` ersetzen:
 
@@ -206,7 +223,7 @@ mc admin policy attach local paraph-rw --user paraph
 | `QES_CSC_CLIENT_SECRET` | leer | Client-Secret. |
 | `QES_CSC_TOKEN_URL` | – | Token-Endpunkt. |
 
-Diese Werte werden nur gelesen und in der Systemübersicht angezeigt („Anbieter konfiguriert, nicht verifiziert“). Es gibt keine Anbieter-Implementierung. Vorgänge mit Stufe `qes` lassen sich nicht versenden, auch wenn diese Variablen gesetzt sind. Siehe [Kapitel 10](10-einschraenkungen.md).
+Diese Werte werden nur gelesen und unter Einstellungen → System angezeigt („Anbieter konfiguriert, nicht verifiziert“). Es gibt keine Anbieter-Implementierung. Vorgänge mit Stufe `qes` lassen sich nicht versenden, auch wenn diese Variablen gesetzt sind. Siehe [Kapitel 10](10-einschraenkungen.md).
 
 ## Sicherung
 
@@ -215,6 +232,17 @@ Diese Werte werden nur gelesen und in der Systemübersicht angezeigt („Anbiete
 | `BACKUP_INTERVAL_HOURS` | `24` | Abstand der automatischen Sicherung in Stunden. `0` schaltet sie ab. |
 | `BACKUP_KEEP` | `14` | Anzahl aufbewahrter automatischer Sicherungen; ältere werden gelöscht. |
 | `BACKUP_DIR` | `DATA_DIR/backups` (in Docker `/backups`) | Zielordner. Wird direkt aus der Umgebung gelesen; `BACKUP_DIR_FILE` wirkt nicht. |
+| `BACKUP_PASSPHRASE_FILE` | in Docker `/run/secrets/backup_passphrase` | Datei mit der Wiederherstellungs-Passphrase. Gesetzt: jede Sicherung enthält den Hauptschlüssel und lässt sich mit der Passphrase öffnen. `docker-compose.yml` bindet `secrets/backup_passphrase` als Docker-Secret ein. Alternativ `BACKUP_PASSPHRASE` direkt. |
+
+Einzelheiten: [Kapitel 6](06-sicherung.md).
+
+## Monitoring
+
+| Variable | Standard | Zweck |
+|---|---|---|
+| `METRICS_TOKEN` | – | Schaltet `/metrics` (Prometheus-Textformat) frei. Abruf nur mit `Authorization: Bearer <METRICS_TOKEN>`. Ohne Token oder mit falschem Token antwortet Paraph mit 404. |
+
+Die Metriken enthalten nur Zählwerte, keine personenbezogenen Daten: Schemaversion, Hintergrundaufgaben nach Zustand, E-Mails der letzten 7 Tage nach Zustand, Vorgänge nach Status (ohne Testmodus), Alter der letzten Sicherung, Anker ohne Zeitstempel, freier Speicher.
 
 ## Nur in `docker-compose.yml`
 
@@ -223,19 +251,28 @@ Diese Variablen wertet Docker Compose aus, nicht Paraph:
 | Variable | Standard | Zweck |
 |---|---|---|
 | `PARAPH_ENV_FILE` | `.env` | Pfad der Umgebungsdatei für den Paraph-Container. |
-| `PARAPH_IMAGE` | `paraph:latest` | Image-Name. |
-| `BIND` | `127.0.0.1` | Host-Adresse, an die der Port gebunden wird. |
-| `HOST_PORT` | `8080` | Port auf dem Host. |
+| `PARAPH_IMAGE` | `paraph:local` | Image-Name. `install.sh` trägt `paraph:<Version>` ein, `update.sh` das jeweils neue Image. |
+| `PARAPH_VERSION` | `0.2.0` | Build-Argument; wird im Image zu `PARAPH_BUILD_VERSION`. |
+| `PARAPH_MEM_LIMIT` | `1g` | Speichergrenze des Paraph-Containers. |
+| `COMPOSE_PROJECT_NAME` | `paraph` | Projektname (Präfix für Container, Netze, Volumes). |
+| `COMPOSE_PROFILES` | – | `caddy` startet den mitgelieferten Reverse Proxy. Setzt `install.sh`. |
+| `DOMAIN` | – | Nur Profil `caddy`: Domain für das Zertifikat. |
+| `ACME_EMAIL` | – | Nur Profil `caddy`: Kontaktadresse für Let's Encrypt. |
+| `CADDY_HTTP_PORT` | `80` | Nur Profil `caddy`: HTTP-Port auf dem Host. |
+| `CADDY_HTTPS_PORT` | `443` | Nur Profil `caddy`: HTTPS-Port auf dem Host (TCP und UDP). |
+| `BIND` | `127.0.0.1` | Host-Adresse, an die der Paraph-Port gebunden wird. |
+| `HOST_PORT` | `8080` | Paraph-Port auf dem Host. |
 | `BACKUP_PATH` | `./backups` | Host-Ordner, der als `/backups` eingebunden wird. |
 | `TZ` | `Europe/Berlin` | Zeitzone des Containers. |
 | `MAILPIT_PORT` | `8025` | Nur `docker-compose.test.yml`: Port der Mailpit-Oberfläche. |
+| `TEST_CERTS` | – | Nur `docker-compose.test.yml`: Ordner mit Testzertifikaten und Anmeldedatei für Mailpit. |
 
 ## Sonstiges
 
 | Variable | Standard | Zweck |
 |---|---|---|
-| `PARAPH_BUILD_VERSION` | `0.1.0-dev` | Angezeigte Versionsnummer. Wird direkt aus der Umgebung gelesen. |
+| `PARAPH_BUILD_VERSION` | `0.2.0-dev` (im Image die Build-Version, z. B. `0.2.0`) | Angezeigte Versionsnummer. Wird direkt aus der Umgebung gelesen. |
 
 ## Einstellungen in der Oberfläche
 
-Viele Einstellungen liegen nicht in `.env`, sondern je Organisation in der Datenbank: Sichtbarkeit der Vorgänge, Standard-Ablauf und -Erinnerung, Aufbewahrung, Zeitzone, Sprache, Branding, E-Mail-Texte, eigene Domain, Einbettungs-Herkünfte, Siegelzertifikat. Siehe [Kapitel 4](04-administration.md).
+Viele Einstellungen liegen nicht in `.env`, sondern je Organisation in der Datenbank: Sichtbarkeit der Vorgänge, Standard-Ablauf und -Erinnerung, Aufbewahrung, Zeitzone, Sprache, Link zu den Datenschutzhinweisen, Branding, E-Mail-Texte, eigene Domain, Einbettungs-Herkünfte, Siegelzertifikat. Siehe [Kapitel 4](04-administration.md).

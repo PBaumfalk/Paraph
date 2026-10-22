@@ -87,7 +87,7 @@ export async function runDiagnostics(ctx: Ctx, opts: { deep?: boolean } = {}): P
   // ── Sicherung
   const b = backupStatus(ctx);
   if (cfg.backup.intervalHours <= 0) add('backup', 'Sicherung', 'Automatische Sicherung', 'warn', 'abgeschaltet (BACKUP_INTERVAL_HOURS=0)');
-  else add('backup', 'Sicherung', 'Letzte Sicherung', b.stale ? 'fail' : 'ok', b.last ? `${b.last.at} (vor ${b.age_hours} h), ${b.last.files} Dateien` : 'noch keine');
+  else add('backup', 'Sicherung', 'Letzte Sicherung', b.stale || b.incomplete ? 'fail' : 'ok', b.last ? `${b.last.at} (vor ${b.age_hours} h), ${b.last.files} Dateien${b.incomplete ? ` – UNVOLLSTÄNDIG: ${b.last.missing} Datei(en) fehlen im Speicher` : ''}` : 'noch keine');
   add('backup_key', 'Sicherung', 'Schlüsselmaterial in der Sicherung', b.passphrase ? 'ok' : 'warn',
     b.passphrase ? 'Sicherungen enthalten den Hauptschlüssel, geschützt durch die Wiederherstellungs-Passphrase.' : 'Keine Wiederherstellungs-Passphrase (BACKUP_PASSPHRASE_FILE): Sicherungen sind nur mit dem getrennt aufbewahrten MASTER_KEY lesbar.');
 
@@ -118,6 +118,7 @@ export async function runDiagnostics(ctx: Ctx, opts: { deep?: boolean } = {}): P
       add('tsa', 'Nachweis', 'Zeitstempeldienst', 'fail', e.message);
     }
   } else add('tsa', 'Nachweis', 'Zeitstempeldienst', 'info', new URL(cfg.tsaUrl).hostname);
+  if (cfg.tsaUrl && !cfg.tsaCaPem) add('tsa_trust', 'Nachweis', 'Vertrauensanker des Zeitstempeldienstes', 'warn', 'TSA_CA_FILE fehlt: Zeitstempel werden rechnerisch geprüft, der Aussteller aber nicht. Gegen jemanden mit Serverzugriff schützt die Verankerung erst mit Vertrauensanker.');
 
   const anchors = ctx.db.prepare(`SELECT COUNT(*) AS n, SUM(tsa_token IS NULL) AS open, MAX(created_at) AS last FROM audit_anchors`).get() as any;
   add('anchors', 'Nachweis', 'Verankerung der Audit-Ketten', anchors.n === 0 ? 'info' : cfg.tsaUrl && anchors.open > 0 ? 'warn' : 'ok',
@@ -127,7 +128,7 @@ export async function runDiagnostics(ctx: Ctx, opts: { deep?: boolean } = {}): P
     const broken = envs.filter((e) => !verifyChain(e.id, listAudit(ctx.db, e.id)).ok).map((e) => e.id);
     add('audit_chains', 'Nachweis', 'Audit-Ketten', broken.length ? 'fail' : 'ok', broken.length ? `${broken.length} beschädigt: ${broken.slice(0, 5).join(', ')}` : `${envs.length} Vorgänge geprüft, alle intakt`);
     const rep = await verifyAnchors(ctx);
-    add('anchor_verify', 'Nachweis', 'Abgleich mit Verankerung', rep.ok ? (rep.warnings.length ? 'warn' : 'ok') : 'fail', rep.ok ? `${rep.anchors} Anker, ${rep.stamped} mit geprüftem Zeitstempel${rep.warnings.length ? '; ' + rep.warnings.slice(0, 3).join('; ') : ''}` : rep.problems.slice(0, 5).join('; '));
+    add('anchor_verify', 'Nachweis', 'Abgleich mit Verankerung', rep.ok ? (rep.warnings.length ? 'warn' : 'ok') : 'fail', rep.ok ? `${rep.anchors} Anker, ${rep.stamped} mit geprüftem Zeitstempel und Vertrauenskette, ${rep.stampedUnverifiedChain} ohne geprüfte Kette${rep.warnings.length ? '; ' + rep.warnings.slice(0, 3).join('; ') : ''}` : rep.problems.slice(0, 5).join('; '));
   }
 
   if (cfg.oidc) {

@@ -188,7 +188,7 @@ export function authRoutes(app: FastifyInstance, ctx: Ctx) {
     return reply.redirect(`/login?error=${code}`);
   };
   // Nur relative Pfade innerhalb der App (kein //host, kein Schema)
-  const safeNext = (v: unknown) => (typeof v === 'string' && /^\/(?![/\\])/.test(v) && v.length <= 500 ? v : '/');
+  const safeNext = (v: unknown) => safeNextPath(ctx.cfg.appUrl, v);
 
   app.get('/api/auth/oidc/start', async (req, reply) => {
     if (!ctx.cfg.oidc) return fail(reply, 'sso_disabled');
@@ -315,4 +315,16 @@ export function authRoutes(app: FastifyInstance, ctx: Ctx) {
   });
 
   void secretToken;
+}
+
+// Nur Pfade dieser Instanz: keine Steuerzeichen, kein Backslash, Ziel muss nach Auflösung dieselbe Origin haben
+export function safeNextPath(appUrl: string, v: unknown): string {
+  if (typeof v !== 'string' || v.length > 500 || !v.startsWith('/') || /[\u0000-\u001f\u007f\\]/.test(v)) return '/';
+  try {
+    const base = new URL(appUrl);
+    const u = new URL(v, base);
+    return u.origin === base.origin && v.startsWith('/') && !v.startsWith('//') ? u.pathname + u.search + u.hash : '/';
+  } catch {
+    return '/';
+  }
 }

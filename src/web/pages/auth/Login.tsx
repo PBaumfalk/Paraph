@@ -34,7 +34,9 @@ export default function Login() {
     return e ? { kind: 'stop', text: t(SSO_ERRORS[e] ?? SSO_ERRORS.sso_failed) } : null;
   });
   const [busy, setBusy] = useState(false);
-  const next = sp.get('next') || '/';
+  // Nur interne Pfade (kein //, kein Backslash, keine Steuerzeichen) – Schutz vor offener Weiterleitung
+  const rawNext = sp.get('next') || '/';
+  const next = /^\/(?![/\\])[^\u0000-\u001f\u007f\\]*$/.test(rawNext) ? rawNext : '/';
   if (auth.setup_required) return <Navigate to="/setup" replace />;
   if (auth.session && !auth.session.mfa_pending && auth.session.org_id) return <Navigate to={next} replace />;
 

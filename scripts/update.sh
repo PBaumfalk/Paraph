@@ -33,15 +33,31 @@ if [ "${1:-}" = "--rollback" ]; then
   [ -f "$STATE" ] || die "Kein vorheriges Update protokolliert ($STATE fehlt)."
   # shellcheck disable=SC1090
   . "./$STATE"
-  say "Rückkehr zu $PREV_IMAGE mit Sicherung $BACKUP_FILE …"
-  docker image inspect "$PREV_IMAGE" >/dev/null 2>&1 || die "Image $PREV_IMAGE nicht mehr vorhanden."
+  docker image inspect "$PREV_IMAGE" >/dev/null 2>&1 || die "Image $PREV_IMAGE nicht mehr vorhanden – Rückweg nicht möglich."
+  [ -f "backups/$BACKUP_FILE" ] || die "Sicherung backups/$BACKUP_FILE fehlt – Rückweg nicht möglich (nichts verändert)."
+  say "Prüfe die Sicherung vor dem Update mit dem alten Programmstand …"
+  PARAPH_IMAGE="$PREV_IMAGE" DC run --rm --no-deps paraph paraph verify-backup "/backups/$BACKUP_FILE" | sed 's/^/    /' \
+    || die "Sicherung backups/$BACKUP_FILE ist nicht in Ordnung – Rückweg abgebrochen (nichts verändert)."
+  echo "  Zurück auf: $PREV_IMAGE mit Daten vom $BACKUP_TIME."
+  echo "  Alles, was seitdem in Paraph geschah (Vorgänge, Unterschriften), ist danach nicht mehr in der laufenden Instanz."
+  if [ "${PARAPH_NONINTERACTIVE:-0}" != 1 ]; then
+    read -r -p "  Fortfahren? (ja/nein) " a
+    [ "$a" = ja ] || die "Abgebrochen (nichts verändert)."
+  fi
+  if wait_ready; then
+    say "Sichere den aktuellen Stand, bevor er ersetzt wird …"
+    NOW_OUT=$(DC exec -T paraph paraph backup) || die "Sicherung des aktuellen Stands fehlgeschlagen – Rückweg abgebrochen (nichts verändert)."
+    NOW_FILE=$(echo "$NOW_OUT" | sed -n 's|^Sicherung erstellt: /backups/||p' | head -1)
+    mkdir -p backups/vor-rueckweg && mv "backups/$NOW_FILE" backups/vor-rueckweg/
+    echo "    aktueller Stand gesichert: backups/vor-rueckweg/$NOW_FILE"
+  fi
   DC stop paraph
   # Daten auf den Stand vor dem Update zurücksetzen (mit dem alten Programm, passend zum alten Schema)
   PARAPH_IMAGE="$PREV_IMAGE" DC run --rm --no-deps paraph paraph restore "/backups/$BACKUP_FILE" --force
   set_image "$PREV_IMAGE"
   PARAPH_IMAGE="$PREV_IMAGE" DC up -d
   PARAPH_IMAGE="$PREV_IMAGE" wait_ready || die "Auch der alte Stand startet nicht – Protokoll: docker compose logs paraph"
-  say "✓ Zurückgesetzt auf $PREV_IMAGE. Änderungen nach $BACKUP_TIME sind nicht mehr enthalten."
+  say "✓ Zurückgesetzt auf $PREV_IMAGE (Daten vom $BACKUP_TIME)."
   exit 0
 fi
 
@@ -70,6 +86,11 @@ DC exec -T paraph paraph verify-backup "/backups/$BACKUP_FILE" | sed 's/^/    /'
 say "3/6 Rückfall-Image markieren"
 PREV_IMAGE="paraph:rollback-$(date +%Y%m%d%H%M%S)"
 docker tag "$PARAPH_IMAGE" "$PREV_IMAGE"
+# Die Sicherung vor dem Update aus der Rotation nehmen (eigener Ordner, die drei neuesten bleiben)
+mkdir -p backups/vor-update
+mv "backups/$BACKUP_FILE" backups/vor-update/
+BACKUP_FILE="vor-update/$BACKUP_FILE"
+ls -1t backups/vor-update | tail -n +4 | while read -r f; do rm -f "backups/vor-update/$f"; done
 printf 'PREV_IMAGE=%s\nBACKUP_FILE=%s\nBACKUP_TIME=%s\n' "$PREV_IMAGE" "$BACKUP_FILE" "$(date -Iseconds)" > "$STATE"
 echo "    $PREV_IMAGE"
 

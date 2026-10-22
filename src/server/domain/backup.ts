@@ -358,14 +358,16 @@ export async function createBackup(ctx: Ctx, outDir: string, opts: { passphrase?
       chunk_size: CHUNK,
       wraps,
     };
-    const target = join(outDir, `paraph-backup-${ts}.pbk`);
+    const target = join(outDir, `paraph-backup-${ts}.pbk`); // bei fehlenden Dateien unten umbenannt
     const tmp = target + '.part';
     await pipeline(zip.outputStream, encryptStream(dk, header), createWriteStream(tmp, { mode: 0o600 }));
     const manifest = JSON.parse((await manifestReady).toString('utf8')) as BackupManifest;
-    renameSync(tmp, target);
-    chmodSync(target, 0o600);
+    // Unvollständige Sicherungen erkennbar benennen; sie zählen nicht zur Rotation und verdrängen keine vollständigen
+    const final = missing.length ? target.replace(/\.pbk$/, '-UNVOLLSTAENDIG.pbk') : target;
+    renameSync(tmp, final);
+    chmodSync(final, 0o600);
     if (missing.length) ctx.log.error({ missing: missing.length }, 'Sicherung unvollständig: Dateien fehlen im Speicher');
-    return { file: target, manifest };
+    return { file: final, manifest };
   } finally {
     rmSync(work, { recursive: true, force: true });
   }
@@ -427,7 +429,7 @@ export interface OpenedBackup {
 }
 
 /** Öffnet und prüft eine Sicherung vollständig (Entschlüsselung, Blockintegrität, Hashes, Schema, Schlüssel). */
-export async function openBackup(file: string, keys: { masterKey?: Buffer; passphrase?: string }, workDir: string): Promise<OpenedBackup> {
+export async function openBackup(file: string, keys: { masterKey?: Buffer; passphrase?: string; allowLegacy?: boolean }, workDir: string): Promise<OpenedBackup> {
   mkdirSync(workDir, { recursive: true, mode: 0o700 });
   const dir = join(workDir, `.restore-${Date.now()}-${randomBytes(4).toString('hex')}`);
   mkdirSync(dir, { mode: 0o700 });
@@ -436,6 +438,9 @@ export async function openBackup(file: string, keys: { masterKey?: Buffer; passp
     const h = readHeader(file);
     let zipFile = file;
     let via: OpenedBackup['via'] = 'legacy';
+    // Unverschlüsseltes Altformat (0.1.0) nur auf ausdrücklichen Wunsch: sonst ließe sich eine fremde Datenbank
+    // unterschieben (der Schlüssel-Prüfwert steht im Klartext in jeder Sicherung)
+    if (!h && !keys.allowLegacy) throw new Error('Unverschlüsselte Sicherung im Altformat (0.1.0). Nur wiederherstellen, wenn ihre Herkunft sicher ist: Option --allow-legacy.');
     if (h) {
       const k = dataKey(h.header, keys);
       via = k.via;
@@ -481,7 +486,7 @@ export async function openBackup(file: string, keys: { masterKey?: Buffer; passp
   }
 }
 
-export async function verifyBackup(file: string, keys: { masterKey?: Buffer; passphrase?: string }, workDir: string) {
+export async function verifyBackup(file: string, keys: { masterKey?: Buffer; passphrase?: string; allowLegacy?: boolean }, workDir: string) {
   const b = await openBackup(file, keys, workDir);
   b.cleanup();
   return { manifest: b.manifest, problems: b.problems, via: b.via, includesMasterKey: !!b.masterKeyFromBackup };
@@ -505,8 +510,8 @@ export async function extractMasterKey(file: string, passphrase: string, out: st
  * Stellt eine Sicherung wieder her. Datenbank → DATA_DIR, Dokumente → konfigurierte Ablage (lokal oder S3;
  * damit ist auch ein Umzug lokal ↔ S3 möglich). Erst nach vollständiger Prüfung wird etwas ersetzt.
  */
-export async function restoreBackup(file: string, target: { dataDir: string; masterKey: Buffer; backend: BlobBackend; passphrase?: string }, opts: { force?: boolean } = {}) {
-  const b = await openBackup(file, { masterKey: target.masterKey, passphrase: target.passphrase }, target.dataDir);
+export async function restoreBackup(file: string, target: { dataDir: string; masterKey: Buffer; backend: BlobBackend; passphrase?: string }, opts: { force?: boolean; allowLegacy?: boolean } = {}) {
+  const b = await openBackup(file, { masterKey: target.masterKey, passphrase: target.passphrase, allowLegacy: opts.allowLegacy }, target.dataDir);
   try {
     if (b.problems.length) throw new Error('Sicherung nicht wiederherstellbar:\n- ' + b.problems.join('\n- '));
     if (masterKeyCheck(target.masterKey) !== b.manifest.master_key_check) {
@@ -542,10 +547,13 @@ export async function restoreBackup(file: string, target: { dataDir: string; mas
 export function pruneBackups(dir: string, keep: number) {
   if (!existsSync(dir)) return;
   const files = readdirSync(dir)
-    .filter((f) => /^paraph-backup-.*\.(zip|pbk)$/.test(f))
+    .filter((f) => /^paraph-backup-.*\.(zip|pbk)$/.test(f) && !f.includes('UNVOLLSTAENDIG'))
     .map((f) => ({ f, t: statSync(join(dir, f)).mtimeMs }))
     .sort((a, b) => b.t - a.t);
   for (const x of files.slice(keep)) unlinkSync(join(dir, x.f));
+  // Von unvollständigen nur die drei neuesten behalten
+  const incomplete = readdirSync(dir).filter((f) => f.includes('UNVOLLSTAENDIG')).map((f) => ({ f, t: statSync(join(dir, f)).mtimeMs })).sort((a, b) => b.t - a.t);
+  for (const x of incomplete.slice(3)) unlinkSync(join(dir, x.f));
   // Reste abgebrochener Läufe
   for (const f of readdirSync(dir)) if (f.endsWith('.part') || f.startsWith('.work-')) rmSync(join(dir, f), { recursive: true, force: true });
 }
@@ -558,7 +566,7 @@ export function backupStatus(ctx: Ctx) {
   const last = ctx.db.prepare(`SELECT value FROM meta WHERE key = 'last_backup'`).get() as { value: string } | undefined;
   const parsed = last ? JSON.parse(last.value) : null;
   const ageH = parsed ? (ctx.now().getTime() - new Date(parsed.at).getTime()) / 3600_000 : null;
-  return { last: parsed, age_hours: ageH === null ? null : Math.round(ageH * 10) / 10, passphrase: !!safePassphrase(), stale: ctx.cfg.backup.intervalHours > 0 && (ageH === null || ageH > ctx.cfg.backup.intervalHours * 2 + 1) };
+  return { last: parsed, age_hours: ageH === null ? null : Math.round(ageH * 10) / 10, passphrase: !!safePassphrase(), incomplete: !!parsed?.missing, stale: ctx.cfg.backup.intervalHours > 0 && (ageH === null || ageH > ctx.cfg.backup.intervalHours * 2 + 1) };
 }
 
 function safePassphrase() {
@@ -573,12 +581,17 @@ function safePassphrase() {
 export async function runBackupJob(ctx: Ctx) {
   const dir = backupDir(ctx);
   const r = await createBackup(ctx, dir);
-  pruneBackups(dir, ctx.cfg.backup.keep);
+  // Rotation nur nach vollständigem Erfolg – sonst würden genau die Sicherungen gelöscht, die fehlende Dateien noch enthalten
+  if (!r.manifest.missing_blobs?.length) pruneBackups(dir, ctx.cfg.backup.keep);
   ctx.db.prepare(`INSERT OR REPLACE INTO meta (key, value) VALUES ('last_backup', ?)`).run(
     JSON.stringify({ file: r.file, at: r.manifest.created_at, files: r.manifest.files.length, size: statSync(r.file).size, includes_master_key: !!r.manifest.includes_master_key, missing: r.manifest.missing_blobs?.length ?? 0 }),
   );
   ctx.log.info({ file: r.file }, 'Sicherung erstellt');
-  if (r.manifest.missing_blobs?.length) throw new Error(`Sicherung erstellt, aber ${r.manifest.missing_blobs.length} Datei(en) fehlen im Speicher`);
+  if (r.manifest.missing_blobs?.length) {
+    // Kein Fehlschlag mit Wiederholung (das erzeugte nur weitere unvollständige Sicherungen), sondern Alarm
+    const { alertAdmins } = await import('./alerts.js');
+    alertAdmins(ctx, { type: 'backup_auto', error: `Sicherung unvollständig: ${r.manifest.missing_blobs.length} Datei(en) fehlen im Speicher. Vollständige ältere Sicherungen werden nicht rotiert.` });
+  }
   return r;
 }
 

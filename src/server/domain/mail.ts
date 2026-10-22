@@ -237,13 +237,20 @@ export function smtpTransportOptions(url: string, allowInsecure = process.env.SM
   };
 }
 
+/**
+ * Erzeugt den SMTP-Transport. Wichtig: Optionen und URL in EINEM Objekt übergeben – das zweite Argument von
+ * createTransport sind Nachrichten-Vorgaben, dort würden requireTLS, TLS-Version und Timeouts wirkungslos.
+ */
+export function createSmtpTransport(url: string, opts: { allowInsecure?: boolean; forceTls?: boolean } = {}): Transporter {
+  const o = smtpTransportOptions(url, opts.allowInsecure);
+  return nodemailer.createTransport({ ...o, ...(opts.forceTls ? { requireTLS: true } : {}) } as any);
+}
+
 function getTransport(ctx: Ctx): Transporter | null {
   if (!ctx.cfg.smtp) return null;
   if (!transporter || transporterUrl !== ctx.cfg.smtp.url) {
     transporter?.close();
-    const o = smtpTransportOptions(ctx.cfg.smtp.url);
-    const { url, ...rest } = o;
-    transporter = nodemailer.createTransport(url, rest as any);
+    transporter = createSmtpTransport(ctx.cfg.smtp.url);
     transporterUrl = ctx.cfg.smtp.url;
   }
   return transporter;

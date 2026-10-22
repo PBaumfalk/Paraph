@@ -8,6 +8,7 @@ import { join } from 'node:path';
 
 export interface TestTsa {
   url: string;
+  caPem: string;
   mode: { replay: boolean; fail: boolean };
   requests: number;
   close: () => Promise<void>;
@@ -26,7 +27,7 @@ export async function startTestTsa(): Promise<TestTsa> {
     `[ tsa ]\ndefault_tsa = tsa_config\n[ tsa_config ]\ndir = ${dir}\nserial = $dir/serial\nsigner_cert = $dir/tsa.pem\ncerts = $dir/ca.pem\nsigner_key = $dir/tsa.key\nsigner_digest = sha256\ndefault_policy = 1.2.3.4.1\ndigests = sha256\naccuracy = secs:1\nordering = no\ntsa_name = no\ness_cert_id_chain = no\ness_cert_id_alg = sha256\n`,
   );
   let lastReply: Buffer | null = null;
-  const t: TestTsa = { url: '', mode: { replay: false, fail: false }, requests: 0, close: async () => {} };
+  const t: TestTsa = { url: '', caPem: readFileSync(join(dir, 'ca.pem'), 'utf8'), mode: { replay: false, fail: false }, requests: 0, close: async () => {} };
   const server: Server = createServer((req, res) => {
     const chunks: Buffer[] = [];
     req.on('data', (c) => chunks.push(c));

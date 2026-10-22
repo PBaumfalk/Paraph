@@ -201,14 +201,14 @@ try {
   const oldPdf = (await after.req('GET', `/api/v1/envelopes/${old.id}/files/final`)).buf;
   check('U5 Altdaten nach Update unverändert (gleicher Hash)', sha(oldPdf) === old.pdfSha);
   check('U6 Kopie vor Migration angelegt', /pre-migration-schema2-/.test(dcA('exec -T paraph ls /data/backups/migrations')));
-  check('U7 Sicherung vor dem Update (Altformat) vorhanden', readdirSync(join(dirA, 'backups')).some((f) => f.endsWith('.zip')));
+  check('U7 Sicherung vor dem Update (Altformat) außerhalb der Rotation vorhanden', readdirSync(join(dirA, 'backups', 'vor-update')).some((f) => f.endsWith('.zip')));
 
   // ───────── C: HTTPS über Caddy, IP-Fälschung ─────────
   const sec = await fetch(`${BASE}/api/health`);
   check('C1 HSTS über HTTPS', (sec.headers.get('strict-transport-security') ?? '').includes('max-age'));
   const events = (await after.req('GET', `/api/v1/envelopes/${old.id}/audit`)).json.events;
   const ips = events.map((e) => e.data?.ip).filter(Boolean);
-  check('C2 Gefälschte X-Forwarded-For (6.6.6.6) landet nicht im Audit-Trail – Altversion vertraute jedem Proxy', true, { ips_alt: [...new Set(ips)] });
+  check('C2 Caddy überschreibt gefälschte X-Forwarded-For (6.6.6.6) – auch mit Altversion nicht im Audit-Trail', ips.length > 0 && !ips.includes('6.6.6.6'), { ips_alt: [...new Set(ips)] });
   const fresh = await completeEnvelope(after, 'Vorgang nach Update');
   const ipsNew = (await after.req('GET', `/api/v1/envelopes/${fresh.id}/audit`)).json.events.map((e) => e.data?.ip).filter(Boolean);
   check('C3 Neue Version: Audit-IP ist die echte Client-Adresse, nicht 6.6.6.6', ipsNew.length > 0 && !ipsNew.includes('6.6.6.6'), [...new Set(ipsNew)]);
@@ -236,9 +236,26 @@ try {
   const doctor = dcA('exec -T paraph paraph doctor');
   check('M4 paraph doctor läuft im Container', /Gesamt:/.test(doctor), doctor.split('\n').filter((l) => /FEHL/.test(l)));
 
+  // ───────── D: Word → PDF über Gotenberg (isoliertes Netz) ─────────
+  const yazl = (await import('yazl')).default;
+  const docx = await new Promise((resolve) => {
+    const z = new yazl.ZipFile();
+    z.addBuffer(Buffer.from('<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>'), '[Content_Types].xml');
+    z.addBuffer(Buffer.from('<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>'), '_rels/.rels');
+    z.addBuffer(Buffer.from('<?xml version="1.0" encoding="UTF-8"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:t>Mandatsvereinbarung</w:t></w:r></w:p><w:p><w:r><w:t>Unterschrift: ____________________</w:t></w:r></w:p></w:body></w:document>'), 'word/document.xml');
+    z.end();
+    const c = [];
+    z.outputStream.on('data', (d) => c.push(d)).on('end', () => resolve(Buffer.concat(c)));
+  });
+  const denv = (await after.req('POST', '/api/v1/envelopes', { title: 'Word-Umwandlung' })).json;
+  const dfd = new FormData();
+  dfd.append('file', new Blob([docx]), 'Mandat.docx');
+  const dup = await after.req('POST', `/api/v1/envelopes/${denv.id}/documents`, dfd);
+  check('D1 DOCX wird über Gotenberg in PDF umgewandelt', dup.status === 201 && dup.json.pages.length >= 1, { status: dup.status, pages: dup.json?.pages?.length });
+
   // ───────── U: Rückweg und erneutes Update ─────────
   log('U: update.sh --rollback …');
-  sh('./scripts/update.sh --rollback', { cwd: dirA });
+  sh('./scripts/update.sh --rollback', { cwd: dirA, env: { PARAPH_NONINTERACTIVE: '1' } });
   const rb = await waitReady();
   check('U8 Rückweg: Altversion läuft wieder', !rb.version.startsWith('0.2.0'), rb.version);
   const rbc = new Http();

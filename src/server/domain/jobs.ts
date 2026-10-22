@@ -80,6 +80,8 @@ export async function runOnce(ctx: Ctx): Promise<boolean> {
       .run(final ? 'failed' : 'queued', new Date(ctx.now().getTime() + delay).toISOString(), String(e?.stack ?? e).slice(0, 2000), final ? 1 : 0, job.id);
     if (final) {
       ctx.log.error({ job: job.id, type: job.type, err: msg }, 'Job endgültig fehlgeschlagen');
+      // Periodische Aufgabe erst zum nächsten regulären Zeitpunkt neu einplanen (keine Endlosschleife)
+      if (job.unique_key?.startsWith('periodic:')) ctx.db.prepare(`INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)`).run(`lastrun:${job.type}`, ctx.now().toISOString());
       for (const l of failureListeners) {
         try {
           l(ctx, { id: job.id, type: job.type, error: msg });

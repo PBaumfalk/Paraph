@@ -33,6 +33,45 @@ export function setTsaTrustAnchors(pem: string | null) {
   if (!trustAnchors.length) throw new Error('TSA_CA_FILE enthält kein Zertifikat');
 }
 
+/** Zertifikat der Signatur anhand der Signer-ID (IssuerAndSerialNumber oder SubjectKeyIdentifier). */
+export function findSignerCert(sd: pkijs.SignedData): pkijs.Certificate | undefined {
+  const certs = (sd.certificates ?? []).filter((c): c is pkijs.Certificate => c instanceof pkijs.Certificate);
+  const sid = sd.signerInfos[0]?.sid;
+  if (!sid) return undefined;
+  if (sid instanceof pkijs.IssuerAndSerialNumber) return certs.find((c) => c.serialNumber.isEqual(sid.serialNumber) && c.issuer.isEqual(sid.issuer));
+  const want = Buffer.from((sid as asn1js.OctetString).valueBlock.valueHexView);
+  return certs.find((c) => {
+    const ski = c.extensions?.find((e) => e.extnID === '2.5.29.14')?.parsedValue as asn1js.OctetString | undefined;
+    return !!ski && Buffer.from(ski.valueBlock.valueHexView).equals(want);
+  });
+}
+
+/** Prüft das signierte Attribut signingCertificate (v1, SHA-1) bzw. signingCertificateV2 (Standard SHA-256) gegen das Zertifikat. */
+export function essCertBound(si: pkijs.SignerInfo, cert: pkijs.Certificate): boolean {
+  const der = Buffer.from(cert.toSchema(true).toBER(false));
+  for (const a of si.signedAttrs?.attributes ?? []) {
+    const v2 = a.type === '1.2.840.113549.1.9.16.2.47';
+    if (!v2 && a.type !== '1.2.840.113549.1.9.16.2.12') continue;
+    try {
+      const certsSeq = (a.values[0] as asn1js.Sequence).valueBlock.value[0] as asn1js.Sequence;
+      const first = certsSeq.valueBlock.value[0] as asn1js.Sequence;
+      const parts = first.valueBlock.value;
+      let alg = v2 ? 'sha256' : 'sha1';
+      let hashEl: any = parts[0];
+      if (v2 && parts[0] instanceof asn1js.Sequence) {
+        const oid = (parts[0].valueBlock.value[0] as asn1js.ObjectIdentifier).valueBlock.toString();
+        alg = { '2.16.840.1.101.3.4.2.1': 'sha256', '2.16.840.1.101.3.4.2.2': 'sha384', '2.16.840.1.101.3.4.2.3': 'sha512' }[oid] ?? '';
+        hashEl = parts[1];
+      }
+      if (!alg || !(hashEl instanceof asn1js.OctetString)) return false;
+      return Buffer.from(hashEl.valueBlock.valueHexView).equals(createHash(alg).update(der).digest());
+    } catch {
+      return false;
+    }
+  }
+  return false;
+}
+
 function subjectOf(cert: pkijs.Certificate) {
   return cert.subject.typesAndValues.map((t) => String(t.value.valueBlock.value)).join(', ');
 }
@@ -53,17 +92,12 @@ export async function verifyTimestampToken(token: pkijs.ContentInfo, expectedDig
   }
   const certs = (sd.certificates ?? []).filter((c): c is pkijs.Certificate => c instanceof pkijs.Certificate);
   if (!certs.length) throw new Error('Zeitstempel: Zertifikat des Zeitstempeldienstes fehlt');
-  // Unterzeichnendes Zertifikat bestimmen
+  // Unterzeichnendes Zertifikat über die Signer-ID bestimmen (nie „das erste in der Liste“)
   const si = sd.signerInfos[0];
-  const sid = si.sid;
-  const signer =
-    sid instanceof pkijs.IssuerAndSerialNumber
-      ? certs.find((c) => c.serialNumber.isEqual(sid.serialNumber) && c.issuer.isEqual(sid.issuer))
-      : certs.find((c) => {
-          const ski = c.extensions?.find((e) => e.extnID === '2.5.29.14')?.parsedValue as asn1js.OctetString | undefined;
-          return ski && Buffer.from(ski.valueBlock.valueHexView).equals(Buffer.from((sid as asn1js.OctetString).valueBlock.valueHexView));
-        });
+  const signer = findSignerCert(sd);
   if (!signer) throw new Error('Zeitstempel: unterzeichnendes Zertifikat nicht enthalten');
+  // ESS-Bindung (RFC 3161/5816): Die Signatur nennt den Hash ihres Zertifikats – kein Austausch des Zertifikats möglich
+  if (!essCertBound(si, signer)) throw new Error('Zeitstempel: Zertifikat nicht an die Signatur gebunden (ESS signingCertificate fehlt oder passt nicht)');
   // Signatur selbst prüfen (pkijs verlangt bei TSTInfo die Originaldaten, die wir bewusst nur als Hash kennen):
   // 1. messageDigest-Attribut = Hash des TSTInfo, 2. Signatur über die signierten Attribute (als SET kodiert).
   if (!si.signedAttrs) throw new Error('Zeitstempel: signierte Attribute fehlen');
@@ -127,6 +161,7 @@ export async function requestTimestamp(tsaUrl: string, digest: Uint8Array): Prom
   if (resp.status.status !== 0 && resp.status.status !== 1) throw new Error(`Zeitstempel abgelehnt (Status ${resp.status.status})`);
   if (!resp.timeStampToken) throw new Error('Zeitstempel fehlt in der Antwort');
   const info = await verifyTimestampToken(resp.timeStampToken, digest, nonce);
+  if (info.chainTrusted === false) throw new Error(`Zeitstempeldienst nicht vertrauenswürdig (Kette passt nicht zu TSA_CA_FILE): ${info.tsaSubject}`);
   return { token: resp.timeStampToken, info };
 }
 

@@ -13,6 +13,16 @@
 
 **So wird die Liste benutzt:** Je Punkt genau ein Kästchen ankreuzen, Datum und Kürzel eintragen. „geändert“ heißt: Text oder Regel wird nach Ihrer Vorgabe angepasst (Vorgabe bitte in die Zeile „Vermerk“). Ein Punkt der Gruppe A, der weder „freigegeben“ noch „geändert“ ist, blockiert den Produktivstart.
 
+**Bereits technisch umgesetzt (Stand 0.2.0) – trotzdem freigabepflichtig:** Folgende Formulierungsvorschläge aus der Analyse sind im Code übernommen worden, weil der bisherige Text ungenau oder riskanter war. Sie sind damit *nicht* freigegeben; sie gehören zu den jeweiligen Punkten unten.
+- Erklärung `signer` (de/en) mit Hinweis „nicht qualifiziert“, protokollierten Merkmalen und Kopie; `CONSENT_VERSION` → `2026-10-2` (`src/shared/consent.ts`) – zu F-02
+- Checkbox „Ich stimme der obigen Erklärung zu.“ (`src/web/pages/sign/Sign.tsx`) – zu F-02
+- Hinweis im Unterschriftsdialog „Ihre Erklärung geben Sie erst mit der abschließenden Bestätigung ab.“ (`SignaturePad.tsx`)
+- Abschlussbestätigung „Zugangsnachweis“ statt „Identitätsprüfung“; Vor-Ort-Text (`certificate.ts`, `finalize.ts`)
+- Versandbestätigung bei Formhinweisen „nach dem Katalog nicht genügt“ (`EnvelopeEditor.tsx`)
+- SMS-Code ohne Dokumenttitel (§ 43a Abs. 2 BRAO) und Stufentext „Textform genügt …, wenn alle Parteien das PDF dauerhaft erhalten“ (`formrules.ts`)
+- Neu: Link „Hinweise zum Datenschutz“ je Organisation (Einstellungen → Organisation), der Inhalt der Datenschutzhinweise selbst ist **nicht** Teil von Paraph.
+- Neu: Abschluss-E-Mail nennt den SHA-256-Prüfwert des unterschriebenen Dokuments.
+
 **Gesamtfreigabe:** erst wenn alle Punkte der Gruppe A erledigt sind.
 [ ] Gruppe A vollständig erledigt — Datum/Kürzel: ____________
 

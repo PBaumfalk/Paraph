@@ -18,6 +18,7 @@ Authorization: Bearer pk_live_…
 - `pk_live_…` arbeitet mit echten Daten, `pk_test_…` im Testmodus.
 - Der Schlüssel wird **nur einmal** angezeigt. Paraph speichert nur einen SHA-256-Hash und die ersten 14 Zeichen zur Wiedererkennung.
 - Abgelaufene oder widerrufene Schlüssel werden sofort mit HTTP 401 `invalid_api_key` abgewiesen.
+- Schlüssel einer Person, die gesperrt oder aus der Organisation entfernt wurde, wirken nicht mehr. Beim Entfernen werden ihre Schlüssel widerrufen. Für dauerhafte Integrationen den Schlüssel deshalb von einem Konto anlegen lassen, das bestehen bleibt.
 
 | Scope | erlaubt |
 |---|---|
@@ -40,6 +41,8 @@ Mit einem `pk_test_`-Schlüssel angelegte Vorgänge
 - tragen im Ergebnis ein Wasserzeichen,
 - lösen nur Webhooks aus, die im Modus `test` angelegt sind,
 - werden nicht in Kontakte übernommen und nicht automatisch erinnert.
+
+Ein Test-Schlüssel sieht und ändert nur Webhooks im Modus `test` und erhält über `/api/v1/events` nur Ereignisse des Testmodus. Für Live-Schlüssel gilt das umgekehrt.
 
 ## Fehlerformat
 
@@ -148,7 +151,7 @@ Der Audit-Trail vermerkt den Kanal `link_handover`. Einen neuen Link ohne E-Mail
 Beachten Sie bei der Linkübergabe:
 
 - `notify: false` gilt für den ganzen Vorgang: Auch spätere Personen (Reihenfolge `sequential`) und Vertretungen erhalten keine E-Mail, und automatische Erinnerungen entfallen. Ihr System erfährt per Webhook `recipient.notified`, wer an der Reihe ist, und holt den Link mit `POST …/recipients/{rid}/link`.
-- Eine manuell ausgelöste Erinnerung (`…/remind`) versendet dagegen bewusst eine E-Mail und ersetzt den Link.
+- Eine manuell ausgelöste Erinnerung (`…/remind`) versendet dagegen bewusst eine E-Mail mit neuem Link. Der unmittelbar vorherige Link bleibt gültig, ältere verfallen. `POST …/recipients/{rid}/link` macht dagegen alle bisherigen Links ungültig und beendet offene Sitzungen der Person.
 - Über `external_ref` (z. B. Aktenzeichen) finden Sie Vorgänge wieder: `GET /api/v1/envelopes?external_ref=123/26`.
 
 ## Einbettung der Signaturseite
@@ -190,7 +193,9 @@ Einstellungen → API und Webhooks oder `POST /api/v1/webhooks`:
 
 Die Antwort enthält einmalig das Geheimnis `whsec_…`. Paraph speichert es verschlüsselt.
 
-Ereignisse: `envelope.sent`, `envelope.completed`, `envelope.declined`, `envelope.voided`, `envelope.expired`, `recipient.notified`, `recipient.viewed`, `recipient.signed`, `recipient.declined`, `recipient.delegated`, `template.published` oder `*` für alle.
+Ereignisse: `envelope.sent`, `envelope.completed`, `envelope.declined`, `envelope.voided`, `envelope.expired`, `recipient.notified`, `recipient.viewed`, `recipient.signed`, `recipient.declined`, `recipient.delegated`, `recipient.delivery_failed`, `template.published` oder `*` für alle.
+
+`recipient.delivery_failed` meldet eine endgültig gescheiterte E-Mail an eine beteiligte Person (`data`: `envelope_id`, `recipient_id`, `reason`, z. B. `recipient_rejected`).
 
 ### Anfrage
 
@@ -285,7 +290,7 @@ curl -s -o ergebnis.pdf https://sign.kanzlei.example/api/v1/envelopes/env_…/fi
 
 Weitere Dateiarten des Endpunkts `files/{kind}` sowie alle Parameter nennt `/docs/api`.
 
-Person erinnern (erzeugt einen neuen Link):
+Person erinnern (neuer Link; der unmittelbar vorherige bleibt gültig):
 
 ```sh
 curl -X POST https://sign.kanzlei.example/api/v1/envelopes/env_…/recipients/rcp_…/remind \

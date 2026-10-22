@@ -17,7 +17,7 @@ let tsa: TestTsa;
 
 beforeAll(async () => {
   tsa = await startTestTsa();
-  s = await startTestServer({ tsaUrl: tsa.url });
+  s = await startTestServer({ tsaUrl: tsa.url, tsaCaPem: tsa.caPem });
   admin = await setupAdmin(s);
 });
 afterAll(async () => {
@@ -239,6 +239,68 @@ describe('Externe Verankerung der Audit-Ketten', () => {
     expect(lastMail(s, e.emails[0], 'Abgeschlossen')!.text).toContain(env.json.result.final_sha256);
   });
 });
+
+
+describe('Zweite Abnahme: Vertrauen in Zertifikate und Zeitstempel', () => {
+  it('Fremde Signatur mit vorangestelltem Instanzzertifikat wird nicht als Siegel dieser Instanz anerkannt', async () => {
+    const pkijs = await import('pkijs');
+    const { generateSealKey, importSealKey, sealPdf } = await import('../src/server/pdf/seal.js');
+    const { getSealKey } = await import('../src/server/domain/sealkeys.js');
+    const own = await getSealKey(s.ctx, null);
+    const mat = await generateSealKey('angreifer.example', 'Paraph Plattformsiegel');
+    const evil = await importSealKey(mat.pkcs8, mat.certChainDer);
+    // Angreifer signiert mit eigenem Schlüssel …
+    const sealed = await sealPdf(await makePdf(), { privateKey: evil.privateKey, certs: evil.certs }, { reason: 'x', name: 'x' });
+    const ci = pkijs.ContentInfo.fromBER(new Uint8Array(Buffer.from(/\/Contents <([0-9a-f]+)/i.exec(sealed.pdf.toString('latin1'))![1].replace(/0+$/, ''), 'hex')));
+    // … und stellt das öffentliche Instanzzertifikat in der Zertifikatsliste voran (PoC der zweiten Abnahme)
+    const sd = new pkijs.SignedData({ schema: ci.content });
+    sd.certificates = [own.key.certs[0], ...(sd.certificates as any[])];
+    const der = Buffer.from(new pkijs.ContentInfo({ contentType: '1.2.840.113549.1.7.2', content: sd.toSchema(true) }).toSchema().toBER(false)).toString('hex');
+    const pdf = Buffer.from(sealed.pdf);
+    const start = pdf.indexOf('/Contents <') + '/Contents <'.length;
+    pdf.write(der.padEnd(24576 * 2, '0'), start, 'latin1');
+    const fd = await s.app.inject({ method: 'POST', url: '/api/public/verify/signature', payload: multipart(pdf), headers: { 'content-type': 'multipart/form-data; boundary=XyZ' } });
+    const sig = fd.json().signatures[0];
+    expect(sig.issued_by_this_instance).toBe(false);
+    expect(sig.verdict).not.toBe('valid');
+  });
+
+  it('Zeitstempel eines fremden (selbst erzeugten) Dienstes wird beim Stempeln abgelehnt und bei der Prüfung erkannt', async () => {
+    const evil = await startTestTsa();
+    const e = await sentEnvelope('Fremder Zeitstempeldienst');
+    const realUrl = s.ctx.cfg.tsaUrl;
+    try {
+      s.ctx.cfg.tsaUrl = evil.url;
+      const a = await createAnchor(s.ctx);
+      expect(a!.tsa_token).toBeNull();
+      expect(a!.tsa_error).toMatch(/nicht vertrauenswürdig/);
+      // Angreifer mit DB-Zugriff setzt den fremden Zeitstempel direkt ein
+      const { requestTimestamp } = await import('../src/server/pdf/timestamp.js');
+      const { setTsaTrustAnchors } = await import('../src/server/pdf/timestamp.js');
+      setTsaTrustAnchors(null);
+      const ts = await requestTimestamp(evil.url, Buffer.from(a!.anchor_hash, 'hex'));
+      setTsaTrustAnchors(tsa.caPem);
+      asAttacker(() => s.ctx.db.prepare('UPDATE audit_anchors SET tsa_token = ?, tsa_time = ? WHERE id = ?').run(Buffer.from(ts.token.toSchema().toBER(false)), ts.info.genTime, a!.id));
+      const rep = await verifyAnchors(s.ctx);
+      expect(rep.problems.join('\n')).toMatch(new RegExp(`Anker ${a!.id}: Zeitstempel ungültig – .*Vertrauensankern`));
+      // Ohne Vertrauensanker: nur „rechnerisch gültig“, ausdrücklich nicht als bestätigt gezählt
+      setTsaTrustAnchors(null);
+      const weak = await verifyAnchors(s.ctx);
+      expect(weak.stampedUnverifiedChain).toBeGreaterThan(0);
+      expect(weak.warnings.join('\n')).toMatch(/TSA_CA_FILE fehlt/);
+      void e;
+    } finally {
+      s.ctx.cfg.tsaUrl = realUrl;
+      const { setTsaTrustAnchors } = await import('../src/server/pdf/timestamp.js');
+      setTsaTrustAnchors(tsa.caPem);
+      await evil.close();
+    }
+  });
+});
+
+function multipart(pdf: Buffer) {
+  return Buffer.concat([Buffer.from('--XyZ\r\nContent-Disposition: form-data; name="file"; filename="x.pdf"\r\nContent-Type: application/pdf\r\n\r\n'), pdf, Buffer.from('\r\n--XyZ--\r\n')]);
+}
 
 function unzip(buf: Buffer): Promise<Map<string, Buffer>> {
   return new Promise((resolve, reject) => {

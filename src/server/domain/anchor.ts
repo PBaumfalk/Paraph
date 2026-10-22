@@ -150,7 +150,8 @@ export async function verifyAnchorToken(row: Pick<AnchorRow, 'anchor_hash' | 'ts
 export interface AnchorReport {
   ok: boolean;
   anchors: number;
-  stamped: number;
+  stamped: number; // mit geprüftem Zeitstempel UND geprüfter Vertrauenskette
+  stampedUnverifiedChain: number; // Zeitstempel rechnerisch gültig, Aussteller aber nicht gegen Vertrauensanker geprüft
   unstamped: number;
   problems: string[];
   warnings: string[];
@@ -169,6 +170,8 @@ export async function verifyAnchors(ctx: Ctx, opts: { envelopeId?: string } = {}
   const coverage: AnchorReport['coverage'] = new Map();
   let prev = ANCHOR_GENESIS;
   let stamped = 0;
+  let unverifiedChain = 0;
+  let lastTsaCert: string | null = null;
   const leafStmt = ctx.db.prepare('SELECT idx, envelope_id, seq, head FROM audit_anchor_leaves WHERE anchor_id = ? ORDER BY idx');
   const evStmt = ctx.db.prepare('SELECT hash FROM audit_events WHERE envelope_id = ? AND seq = ?');
   const envExists = ctx.db.prepare('SELECT 1 FROM envelopes WHERE id = ?');
@@ -184,8 +187,13 @@ export async function verifyAnchors(ctx: Ctx, opts: { envelopeId?: string } = {}
     if (a.tsa_token) {
       try {
         const info = await verifyAnchorToken(a);
-        externalTime = info.genTime;
-        stamped++;
+        if (info.chainTrusted === false) throw new Error(`Aussteller ${info.tsaSubject} gehört nicht zu den Vertrauensankern (TSA_CA_FILE)`);
+        if (lastTsaCert && lastTsaCert !== info.tsaCertSha256) warnings.push(`Anker ${a.id}: anderes Zertifikat des Zeitstempeldienstes als beim vorherigen Anker (${info.tsaSubject}) – Zertifikatswechsel des Anbieters oder Fälschung prüfen`);
+        lastTsaCert = info.tsaCertSha256;
+        if (info.chainTrusted) {
+          externalTime = info.genTime;
+          stamped++;
+        } else unverifiedChain++;
         if (Math.abs(new Date(info.genTime).getTime() - new Date(a.created_at).getTime()) > STAMP_TOLERANCE_MS && !a.tsa_error) {
           // Nachgeholter Zeitstempel ist zulässig, die externe Zeit gilt dann ab genTime
           warnings.push(`Anker ${a.id}: Zeitstempel ${info.genTime} weicht deutlich von der Erstellung ${a.created_at} ab (nachgeholt?)`);
@@ -208,7 +216,8 @@ export async function verifyAnchors(ctx: Ctx, opts: { envelopeId?: string } = {}
     }
     prev = a.anchor_hash;
   }
-  return { ok: problems.length === 0, anchors: anchors.length, stamped, unstamped: anchors.length - stamped, problems, warnings, envelopes: coverage.size, coverage };
+  if (unverifiedChain) warnings.push(`${unverifiedChain} Anker mit Zeitstempel, dessen Aussteller nicht gegen einen Vertrauensanker geprüft ist (TSA_CA_FILE fehlt). Jemand mit Serverzugriff könnte solche Zeitstempel selbst erzeugen – für den Nachweis TSA_CA_FILE einrichten.`);
+  return { ok: problems.length === 0, anchors: anchors.length, stamped, stampedUnverifiedChain: unverifiedChain, unstamped: anchors.length - stamped - unverifiedChain, problems, warnings, envelopes: coverage.size, coverage };
 }
 
 /**

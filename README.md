@@ -4,36 +4,51 @@ Paraph ist eine selbst gehostete Plattform für elektronische Signaturen. Sie l�
 
 > **Hinweis:** Vorlagen, Mustertexte und Formhinweise in Paraph ersetzen keine Rechtsberatung. Ob die elektronische Form im Einzelfall genügt, prüfen Sie selbst. Siehe [Handbuch, Kapitel 8](docs/handbuch/08-recht.md).
 
-## Schnellstart mit Docker
+## Installation
 
-Voraussetzungen: Docker mit Compose-Plugin, `openssl`, eine Domain mit HTTPS über einen Reverse Proxy.
+Voraussetzungen: Linux-Server mit Docker und Compose-Plugin, `openssl`, Root-Rechte, eine Domain. Für automatisches HTTPS über den mitgelieferten Caddy die Ports 80 und 443; sonst ein eigener Reverse Proxy.
 
 ```sh
-# 1. Einmalig vorbereiten: Hauptschlüssel, .env mit Einrichtungscode, Sicherungsordner
-./scripts/init.sh
-
-# 2. .env anpassen: mindestens APP_URL, SMTP_URL, MAIL_FROM
-nano .env
-
-# 3. Starten (Paraph + Gotenberg für Word/ODT-Umwandlung)
-docker compose up -d
-
-# 4. Im Browser https://IHRE-DOMAIN/setup öffnen und den SETUP_CODE aus .env eingeben
+sudo ./scripts/install.sh
 ```
 
-`init.sh` legt den Hauptschlüssel unter `secrets/master.key` an. **Bewahren Sie diese Datei getrennt von den Sicherungen auf.** Ohne sie sind gespeicherte Dokumente nicht mehr lesbar.
+Das Skript fragt Domain, Caddy ja/nein, E-Mail für Let's Encrypt, SMTP-Zugang, Absender und Zeitstempeldienst ab. Es erzeugt den Hauptschlüssel `secrets/master.key` und die Wiederherstellungs-Passphrase `secrets/backup_passphrase` (als Docker-Secrets, nur für den Container-Benutzer lesbar), legt `.env` an, baut das Image und startet die Dienste. Am Ende zeigt es den Einrichtungscode für `https://IHRE-DOMAIN/setup`.
 
-Details: [Installation](docs/handbuch/02-installation.md).
+**Übernehmen Sie die angezeigte Wiederherstellungs-Passphrase sofort in einen Passwortmanager.** Mit ihr lässt sich jede Sicherung samt Hauptschlüssel auf einem neuen Server wiederherstellen. Ohne Passphrase und ohne `secrets/master.key` sind Sicherungen nicht lesbar.
+
+`scripts/init.sh` aus Version 0.1.0 ist veraltet und wird nicht mehr empfohlen.
+
+Details, Variablen für eine Installation ohne Rückfragen und Beispiele für nginx: [Installation](docs/handbuch/02-installation.md).
+
+## Aktualisieren und Wiederherstellen
+
+```sh
+sudo ./scripts/update.sh              # Sicherung, Rückfall-Image, Build, Start mit Migration, Prüfung
+sudo ./scripts/update.sh --rollback   # zurück auf den Stand vor dem letzten Update
+sudo ./scripts/restore.sh backups/paraph-backup-….pbk   # Wiederherstellung, auch auf einem neuen Server
+```
+
+Details: [Updates](docs/handbuch/02-installation.md#updates-mit-updatesh), [Sicherung und Wiederherstellung](docs/handbuch/06-sicherung.md).
 
 ## Reverse Proxy
 
-Der Container lauscht nur auf `127.0.0.1:8080`. HTTPS stellt ein vorgeschalteter Reverse Proxy bereit (Caddy, nginx, Traefik).
+Paraph lauscht nur auf `127.0.0.1:8080`. HTTPS übernimmt der mitgelieferte Caddy (Profil `caddy`) oder ein vorhandener Reverse Proxy (nginx, Traefik).
 
 - `APP_URL` muss die öffentliche Adresse mit `https://` sein. Davon hängen Links in E-Mails, sichere Cookies und HSTS ab.
-- `TRUST_PROXY=true` nur setzen, wenn Paraph ausschließlich über den Proxy erreichbar ist. Dann übernimmt Paraph die Client-IP aus `X-Forwarded-For` in den Audit-Trail und in die Rate-Limits.
+- `TRUST_PROXY=true` bedeutet genau einen vertrauenswürdigen Proxy-Hop. Nur setzen, wenn Paraph ausschließlich über den Proxy erreichbar ist. Bei zwei Proxys hintereinander die Anzahl oder die Proxy-Netze angeben.
 - Uploads bis 60 MB je Anfrage zulassen (z. B. nginx `client_max_body_size 60m`).
 
-Beispiele für Caddy und nginx: [Installation, Abschnitt Reverse Proxy](docs/handbuch/02-installation.md#reverse-proxy).
+Beispiele: [Installation, Abschnitt Reverse Proxy](docs/handbuch/02-installation.md#reverse-proxy).
+
+## Tests
+
+```sh
+npm ci && npm test                 # Vitest
+npm run build && npx playwright test   # Browser-Tests, Mailpit auf 127.0.0.1:1025/8025 nötig
+node scripts/docker-e2e.mjs        # Docker-Gesamtprüfung, vorher Test-Images bauen
+```
+
+Stand 0.2.0: Vitest 81 bestanden, 18 übersprungen (MinIO- und authentik-Tests ohne laufende Dienste); Playwright 7 Läufe; Docker-Gesamtprüfung 29 von 29. Details und Voraussetzungen: [Tests und Nachweise](docs/handbuch/09-tests-und-nachweise.md).
 
 ## Funktionen
 

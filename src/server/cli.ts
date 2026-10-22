@@ -69,7 +69,7 @@ async function main() {
     case 'verify-backup': {
       const { verifyBackup } = await import('./domain/backup.js');
       const cfg = loadConfig();
-      const r = await verifyBackup(args[0], { masterKey: cfg.masterKey, passphrase: passphraseArg() }, scratchDir(cfg.dataDir));
+      const r = await verifyBackup(args[0], { masterKey: cfg.masterKey, passphrase: passphraseArg(), allowLegacy: args.includes('--allow-legacy') }, scratchDir(cfg.dataDir));
       console.log(`Sicherung vom ${r.manifest.created_at}, Version ${r.manifest.version}, Schema ${r.manifest.schema}, ${r.manifest.files.length} Dateien, geöffnet per ${r.via === 'master' ? 'Hauptschlüssel' : r.via === 'passphrase' ? 'Passphrase' : 'Altformat'}${r.includesMasterKey ? ', Hauptschlüssel enthalten' : ''}`);
       if (r.problems.length) {
         console.error('Probleme:\n- ' + r.problems.join('\n- '));
@@ -97,7 +97,7 @@ async function main() {
       const ctx = await createContextAsync({ ...cfg, dataDir: scratchDir(cfg.dataDir) });
       ctx.db.close();
       const backend = cfg.s3 ? ctx.blobs.backend : new (await import('./lib/storage.js')).LocalBackend((await import('node:path')).join(cfg.dataDir, 'blobs'));
-      const r = await restoreBackup(args[0], { dataDir: cfg.dataDir, masterKey: cfg.masterKey, backend, passphrase: passphraseArg() }, { force: args.includes('--force') });
+      const r = await restoreBackup(args[0], { dataDir: cfg.dataDir, masterKey: cfg.masterKey, backend, passphrase: passphraseArg() }, { force: args.includes('--force'), allowLegacy: args.includes('--allow-legacy') });
       console.log(`Wiederhergestellt nach ${cfg.dataDir}: ${r.blobs} Dokumentdateien (${cfg.s3 ? 'S3' : 'lokal'}), ${JSON.stringify(r.manifest.counts)}. Jetzt den Dienst starten.`);
       return;
     }
@@ -141,8 +141,20 @@ async function main() {
       const rep = await verifyAnchors(ctx);
       for (const p of rep.problems) console.error('Verankerung: ' + p);
       for (const w of rep.warnings) console.warn('Hinweis: ' + w);
-      console.log(`${rep.anchors} Anker (${rep.stamped} mit geprüftem Zeitstempel, ${rep.unstamped} ohne), ${rep.envelopes} Vorgänge verankert, ${rep.problems.length} Abweichungen.`);
+      console.log(`${rep.anchors} Anker (${rep.stamped} mit geprüftem Zeitstempel und Vertrauenskette, ${rep.stampedUnverifiedChain} ohne geprüfte Kette, ${rep.unstamped} ohne Zeitstempel), ${rep.envelopes} Vorgänge verankert, ${rep.problems.length} Abweichungen.`);
       if (!ctx.cfg.tsaUrl) console.warn('Hinweis: Ohne Zeitstempeldienst (TSA_URL) schützt die Verankerung nicht gegen jemanden mit vollem Serverzugriff.');
+      // Rückdatierung: Ereignisse, die deutlich vor ihrer ersten externen Bestätigung liegen
+      const { envelopeAnchoring } = await import('./domain/anchor.js');
+      const limitH = (ctx.cfg.anchorIntervalMinutes / 60) * 2 + 24;
+      let late = 0;
+      for (const e of envs) {
+        const a = await envelopeAnchoring(ctx, e.id);
+        if (a.max_anchor_delay_hours > limitH) {
+          late++;
+          console.warn(`Hinweis: ${e.id}: Ereignisse liegen bis zu ${a.max_anchor_delay_hours} h vor ihrer ersten externen Bestätigung (erwartet ≤ ${limitH} h) – Rückdatierung oder längerer Ausfall des Zeitstempeldienstes prüfen.`);
+        }
+      }
+      if (late) console.warn(`${late} Vorgänge mit auffälligem Verankerungsverzug.`);
       process.exit(bad || rep.problems.length ? 2 : 0);
     }
     case 'doctor': {

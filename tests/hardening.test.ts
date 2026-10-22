@@ -5,13 +5,12 @@ import { mkdtempSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import Database from 'better-sqlite3';
-import nodemailer from 'nodemailer';
 import { PNG } from 'pngjs';
 import { startTestServer, setupAdmin, Client, Signer, lastMail, jobs, type TestServer } from './helpers/server.js';
 import { makePdf, signaturePng } from './helpers/pdfs.js';
 import { CONSENT_VERSION } from '../src/shared/model.js';
 import { listAudit } from '../src/server/domain/audit.js';
-import { classifyMailError, smtpTransportOptions } from '../src/server/domain/mail.js';
+import { classifyMailError, smtpTransportOptions, createSmtpTransport } from '../src/server/domain/mail.js';
 import { migrate, openDb } from '../src/server/db/index.js';
 import { migrations } from '../src/server/db/migrations.js';
 import { trustProxySetting } from '../src/server/config.js';
@@ -280,10 +279,20 @@ describe('SMTP: Zustellung und Fehlerbehandlung (lokaler SMTP-Stub, kein externe
     expect(() => smtpTransportOptions('smtp://u:p@smtp.example.org:587?tls.rejectUnauthorized=false', false)).toThrow(/Zertifikatsprüfung/);
   });
 
+  it('Produktiver Transportweg übernimmt requireTLS, Pool und Timeouts (Regression: Optionen gingen verloren)', () => {
+    const t = createSmtpTransport('smtp://u:p@smtp.example.org:587', { allowInsecure: false }) as any;
+    expect(t.options.requireTLS).toBe(true);
+    expect(t.options.host).toBe('smtp.example.org');
+    expect(t.options.connectionTimeout).toBe(15_000);
+    expect(t.options.tls.minVersion).toBe('TLSv1.2');
+    t.close();
+  });
+
   it('Server ohne STARTTLS wird bei erzwungenem TLS abgewiesen (keine Klartext-Übertragung)', async () => {
     const stub = await smtpStub();
     try {
-      const t = nodemailer.createTransport({ host: '127.0.0.1', port: stub.port, requireTLS: true, connectionTimeout: 3000 } as any);
+      // Derselbe Fabrikweg wie im Betrieb; forceTls simuliert einen nicht lokalen Server (der Stub läuft auf 127.0.0.1)
+      const t = createSmtpTransport(`smtp://127.0.0.1:${stub.port}`, { forceTls: true });
       const err = await t.sendMail({ from: 'a@b.de', to: 'x@example.org', subject: 's', text: 't' }).catch((e) => e);
       expect(classifyMailError(err).code).toBe('tls');
       expect(stub.received).toEqual([]);
@@ -337,5 +346,19 @@ describe('SMTP: Zustellung und Fehlerbehandlung (lokaler SMTP-Stub, kein externe
     expect(classifyMailError({ code: 'ECONNECTION', message: 'connect ECONNREFUSED' }).permanent).toBe(false);
     expect(classifyMailError({ code: 'EENVELOPE', responseCode: 554, response: '554 5.7.1 rejected by DMARC policy' }).code).toBe('policy');
     expect(classifyMailError({ message: 'Invalid login smtp://user:secret@host' }).message).not.toContain('secret');
+  });
+});
+
+describe('Zweite Abnahme: Weiterleitung nach Anmeldung', () => {
+  it('nur interne Pfade, keine Steuerzeichen/Backslashes/fremden Ziele', async () => {
+    const { safeNextPath } = await import('../src/server/routes/auth.js');
+    const A = 'https://sign.kanzlei.example';
+    expect(safeNextPath(A, '/envelopes/env_1?x=1')).toBe('/envelopes/env_1?x=1');
+    for (const bad of ['/\t/evil.example', '//evil.example', '/\\evil.example', 'https://evil.example', '/%09/evil', '\n/x']) {
+      const r = safeNextPath(A, bad);
+      expect(new URL(r, A).origin).toBe(A);
+      expect(r.startsWith('//')).toBe(false);
+    }
+    expect(safeNextPath(A, '/\t/evil.example')).toBe('/');
   });
 });

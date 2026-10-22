@@ -114,4 +114,37 @@ describe('Sicherung v2', () => {
     await expect(restoreBackup(r.file, { dataDir: s.dir, masterKey: s.ctx.cfg.masterKey, backend: new LocalBackend(join(s.dir, 'blobs')) })).rejects.toThrow(/nicht leer/);
     expect(existsSync(join(s.dir, 'paraph.db'))).toBe(true);
   });
+  it('Altformat (unverschlüsseltes ZIP) wird nur mit ausdrücklichem Schalter angenommen (kein Downgrade)', async () => {
+    const yazl = (await import('yazl')).default;
+    const z = new yazl.ZipFile();
+    z.addBuffer(Buffer.from(JSON.stringify({ format: 'paraph-backup/1', created_at: 'x', version: 'x', schema: 1, master_key_check: 'beliebig', storage: 'local', files: [], counts: {} })), 'manifest.json');
+    z.end();
+    const chunks: Buffer[] = [];
+    await new Promise<void>((r) => z.outputStream.on('data', (c: Buffer) => chunks.push(c)).on('end', () => r()));
+    writeFileSync(join(out, 'alt.zip'), Buffer.concat(chunks));
+    await expect(verifyBackup(join(out, 'alt.zip'), { masterKey: s.ctx.cfg.masterKey }, out)).rejects.toThrow(/Altformat.*--allow-legacy/);
+  });
+
+  it('Fehlende Dokumentdatei: Sicherung wird als UNVOLLSTAENDIG benannt und verdrängt keine vollständigen', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'paraph-rot-'));
+    const complete = await createBackup(s.ctx, dir, { passphrase: null });
+    const victim = (s.ctx.db.prepare(`SELECT id FROM blobs WHERE kind = 'signature' LIMIT 1`).get() as any).id;
+    const original = (s.ctx.blobs.backend as any);
+    const realGet = original.get.bind(original);
+    original.get = async (k: string) => (k === victim ? Promise.reject(new Error('Datei fehlt im Speicher')) : realGet(k));
+    try {
+      s.ctx.cfg.backup.keep = 1;
+      const { runBackupJob } = await import('../src/server/domain/backup.js');
+      process.env.BACKUP_DIR = dir;
+      const r = await runBackupJob(s.ctx);
+      expect(r.file).toMatch(/-UNVOLLSTAENDIG\.pbk$/);
+      expect(readdirSync(dir)).toContain(complete.file.split('/').pop());
+      const st = (await admin.get('/api/v1/system')).json;
+      expect(st.diagnostics.checks.find((c: any) => c.id === 'backup').status).toBe('fail');
+    } finally {
+      original.get = realGet;
+      delete process.env.BACKUP_DIR;
+      s.ctx.cfg.backup.keep = 14;
+    }
+  });
 });
