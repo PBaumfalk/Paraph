@@ -524,7 +524,7 @@ export function complete(ctx: Ctx, sc0: SignerCtx, input: CompleteInput, meta: R
     if (group.length === 0) {
       enqueue(ctx, 'finalize_envelope', { envelopeId: env.id }, { uniqueKey: `finalize:${env.id}` });
     } else {
-      for (const g of group.filter((x) => x.status === 'waiting')) activateRecipient(ctx, env, g, { notify: true, actor: { type: 'system' } });
+      for (const g of group.filter((x) => x.status === 'waiting')) activateRecipient(ctx, env, g, { notify: env.notify !== 0, actor: { type: 'system' } });
     }
     return { idempotent: false, env, rec };
   });
@@ -583,7 +583,7 @@ export function delegate(ctx: Ctx, sc0: SignerCtx, input: { name: string; email:
     ctx.db.prepare(`DELETE FROM signer_sessions WHERE recipient_id = ?`).run(rec.id);
     appendAudit(ctx.db, env.id, env.org_id, 'recipient.delegated', recActor(rec), { from: rec.id, to: newId, to_name: name, to_email: email, reason: input.reason ?? '', ip: meta.ip });
     const fresh = ctx.db.prepare('SELECT * FROM recipients WHERE id = ?').get(newId);
-    activateRecipient(ctx, env, fresh, { notify: true, actor: recActor(rec) });
+    activateRecipient(ctx, env, fresh, { notify: env.notify !== 0, actor: recActor(rec) });
     emit(ctx, env.org_id, 'recipient.delegated', { envelope_id: env.id, from: rec.id, to: newId }, { testMode: !!env.test_mode });
     return { ok: true };
   });

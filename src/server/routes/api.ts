@@ -278,10 +278,11 @@ export function apiRoutes(app: FastifyInstance, ctx: Ctx) {
     const env = E.loadEnvelope(ctx, pr, p(req).id, true);
     const rec = ctx.db.prepare(`SELECT * FROM recipients WHERE id = ? AND envelope_id = ? AND status IN ('sent','opened')`).get(p(req).rid, env.id) as any;
     if (!rec) throw notFound('Empfänger ist nicht an der Reihe');
-    const { origin } = z.object({ origin: z.string().url().optional() }).parse(req.body ?? {});
+    // Herkunft ist Pflicht: nur so sind iframe-Einbettung (frame-ancestors) und Rückmeldung per postMessage sicher begrenzt
+    const { origin } = z.object({ origin: z.string().url() }).parse(req.body ?? {});
     const org = getOrg(ctx, pr.orgId);
-    if (origin && !org.settings.embedOrigins.includes(new URL(origin).origin)) throw badRequest('origin_not_allowed', 'Diese Herkunft ist für Einbettungen nicht freigegeben (Einstellungen → API).');
-    const token = issueEmbedToken(ctx, rec, origin ? new URL(origin).origin : null);
+    if (!org.settings.embedOrigins.includes(new URL(origin).origin)) throw badRequest('origin_not_allowed', 'Diese Herkunft ist für Einbettungen nicht freigegeben (Einstellungen → API).');
+    const token = issueEmbedToken(ctx, rec, new URL(origin).origin);
     return { url: `${E.signingUrl(ctx, pr.orgId, token).replace('/s/', '/embed/s/')}`, expires_in: 600 };
   });
 

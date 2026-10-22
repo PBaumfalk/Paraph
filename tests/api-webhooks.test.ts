@@ -150,4 +150,31 @@ describe('TEST G – API und Webhooks', () => {
     expect(r.json.openapi).toBe('3.1.0');
     expect(Object.keys(r.json.paths).length).toBeGreaterThan(20);
   });
+
+  it('notify:false gilt für den ganzen Vorgang: keine Mails an Folgende, keine automatische Erinnerung, Link bleibt gültig', async () => {
+    const k = await admin.post('/api/v1/api-keys', { name: 'j-lawyer', scopes: ['envelopes:read', 'envelopes:write'], mode: 'live' });
+    const api = new Client(s, k.json.key);
+    const pdf = (await makePdf()).toString('base64');
+    const r = await api.post('/api/v1/envelopes', { title: 'Übergabe', signing_order: 'sequential', reminder_days: 1, documents: [{ name: 'u.pdf', file_base64: pdf }], recipients: [{ ref: 'a', name: 'A', email: 'a.notify@example.org' }, { ref: 'b', name: 'B', email: 'b.notify@example.org' }], fields: [{ type: 'signature', document: 0, recipient: 'a', page: 0, x: 0.1, y: 0.8, w: 0.3, h: 0.06 }, { type: 'signature', document: 0, recipient: 'b', page: 0, x: 0.5, y: 0.8, w: 0.3, h: 0.06 }], send: true, notify: false });
+    expect(r.status).toBe(201);
+    const linkA = r.json.signing_links[0].url;
+    // Automatische Erinnerung nach 3 Tagen: darf weder mailen noch den Link ersetzen
+    const { reminderScan } = await import('../src/server/domain/maintenance.js');
+    const real = s.ctx.now;
+    s.ctx.now = () => new Date(Date.now() + 3 * 86400_000);
+    try { expect(reminderScan(s.ctx)).toBe(0); } finally { s.ctx.now = real; }
+    const a = new Signer(s);
+    const o = await a.open(linkA);
+    expect(o.status).toBe(200);
+    const sg = await a.req('POST', '/api/sign/signatures', { purpose: 'signature', method: 'drawn', png_base64: signaturePng() });
+    const key = o.json.view.fields.find((f: any) => f.mine).key;
+    expect((await a.req('POST', '/api/sign/complete', { values: {}, signatures: { [key]: sg.json.id }, consent: { accepted: true, version: CONSENT_VERSION }, document_hashes: o.json.view.documents.map((d: any) => d.sha256), completion_key: 'ck_notify_a' })).status).toBe(200);
+    const mails = s.ctx.db.prepare(`SELECT to_addr, subject FROM emails WHERE envelope_id = ?`).all(r.json.id) as any[];
+    expect(mails.filter((m) => m.to_addr === 'b.notify@example.org')).toHaveLength(0);
+    // Link für B holt sich das eigene System
+    const rb = r.json.recipients.find((x: any) => x.email === 'b.notify@example.org');
+    const lb = await api.post(`/api/v1/envelopes/${r.json.id}/recipients/${rb.id}/link`);
+    expect(lb.json.url).toContain('/s/');
+    expect((await new Signer(s).open(lb.json.url)).status).toBe(200);
+  });
 });

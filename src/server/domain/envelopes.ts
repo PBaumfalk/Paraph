@@ -41,6 +41,7 @@ export interface EnvelopeRow {
   metadata: string;
   external_ref: string | null;
   public_form_id: string | null;
+  notify: number;
   void_reason: string | null;
   revision: number;
   created_at: string;
@@ -105,6 +106,7 @@ export function serializeEnvelope(ctx: Ctx, env: EnvelopeRow, opts: { withFields
     test_mode: !!env.test_mode,
     signing_order: env.signing_order,
     signature_level: env.signature_level,
+    notify: env.notify !== 0,
     locale: env.locale,
     expires_at: env.expires_at,
     reminder_days: env.reminder_days,
@@ -689,7 +691,7 @@ export function sendEnvelope(ctx: Ctx, p: Principal, envelopeId: string, opts: {
         signature_level: env.signature_level,
       });
     }
-    ctx.db.prepare(`UPDATE envelopes SET status = 'sent', sent_at = ?, updated_at = ?, revision = revision + 1 WHERE id = ? AND status = 'draft'`).run(now, now, envelopeId);
+    ctx.db.prepare(`UPDATE envelopes SET status = 'sent', sent_at = ?, updated_at = ?, notify = ?, revision = revision + 1 WHERE id = ? AND status = 'draft'`).run(now, now, notify ? 1 : 0, envelopeId);
     ctx.db.prepare(`UPDATE recipients SET status = 'waiting' WHERE envelope_id = ? AND kind != 'viewer'`).run(envelopeId);
     ctx.db.prepare(`UPDATE recipients SET status = 'created' WHERE envelope_id = ? AND kind = 'viewer'`).run(envelopeId);
     // Feldvorbelegungen gelten als Teil des Dokuments, nicht als Eingabe des Empfängers

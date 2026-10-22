@@ -462,4 +462,12 @@ CREATE TABLE seal_keys (
 );
 `,
   },
+  {
+    id: 2,
+    name: 'zustellart',
+    sql: `
+-- Zustellart je Vorgang: 1 = Paraph versendet E-Mails, 0 = Links werden vom eigenen System übergeben
+ALTER TABLE envelopes ADD COLUMN notify INTEGER NOT NULL DEFAULT 1;
+`,
+  },
 ];
