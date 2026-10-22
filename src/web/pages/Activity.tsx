@@ -9,6 +9,8 @@ const ACT: Record<string, string> = {
   'auth.login': 'Anmeldung',
   'auth.login_failed': 'Anmeldung fehlgeschlagen',
   'auth.login_oidc': 'Anmeldung per SSO',
+  'auth.oidc_linked': 'SSO-Konto verknüpft',
+  'auth.oidc_user_created': 'Konto per SSO angelegt',
   'auth.totp_enabled': 'Zwei-Faktor aktiviert',
   'auth.totp_disabled': 'Zwei-Faktor deaktiviert',
   'auth.password_changed': 'Passwort geändert',

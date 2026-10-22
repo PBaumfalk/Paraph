@@ -57,7 +57,7 @@ done
 export PARAPH_IMAGE
 say "1/6 Zustand prüfen"
 wait_ready || die "Paraph läuft nicht bereit – vor einem Update erst den Betrieb herstellen (docker compose logs paraph)."
-OLD_VERSION=$(DC exec -T paraph paraph version 2>/dev/null | head -1 || echo unbekannt)
+OLD_VERSION=$(DC exec -T paraph paraph version 2>/dev/null | grep -m1 "^Paraph" || echo "Paraph (Version unbekannt)")
 echo "    laufend: $OLD_VERSION ($PARAPH_IMAGE)"
 
 say "2/6 Verschlüsselte Sicherung"

@@ -49,7 +49,7 @@ Dieses Kapitel beschreibt, wovor Paraph schützt, wie, und wo die Grenzen liegen
 - **Root auf dem Server** kann alles: Hauptschlüssel lesen, Datenbank direkt ändern, Trigger umgehen, laufende Prozesse beobachten. Paraph kann das nicht verhindern, nur teilweise erkennen (siehe unten).
 - **Kompromittiertes E-Mail-Postfach** einer unterzeichnenden Person: Bei Zugang nur per Link (`none`) oder per E-Mail-Code kann der Angreifer unterschreiben. Abhilfe: SMS-Code oder Zugangscode auf einem zweiten Weg.
 - **Kompromittierter Browser** der unterzeichnenden Person: nicht abwehrbar.
-- **OIDC-Anbieter**: Wer dort eine E-Mail-Adresse eines Paraph-Kontos eintragen kann, kann sich als diese Person anmelden. Paraph prüft bei OIDC keinen eigenen zweiten Faktor.
+- **OIDC-Anbieter**: Paraph verknüpft bestehende Konten nur, wenn der Anbieter die E-Mail-Adresse als bestätigt meldet (`email_verified: true`) oder `OIDC_TRUST_EMAIL=true` gesetzt ist. Wer im Anbieter E-Mail-Adressen pflegen und als bestätigt markieren kann, kann sich trotzdem als die betreffende Person anmelden – diese Rechte eng halten. Einen eigenen zweiten Faktor fragt Paraph nach SSO nur bei Personen mit aktiviertem TOTP ab; Mehrfaktor im Anbieter erzwingen.
 - **Selbst signiertes Siegel**: Beweist nur die Herkunft von dieser Instanz, nicht die Identität eines Ausstellers gegenüber Dritten.
 - **SMTP-Strecke**: E-Mails mit Links gehen über Ihren Mailanbieter. Transportverschlüsselung und Zustellung liegen dort.
 

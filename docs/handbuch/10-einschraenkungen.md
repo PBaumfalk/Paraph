@@ -12,7 +12,7 @@ Stand: 22.10.2026. Diese Liste nennt, was Paraph nicht kann, was nicht gegen ech
 ## Nicht gegen echte Gegenstellen getestet
 
 - **SMS:** Die Schnittstelle ist generisch (JSON-POST). Sie wurde nicht gegen einen echten SMS-Anbieter getestet.
-- **OIDC/authentik:** implementiert, aber nicht gegen einen echten Identitätsanbieter getestet.
+- **OIDC/authentik:** gegen authentik 2026.8.5 automatisiert getestet (`tests/oidc-authentik.test.ts`). Andere Anbieter (Keycloak, Entra ID, Google) nicht getestet. Kein Single Logout: Abmelden in Paraph meldet nicht beim Anbieter ab.
 - **S3:** Speicher mit SigV4-Signatur implementiert, nicht gegen MinIO oder AWS getestet.
 - **E-Mail-Zustellung:** nur gegen Mailpit getestet. Zustellbarkeit, SPF, DKIM und DMARC liegen beim Betreiber und seinem Mailanbieter.
 
@@ -22,7 +22,7 @@ Stand: 22.10.2026. Diese Liste nennt, was Paraph nicht kann, was nicht gegen ech
 - **Formhinweise** sind regelbasiert (Schlüsselwörter), keine Einzelfallprüfung. Der Katalog hat den Stand 22.10.2026 und ist vor dem Produktiveinsatz anwaltlich freizugeben.
 - **Dokumentenumwandlung** (Word, DOC, ODT, RTF) nur mit dem Gotenberg-Container. Ohne ihn nur PDF.
 - **Einbettung:** Nur die Signaturseite ist einbettbar. Der Vorlagen- und Vorgangs-Editor nicht. `postMessage`-Nachrichten gibt es nur, wenn beim Einbettungslink eine Herkunft angegeben wurde.
-- **Zwei-Faktor** lässt sich nicht organisationsweit erzwingen. Bei OIDC-Anmeldung fragt Paraph keinen eigenen zweiten Faktor ab.
+- **Zwei-Faktor** lässt sich nicht organisationsweit erzwingen. Bei OIDC-Anmeldung fragt Paraph einen eigenen zweiten Faktor nur ab, wenn die Person TOTP aktiviert hat. Reine SSO-Konten (ohne Passwort) können ein aktiviertes TOTP nicht selbst abschalten.
 - **Anmeldeereignisse** werden protokolliert, erscheinen aber nicht im Aktivitätsprotokoll der Organisation.
 
 ## Betrieb

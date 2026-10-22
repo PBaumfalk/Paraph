@@ -6,6 +6,20 @@ import { useSession } from '../../lib/session';
 import { t } from '../../lib/i18n';
 import { Callout, errorText, Logo } from '../../components/ui';
 
+// Fehlercodes aus /api/auth/oidc/callback (Details stehen nur im Server-Log)
+const SSO_ERRORS: Record<string, string> = {
+  sso_denied: 'Die Anmeldung wurde beim Anmeldedienst abgebrochen oder abgelehnt.',
+  sso_expired: 'Der Anmeldevorgang ist abgelaufen. Bitte erneut versuchen.',
+  sso_unavailable: 'Der Anmeldedienst ist gerade nicht erreichbar. Bitte später erneut versuchen.',
+  sso_failed: 'Die Anmeldung über den Anmeldedienst ist fehlgeschlagen. Bitte erneut versuchen.',
+  sso_disabled: 'Anmeldung per SSO ist nicht eingerichtet.',
+  sso_no_account: 'Für dieses SSO-Konto gibt es noch keinen Zugang. Bitte lassen Sie sich einladen.',
+  sso_email_unverified: 'Ihre E-Mail-Adresse ist beim Anmeldedienst nicht bestätigt. Das Konto kann deshalb nicht verknüpft werden.',
+  sso_group: 'Ihr Konto ist für diese Anwendung nicht freigeschaltet. Bitte wenden Sie sich an die Verwaltung.',
+  sso_disabled_user: 'Ihr Zugang ist gesperrt. Bitte wenden Sie sich an die Verwaltung.',
+  sso_no_org: 'Ihr Konto gehört noch zu keiner Organisation. Bitte lassen Sie sich einladen.',
+};
+
 export default function Login() {
   const { auth, refresh } = useSession();
   const [sp] = useSearchParams();
@@ -15,7 +29,10 @@ export default function Login() {
   const [code, setCode] = useState('');
   const [mfa, setMfa] = useState(!!auth.session?.mfa_pending);
   const [forgot, setForgot] = useState(false);
-  const [msg, setMsg] = useState<{ kind: 'stop' | 'done'; text: string } | null>(sp.get('error') === 'sso_no_account' ? { kind: 'stop', text: t('Für dieses SSO-Konto gibt es noch keinen Zugang. Bitte lassen Sie sich einladen.') } : null);
+  const [msg, setMsg] = useState<{ kind: 'stop' | 'done'; text: string } | null>(() => {
+    const e = sp.get('error');
+    return e ? { kind: 'stop', text: t(SSO_ERRORS[e] ?? SSO_ERRORS.sso_failed) } : null;
+  });
   const [busy, setBusy] = useState(false);
   const next = sp.get('next') || '/';
   if (auth.setup_required) return <Navigate to="/setup" replace />;
@@ -34,7 +51,9 @@ export default function Login() {
         const r = await post('/api/auth/mfa', { code });
         setCsrf(r.session?.csrf ?? '');
         await refresh();
-        nav(next, { replace: true });
+        setMfa(false);
+        if (!r.session?.org_id && !next.startsWith('/invite/')) setMsg({ kind: 'stop', text: t(SSO_ERRORS.sso_no_org) });
+        else nav(next, { replace: true });
       } else {
         const r = await post('/api/auth/login', { email, password });
         if (r.mfa_required) setMfa(true);
@@ -81,7 +100,7 @@ export default function Login() {
           {mfa ? t('Bestätigen') : forgot ? t('Link anfordern') : t('Anmelden')}
         </button>
         {!mfa && auth.oidc.enabled && !forgot && (
-          <a className="btn btn-lg btn-block" href="/api/auth/oidc/start">
+          <a className="btn btn-lg btn-block" href={`/api/auth/oidc/start${next !== '/' ? `?next=${encodeURIComponent(next)}` : ''}`}>
             {t('Mit {name} anmelden', { name: auth.oidc.name ?? 'SSO' })}
           </a>
         )}

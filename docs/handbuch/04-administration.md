@@ -98,31 +98,14 @@ Paraph kann Zwei-Faktor nicht organisationsweit erzwingen. Jede Person schaltet 
 
 ## Anmeldung per OIDC (authentik)
 
-Paraph unterstützt eine OIDC-Anmeldung, z. B. über authentik.
+Paraph unterstützt eine OIDC-Anmeldung, z. B. über authentik. Einrichtung Schritt für Schritt, alle Variablen und das genaue Verhalten stehen in [Kapitel 3](03-konfiguration.md#anmeldung-per-oidc-z-b-authentik).
 
-**Im Identitätsanbieter** (authentik: Anwendung mit OAuth2/OpenID-Provider anlegen):
+Kurz:
 
-- Client-Typ: vertraulich (confidential)
-- Redirect-URI: `APP_URL/api/auth/oidc/callback`, z. B. `https://sign.kanzlei.example/api/auth/oidc/callback`
-- Scopes: `openid email profile`
-
-**In `.env`:**
-
-```ini
-OIDC_ISSUER=https://auth.kanzlei.example/application/o/paraph/
-OIDC_CLIENT_ID=...
-OIDC_CLIENT_SECRET=...
-OIDC_NAME=authentik
-OIDC_AUTO_CREATE_USERS=false
-```
-
-Verhalten:
-
-- Bekannte OIDC-Konten werden über Issuer und Subjekt (`sub`) erkannt.
-- Beim ersten Login wird ein bestehendes Paraph-Konto **über die E-Mail-Adresse verknüpft**, sofern der Anbieter die Adresse nicht als unbestätigt meldet (`email_verified: false`). Die E-Mail-Adresse im Identitätsanbieter muss deshalb vertrauenswürdig gepflegt sein.
-- Mit `OIDC_AUTO_CREATE_USERS=true` erhalten unbekannte Personen ein Konto ohne Organisation. Einer Organisation treten sie per Einladung bei.
-- Ohne Konto und ohne automatische Anlage wird die Anmeldung abgewiesen.
-- Bei OIDC-Anmeldung fragt Paraph **keinen** eigenen Zwei-Faktor-Code ab. Erzwingen Sie die Mehrfaktor-Anmeldung im Identitätsanbieter.
+- Bestehende Konten werden beim ersten SSO-Login nur verknüpft, wenn der Anbieter die E-Mail-Adresse als bestätigt meldet. Bei authentik dafür ein eigenes Scope-Mapping anlegen.
+- Personen ohne Konto werden abgewiesen, außer `OIDC_AUTO_CREATE_USERS=true`. Mit `OIDC_DEFAULT_ROLE=member` (oder `viewer`) treten neue Konten automatisch der ältesten Organisation bei, sonst per Einladung.
+- Gesperrte Konten können sich auch per SSO nicht anmelden.
+- Paraph fragt einen eigenen TOTP-Code auch nach SSO ab, wenn die Person ihn aktiviert hat. Mehrfaktor im Anbieter bleibt die Empfehlung.
 
 ## Notfallzugang
 
