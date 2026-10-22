@@ -18,6 +18,7 @@ import { sealPdf, cmsSignDetached } from '../pdf/seal.js';
 import { activeKeys, type LogicField } from '../../shared/fieldlogic.js';
 import { ruleById, LEVEL_TEXT } from '../../shared/formrules.js';
 import { hashToken, secretToken } from '../lib/crypto.js';
+import { VERIFY_AUDIT_PY } from './verify-audit-script.js';
 
 const AUTH_LABEL: Record<string, { de: [string, string]; en: [string, string] }> = {
   link: { de: ['Persönlicher Link', 'Besitz des per E-Mail zugestellten Links'], en: ['Personal link', 'Possession of the link delivered by email'] },
@@ -216,6 +217,7 @@ export async function finalizeEnvelope(ctx: Ctx, envelopeId: string) {
   for (const [, s] of sigRows) files.push({ path: `06_unterschriften/${s.id}.png`, data: s.png });
   for (const a of attRows) files.push({ path: `07_anhaenge/${a.id}_${safe(a.name)}`, data: await ctx.blobs.get(a.blob_id) });
   files.push({ path: 'siegelzertifikat.pem', data: Buffer.from(seal.info.pem) });
+  files.push({ path: 'pruefen/verify-audit.py', data: Buffer.from(VERIFY_AUDIT_PY) });
   const manifest = {
     format: 'paraph-evidence/1',
     envelope_id: envelopeId,
@@ -240,6 +242,7 @@ export async function finalizeEnvelope(ctx: Ctx, envelopeId: string) {
         `   es als vertrauenswürdig zu markieren, ist eine bewusste Entscheidung (Fingerabdruck in der Abschlussbestätigung).\n` +
         `4. Ereigniskette: 03_audit-trail.json enthält alle Ereignisse; jeder Hash ergibt sich aus dem kanonischen JSON\n` +
         `   des Eintrags inklusive des vorherigen Hashes. Kettenkopf: ${chain.head}\n` +
+        `   Unabhängig prüfen: python3 pruefen/verify-audit.py 03_audit-trail.json\n` +
         `5. Online-Prüfung: ${ctx.cfg.appUrl}/verify (die Datei verlässt dabei den Browser nicht).\n\n` +
         `Hinweis: Das Plattformsiegel weist die Unversehrtheit seit Abschluss nach. Es ist keine persönliche Signatur\n` +
         `der Unterzeichner und kein qualifiziertes Siegel. Die Unterschriften sind einfache elektronische Signaturen (EES).\n`,
