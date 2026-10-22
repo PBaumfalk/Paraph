@@ -145,7 +145,8 @@ export function loadConfig(overrides: Partial<Config> = {}): Config {
     smtp: smtpUrl ? { url: smtpUrl, from: env('MAIL_FROM', 'Paraph <no-reply@localhost>')! } : undefined,
     gotenbergUrl: env('GOTENBERG_URL'),
     tsaUrl: env('TSA_URL'),
-    tsaCaPem: env('TSA_CA'), // PEM-Bündel; üblich als TSA_CA_FILE
+    // PEM-Bündel, üblich als TSA_CA_FILE (Docker-Secret); eine leere Datei bedeutet „nicht eingerichtet“
+    tsaCaPem: env('TSA_CA')?.includes('BEGIN CERTIFICATE') ? env('TSA_CA') : undefined,
     webhookAllowPrivate: bool('WEBHOOK_ALLOW_PRIVATE_NETWORKS', false),
     webhookAllowHosts: (env('WEBHOOK_ALLOW_HOSTS', '') ?? '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean),
     oidc: oidcIssuer

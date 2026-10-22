@@ -50,6 +50,12 @@ if [ "${1:-}" = "--rollback" ]; then
     NOW_FILE=$(echo "$NOW_OUT" | sed -n 's|^Sicherung erstellt: /backups/||p' | head -1)
     mkdir -p backups/vor-rueckweg && mv "backups/$NOW_FILE" backups/vor-rueckweg/
     echo "    aktueller Stand gesichert: backups/vor-rueckweg/$NOW_FILE"
+  else
+    # Dienst läuft nicht: mindestens die Datenbank unverändert beiseitelegen, bevor sie ersetzt wird
+    mkdir -p backups/vor-rueckweg
+    DC run --rm --no-deps --entrypoint sh paraph -c "cp /data/paraph.db /backups/vor-rueckweg/paraph-$(date +%Y%m%d%H%M%S).db" \
+      || die "Datenbank konnte nicht gesichert werden – Rückweg abgebrochen (nichts verändert)."
+    echo "    Datenbank des aktuellen Stands nach backups/vor-rueckweg/ kopiert (unverschlüsselt – nach Klärung löschen)."
   fi
   DC stop paraph
   # Daten auf den Stand vor dem Update zurücksetzen (mit dem alten Programm, passend zum alten Schema)
@@ -71,6 +77,8 @@ while [ $# -gt 0 ]; do
 done
 
 export PARAPH_IMAGE
+# Ab 0.2.0 erwartet Compose das Secret tsa_ca (leer = kein Zeitstempeldienst)
+[ -f secrets/tsa_ca.pem ] || { : > secrets/tsa_ca.pem; chmod 0400 secrets/tsa_ca.pem; [ "$(id -u)" = 0 ] && chown 1000:1000 secrets/tsa_ca.pem; }
 say "1/6 Zustand prüfen"
 wait_ready || die "Paraph läuft nicht bereit – vor einem Update erst den Betrieb herstellen (docker compose logs paraph)."
 OLD_VERSION=$(DC exec -T paraph paraph version 2>/dev/null | grep -m1 "^Paraph" || echo "Paraph (Version unbekannt)")

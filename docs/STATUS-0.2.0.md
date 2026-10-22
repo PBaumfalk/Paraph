@@ -10,7 +10,7 @@ Die technisch prüfbaren Voraussetzungen sind erfüllt (siehe Abschnitte 1 und 2
 
 1. **Anwaltliche Freigabe** der Formhinweise und Erklärungstexte ist offen (`docs/recht/FREIGABELISTE.md`, Gruppe A).
 2. **Echte Gegenstellen sind nicht verifiziert**: Mailserver mit SPF/DKIM/DMARC, Domain mit Let's-Encrypt-Zertifikat, Zeitstempeldienst. Alles wurde nur gegen lokale Testdienste geprüft.
-3. **Zeitstempeldienst nicht gewählt.** Ohne `TSA_URL` schützt die Verankerung der Audit-Ketten nicht gegen jemanden mit vollem Serverzugriff. Für vertrauliche Kanzleidokumente halte ich das für einen Pflichtbaustein.
+3. **Zeitstempeldienst nicht gewählt.** Ohne `TSA_URL` und das Anbieterzertifikat (`secrets/tsa_ca.pem`) schützt die Verankerung der Audit-Ketten nicht gegen jemanden mit vollem Serverzugriff. Für vertrauliche Kanzleidokumente ist das ein Pflichtbaustein. Paraph erzwingt das jetzt: Ist `TSA_URL` ohne Vertrauensanker gesetzt, melden Diagnose und `verify-audit` einen Fehler.
 
 Sind diese drei Punkte erledigt und der Abnahmelauf auf dem Server (Abschnitt 6) grün, kann der Status auf READY FOR PRODUCTION gesetzt werden.
 
@@ -35,11 +35,12 @@ Sind diese drei Punkte erledigt und der Abnahmelauf auf dem Server (Abschnitt 6)
 | Erinnerungen ohne Entwertung der ersten Einladung; „Neuer Link“ widerruft alles inkl. Sitzungen | `flows.test.ts`, `hardening.test.ts` |
 | Hintergrundaufgaben: Zeitplan überlebt Neustart, Sperrdauer je Typ, Alarm-Mail | `hardening.test.ts`, Diagnose |
 | Diagnose (Oberfläche, `paraph doctor`), Metriken, Instanz-Benutzerverwaltung | `hardening.test.ts`, Playwright F, Docker M4 |
+| Word → PDF über isoliertes Gotenberg | Docker D1 |
 | HTTPS über Caddy, Container-Härtung (UID 1000, read-only, Gotenberg ohne Internet), Schlüsseldateien nur für Eigentümer lesbar | Docker C1, H1–H5 |
 | S3-Ablage | `s3-minio.test.ts` gegen MinIO (16 Tests, nur bei laufendem MinIO) |
 | OIDC | `oidc.test.ts`; `oidc-authentik.test.ts` gegen authentik 2026.8.5 (9 Browser-Szenarien, nur bei laufendem authentik) |
 
-Zahlen: Vitest 81 bestanden / 18 übersprungen (MinIO, authentik ohne laufenden Dienst) · Playwright 7 Szenarien · Docker-Gesamttest 29 Prüfungen.
+Zahlen (letzter Lauf): Vitest 87 bestanden / 18 übersprungen (MinIO, authentik ohne laufenden Dienst) · Playwright 7 Tests (6 Szenarien, C auf zwei Smartphones) + F · Docker-Gesamttest 30 Prüfungen.
 
 ## 2. Was unter realen Produktionsbedingungen funktioniert – und was nur simuliert ist
 
@@ -60,7 +61,7 @@ Zahlen: Vitest 81 bestanden / 18 übersprungen (MinIO, authentik ohne laufenden 
 |---|---|---|
 | E-Mail-Versand | `SMTP_URL`, `MAIL_FROM` (+ SPF/DKIM/DMARC der Absenderdomain) | **ja** |
 | HTTPS-Zertifikat | `DOMAIN`, `ACME_EMAIL` (Profil caddy) oder eigener Proxy | **ja** |
-| Zeitstempeldienst | `TSA_URL`, optional `TSA_CA_FILE` | dringend empfohlen |
+| Zeitstempeldienst | `TSA_URL` + Zertifikat des Anbieters (`secrets/tsa_ca.pem`) | für den Produktivstart erforderlich |
 | Externe Sicherungskopie | außerhalb von Paraph (restic, rsync, NAS) | dringend empfohlen |
 | SSO | `OIDC_ISSUER`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET` (+ authentik-Mapping für `email_verified`) | optional |
 | S3-Ablage | `S3_*` | optional |
@@ -131,4 +132,5 @@ Ausführlich: `docs/handbuch/02-installation.md` und `06-sicherung.md`.
 
 - **Sicherheitsprüfung 1** (vor den Änderungen): 2 hohe, 7 mittlere Befunde, alle behoben und mit Regressionstests belegt (`hardening.test.ts`, `integrity.test.ts`).
 - **Juristische Vorprüfung:** Kein Text bezeichnet das Plattformsiegel als qualifiziert oder als persönliche Signatur; Präzisierungen übernommen, Freigabe offen.
-- **Abnahmeprüfung 2** (nach den Änderungen): siehe unten.
+- **Abnahmeprüfung 2** (nach den Änderungen): 3 hohe Befunde (Prüfstelle akzeptierte vorangestelltes Instanzzertifikat; Zeitstempel ohne geprüfte Kette galten als bestätigt; SMTP-TLS-Erzwingung durch falsche Optionsübergabe wirkungslos) und 4 mittlere (Downgrade auf unverschlüsseltes Altformat, Rotation bei unvollständiger Sicherung, Open Redirect nach SSO, Rückweg ohne Rückfrage). Alle behoben, mit Regressionstests. Nachprüfung durch denselben Prüfer: behoben bis auf einen neuen Umgehungsweg der Weiterleitung (`/..//evil`) und die fehlende TSA-Pflicht – beides anschließend behoben und getestet. Urteil des Prüfers: „abnahmefähig, sobald diese beiden Punkte korrigiert sind“.
+- **Eigene Lehre:** Die SMTP-Prüfung im Docker-Test war grün, obwohl die Erzwingung im Code wirkungslos war – Mailpit verlangte STARTTLS selbst. Der neue Regressionstest prüft deshalb den produktiven Fabrikweg direkt.

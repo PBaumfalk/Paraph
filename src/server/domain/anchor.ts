@@ -194,7 +194,7 @@ export async function verifyAnchors(ctx: Ctx, opts: { envelopeId?: string } = {}
           externalTime = info.genTime;
           stamped++;
         } else unverifiedChain++;
-        if (Math.abs(new Date(info.genTime).getTime() - new Date(a.created_at).getTime()) > STAMP_TOLERANCE_MS && !a.tsa_error) {
+        if (Math.abs(new Date(info.genTime).getTime() - new Date(a.created_at).getTime()) > STAMP_TOLERANCE_MS ) {
           // Nachgeholter Zeitstempel ist zulässig, die externe Zeit gilt dann ab genTime
           warnings.push(`Anker ${a.id}: Zeitstempel ${info.genTime} weicht deutlich von der Erstellung ${a.created_at} ab (nachgeholt?)`);
         }

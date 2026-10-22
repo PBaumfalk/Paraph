@@ -23,11 +23,14 @@ services:
       TZ: ${TZ:-Europe/Berlin}
       MASTER_KEY_FILE: /run/secrets/master_key
       BACKUP_PASSPHRASE_FILE: /run/secrets/backup_passphrase
+      # Vertrauensanker des Zeitstempeldienstes (leere Datei = keiner; mit TSA_URL Pflicht)
+      TSA_CA_FILE: /run/secrets/tsa_ca
       GOTENBERG_URL: http://gotenberg:3000
       BACKUP_DIR: /backups
     secrets:
       - master_key
       - backup_passphrase
+      - tsa_ca
     ports:
       # Nur lokal binden; HTTPS übernimmt der Reverse Proxy (Profil „caddy“ oder vorhandener Proxy)
       - "${BIND:-127.0.0.1}:${HOST_PORT:-8080}:8080"
@@ -111,6 +114,8 @@ secrets:
     file: ./secrets/master.key
   backup_passphrase:
     file: ./secrets/backup_passphrase
+  tsa_ca:
+    file: ./secrets/tsa_ca.pem
 
 volumes:
   paraph-data:

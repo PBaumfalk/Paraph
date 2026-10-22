@@ -60,7 +60,7 @@ SPF, DKIM und DMARC für die Absenderdomain richten Sie beim Mailanbieter ein.
 |---|---|---|
 | `GOTENBERG_URL` | – (in Docker `http://gotenberg:3000`) | Gotenberg-Dienst für Word/DOC/ODT/RTF → PDF. Fehlt er, nimmt Paraph nur PDF an. |
 | `TSA_URL` | – | RFC-3161-Zeitstempeldienst, z. B. der Dienst Ihres Vertrauensdiensteanbieters oder `https://freetsa.org/tsr` (kostenlos, ohne Gewähr). An den Dienst geht nur ein Hashwert. Verwendet für das Plattformsiegel (PAdES-B-T) und für die externe Verankerung der Audit-Ketten. Ist der Dienst beim Abschluss nicht erreichbar, wird ohne Zeitstempel versiegelt (PAdES-B-B). |
-| `TSA_CA_FILE` | – | PEM-Datei mit Wurzel- und ggf. Zwischenzertifikaten des Zeitstempeldienstes (Vertrauensanker). Dann prüft Paraph zusätzlich die Zertifikatskette des Dienstes. Ohne Anker ist nur belegt, dass ein Dienst gestempelt hat, nicht welcher vertrauenswürdige. |
+| `TSA_CA_FILE` | `/run/secrets/tsa_ca` | Vertrauensanker des Zeitstempeldienstes (PEM, vom Anbieter). Mit `TSA_URL` **Pflicht**: ohne ihn melden Diagnose und `paraph verify-audit` einen Fehler, weil sich Zeitstempel sonst von jemandem mit Serverzugriff selbst erzeugen ließen. In Docker als Secret `secrets/tsa_ca.pem` (leer = kein Zeitstempeldienst); `install.sh` fragt die Datei ab. |
 | `ANCHOR_INTERVAL_MINUTES` | `60` | Abstand der externen Verankerung in Minuten, mindestens 5. Zusätzlich wird jeder Abschluss zeitnah verankert. |
 
 Jeden Zeitstempel prüft Paraph vollständig, bevor er zählt (`src/server/pdf/timestamp.ts`): Signatur des Dienstes, Hashwert (Imprint), Nonce der eigenen Anfrage und Verwendungszweck des Zertifikats. Eine Antwort, die nicht zur Anfrage passt, wird verworfen. Zur Verankerung siehe [Kapitel 7](07-sicherheit.md#externe-verankerung).

@@ -155,7 +155,9 @@ async function main() {
         }
       }
       if (late) console.warn(`${late} Vorgänge mit auffälligem Verankerungsverzug.`);
-      process.exit(bad || rep.problems.length ? 2 : 0);
+      // Zeitstempel ohne geprüfte Vertrauenskette sind kein Nachweis gegen Serverzugriff → nicht „in Ordnung“ melden
+      if (ctx.cfg.tsaUrl && !ctx.cfg.tsaCaPem) console.error('FEHLER: TSA_URL ist gesetzt, TSA_CA_FILE fehlt – Zeitstempel können nicht als echt bestätigt werden (Aussteller ungeprüft).');
+      process.exit(bad || rep.problems.length ? 2 : ctx.cfg.tsaUrl && !ctx.cfg.tsaCaPem ? 3 : 0);
     }
     case 'doctor': {
       const { createContextAsync } = await import('./context.js');

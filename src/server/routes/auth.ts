@@ -320,10 +320,13 @@ export function authRoutes(app: FastifyInstance, ctx: Ctx) {
 // Nur Pfade dieser Instanz: keine Steuerzeichen, kein Backslash, Ziel muss nach Auflösung dieselbe Origin haben
 export function safeNextPath(appUrl: string, v: unknown): string {
   if (typeof v !== 'string' || v.length > 500 || !v.startsWith('/') || /[\u0000-\u001f\u007f\\]/.test(v)) return '/';
+  // Punktsegmente (auch kodiert) ablehnen: „/..//evil“ würde nach Normalisierung zu „//evil“
+  if (/(^|\/)(\.|%2e){1,2}(\/|$)/i.test(v)) return '/';
   try {
     const base = new URL(appUrl);
     const u = new URL(v, base);
-    return u.origin === base.origin && v.startsWith('/') && !v.startsWith('//') ? u.pathname + u.search + u.hash : '/';
+    const out = u.pathname + u.search + u.hash;
+    return u.origin === base.origin && !v.startsWith('//') && !out.startsWith('//') ? out : '/';
   } catch {
     return '/';
   }

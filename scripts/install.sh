@@ -54,6 +54,12 @@ MAIL_FROM=${PARAPH_MAIL_FROM:-}
 ask MAIL_FROM "Absender (z. B. Kanzlei Muster <signatur@kanzlei.de>)" "Paraph <signatur@$DOMAIN>"
 TSA_URL=${PARAPH_TSA_URL:-}
 ask TSA_URL "Zeitstempeldienst (RFC 3161, leer = keiner; dringend empfohlen)" ""
+TSA_CA_SRC=${PARAPH_TSA_CA_FILE:-}
+if [ -n "$TSA_URL" ]; then
+  # Ohne Vertrauensanker ließen sich Zeitstempel von jemandem mit Serverzugriff selbst erzeugen
+  ask TSA_CA_SRC "PEM-Datei mit Wurzel-/Zwischenzertifikat des Zeitstempeldienstes (vom Anbieter)" ""
+  [ -f "$TSA_CA_SRC" ] && grep -q 'BEGIN CERTIFICATE' "$TSA_CA_SRC" || die "Für TSA_URL ist das Zertifikat des Zeitstempeldienstes (PEM) nötig: $TSA_CA_SRC"
+fi
 
 # ── Schlüssel ────────────────────────────────────────────────────────────────
 umask 077
@@ -72,7 +78,8 @@ if [ ! -s secrets/backup_passphrase ]; then
   printf '%s' "${PASS:0:32}" > secrets/backup_passphrase
   NEW_KEYS=1
 fi
-for f in secrets/master.key secrets/backup_passphrase; do
+if [ -n "${TSA_CA_SRC:-}" ]; then cp "$TSA_CA_SRC" secrets/tsa_ca.pem; elif [ ! -f secrets/tsa_ca.pem ]; then : > secrets/tsa_ca.pem; fi
+for f in secrets/master.key secrets/backup_passphrase secrets/tsa_ca.pem; do
   if [ "$(id -u)" = 0 ]; then chown "$UID_APP:$UID_APP" "$f"; chmod 0400 "$f"; else chmod 0400 "$f"; warn "$f gehört nicht UID $UID_APP (ohne root). Nur für Tests geeignet."; fi
 done
 

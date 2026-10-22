@@ -118,7 +118,7 @@ export async function runDiagnostics(ctx: Ctx, opts: { deep?: boolean } = {}): P
       add('tsa', 'Nachweis', 'Zeitstempeldienst', 'fail', e.message);
     }
   } else add('tsa', 'Nachweis', 'Zeitstempeldienst', 'info', new URL(cfg.tsaUrl).hostname);
-  if (cfg.tsaUrl && !cfg.tsaCaPem) add('tsa_trust', 'Nachweis', 'Vertrauensanker des Zeitstempeldienstes', 'warn', 'TSA_CA_FILE fehlt: Zeitstempel werden rechnerisch geprüft, der Aussteller aber nicht. Gegen jemanden mit Serverzugriff schützt die Verankerung erst mit Vertrauensanker.');
+  if (cfg.tsaUrl && !cfg.tsaCaPem) add('tsa_trust', 'Nachweis', 'Vertrauensanker des Zeitstempeldienstes', 'fail', 'TSA_CA_FILE fehlt: Zeitstempel werden rechnerisch geprüft, der Aussteller aber nicht. Gegen jemanden mit Serverzugriff schützt die Verankerung erst mit Vertrauensanker.');
 
   const anchors = ctx.db.prepare(`SELECT COUNT(*) AS n, SUM(tsa_token IS NULL) AS open, MAX(created_at) AS last FROM audit_anchors`).get() as any;
   add('anchors', 'Nachweis', 'Verankerung der Audit-Ketten', anchors.n === 0 ? 'info' : cfg.tsaUrl && anchors.open > 0 ? 'warn' : 'ok',

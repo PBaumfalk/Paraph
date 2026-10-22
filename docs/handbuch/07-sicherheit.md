@@ -268,6 +268,6 @@ Zusätzlich geändert: Eine Erinnerung lässt den unmittelbar vorherigen Link g�
 - SSH nur mit Schlüssel; wenige Personen mit Root.
 - Zwei-Faktor für alle Konten mit Rolle Inhaber oder Administrator.
 - Bei sensiblen Vorgängen Einmalcode per SMS oder Zugangscode verwenden.
-- Zeitstempeldienst einrichten (`TSA_URL`, möglichst mit `TSA_CA_FILE`). Ohne ihn schützt die Verankerung nicht gegen jemanden mit Serverzugriff.
+- Zeitstempeldienst einrichten (`TSA_URL` mit Anbieterzertifikat in `secrets/tsa_ca.pem`; ohne Vertrauensanker meldet Paraph einen Fehler). Ohne ihn schützt die Verankerung nicht gegen jemanden mit Serverzugriff.
 - Sicherungen außer Haus, Wiederherstellungs-Passphrase und Hauptschlüssel getrennt davon.
 - Aktivitätsprotokoll und Einstellungen → System regelmäßig ansehen; Alarm-E-Mails an die Instanz-Administration nicht ausfiltern.

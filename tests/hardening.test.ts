@@ -354,7 +354,7 @@ describe('Zweite Abnahme: Weiterleitung nach Anmeldung', () => {
     const { safeNextPath } = await import('../src/server/routes/auth.js');
     const A = 'https://sign.kanzlei.example';
     expect(safeNextPath(A, '/envelopes/env_1?x=1')).toBe('/envelopes/env_1?x=1');
-    for (const bad of ['/\t/evil.example', '//evil.example', '/\\evil.example', 'https://evil.example', '/%09/evil', '\n/x']) {
+    for (const bad of ['/\t/evil.example', '//evil.example', '/\\evil.example', 'https://evil.example', '/%09/evil', '\n/x', '/..//evil.example', '/.//evil.example', '/%2e%2e//evil.example', '/a/..//evil.example']) {
       const r = safeNextPath(A, bad);
       expect(new URL(r, A).origin).toBe(A);
       expect(r.startsWith('//')).toBe(false);
