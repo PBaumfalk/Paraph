@@ -1,0 +1,11 @@
+# Lokale Testdienste (nie produktiv): Mailpit fängt alle E-Mails ab.
+# docker compose -f docker-compose.yml -f docker-compose.test.yml up -d
+services:
+  mailpit:
+    image: axllent/mailpit:v1.27
+    ports: ["127.0.0.1:${MAILPIT_PORT:-8025}:8025"]
+    networks: [frontend]
+  paraph:
+    environment:
+      SMTP_URL: smtp://mailpit:1025
+      MAIL_FROM: "Paraph Test <paraph@test.local>"

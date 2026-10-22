@@ -1,0 +1,68 @@
+# Paraph – Start: ./scripts/init.sh (einmalig), dann: docker compose up -d
+# Konfiguration in .env (Vorlage .env.example). Ausführlich: docs/handbuch/02-installation.md
+
+services:
+  paraph:
+    image: ${PARAPH_IMAGE:-paraph:latest}
+    build: .
+    restart: unless-stopped
+    env_file:
+      - path: ${PARAPH_ENV_FILE:-.env}
+        required: true
+    environment:
+      APP_URL: ${APP_URL:?APP_URL in .env setzen}
+      TZ: ${TZ:-Europe/Berlin}
+      MASTER_KEY_FILE: /run/secrets/master_key
+      GOTENBERG_URL: http://gotenberg:3000
+      BACKUP_DIR: /backups
+    secrets:
+      - master_key
+    ports:
+      # Nur lokal binden; HTTPS übernimmt der Reverse Proxy (Caddy, Traefik, nginx)
+      - "${BIND:-127.0.0.1}:${HOST_PORT:-8080}:8080"
+    volumes:
+      - paraph-data:/data
+      - ${BACKUP_PATH:-./backups}:/backups
+    read_only: true
+    tmpfs:
+      - /tmp:size=128m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    mem_limit: 1g
+    pids_limit: 256
+    depends_on:
+      - gotenberg
+    networks: [frontend, convert]
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "5" }
+
+  # Umwandlung von Word/ODT in PDF – isoliert, ohne Internetzugang, ohne Zugriff auf Paraph-Daten
+  gotenberg:
+    image: gotenberg/gotenberg:8
+    restart: unless-stopped
+    command:
+      - gotenberg
+      - --chromium-disable-javascript=true
+      - --api-timeout=120s
+      - --libreoffice-auto-start=true
+    networks: [convert]
+    read_only: false
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 1g
+    pids_limit: 512
+
+networks:
+  frontend: {}
+  convert:
+    internal: true
+
+secrets:
+  master_key:
+    file: ./secrets/master.key
+
+volumes:
+  paraph-data:

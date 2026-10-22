@@ -1,0 +1,3 @@
+#!/bin/sh
+# Kommandozeile im Container: paraph health | backup | verify-backup | restore | setup-code | reset-link | verify-audit
+exec node /app/dist/server/cli.js "$@"
