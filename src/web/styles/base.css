@@ -1,0 +1,123 @@
+/* Paraph – Designsystem „Schreibtisch und Bogen“.
+   Tokens: kühler Tischgrund, weiße Bögen, Eisengallus-Blauschwarz, Königsblau als Tinte. */
+:root {
+  --desk: #eceef3;
+  --desk-2: #e2e5ec;
+  --paper: #ffffff;
+  --ink: #161a2e;
+  --ink-2: #3c4258;
+  --ink-3: #6b7189;
+  --ink-4: #9aa0b4;
+  --rule: #dfe2ea;
+  --rule-2: #cfd3de;
+  --tinte: #2338e0;
+  --tinte-2: #1a2bb8;
+  --tinte-soft: #e8ebfe;
+  --tinte-glow: rgba(35, 56, 224, 0.18);
+  --done: #0e7c55;
+  --done-soft: #e3f3ec;
+  --wait: #a8660b;
+  --wait-soft: #fbf0dc;
+  --stop: #c2362b;
+  --stop-soft: #fbe6e3;
+  --mute-soft: #eef0f4;
+
+  --font-display: 'Newsreader', 'Iowan Old Style', Georgia, serif;
+  --font-ui: 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  --r-sm: 6px;
+  --r: 10px;
+  --r-lg: 16px;
+  --sheet-shadow: 0 1px 0 rgba(22, 26, 46, 0.04), 0 1px 2px rgba(22, 26, 46, 0.06), 0 8px 24px -12px rgba(22, 26, 46, 0.18);
+  --pop-shadow: 0 2px 4px rgba(22, 26, 46, 0.06), 0 18px 48px -12px rgba(22, 26, 46, 0.32);
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --sidebar: 232px;
+  color-scheme: light;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+html {
+  -webkit-text-size-adjust: 100%;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+body {
+  margin: 0;
+  background: var(--desk);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 15px;
+  line-height: 1.5;
+  font-feature-settings: 'ss01', 'cv11';
+}
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+a {
+  color: var(--tinte);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+img,
+svg,
+canvas {
+  display: block;
+}
+:focus-visible {
+  outline: 2px solid var(--tinte);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+::selection {
+  background: var(--tinte-soft);
+}
+.mono {
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+  letter-spacing: -0.01em;
+}
+.display {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: -0.015em;
+}
+.muted {
+  color: var(--ink-3);
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+p {
+  margin: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}

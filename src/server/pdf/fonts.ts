@@ -42,7 +42,7 @@ export class FontChain {
       regular: ['@fontsource/geist', 'geist', 400],
       semibold: ['@fontsource/geist', 'geist', 600],
       mono: ['@fontsource/geist-mono', 'geist-mono', 400],
-      serif: ['@fontsource/instrument-serif', 'instrument-serif', 400],
+      serif: ['@fontsource/newsreader', 'newsreader', 400],
     };
     const [pkg, fam, w] = spec[role];
     const files = load(pkg, fam, w);

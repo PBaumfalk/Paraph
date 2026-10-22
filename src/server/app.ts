@@ -106,7 +106,7 @@ export async function buildApp(ctx: Ctx): Promise<FastifyInstance> {
       wildcard: false,
       index: false,
       setHeaders: (res: any, path: string) => {
-        if (/\/assets\//.test(path)) res.setHeader('cache-control', 'public, max-age=31536000, immutable');
+        if (/\/assets\//.test(path)) (res.header ?? res.setHeader).call(res, 'cache-control', 'public, max-age=31536000, immutable');
       },
     });
   }

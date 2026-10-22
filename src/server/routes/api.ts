@@ -60,6 +60,13 @@ export function apiRoutes(app: FastifyInstance, ctx: Ctx) {
     };
   });
 
+  app.patch('/api/v1/me', async (req) => {
+    const pr = userOnly(req);
+    const b = z.object({ name: z.string().trim().min(1).max(120).optional(), locale: z.enum(['de', 'en']).optional() }).parse(req.body);
+    ctx.db.prepare('UPDATE users SET name = COALESCE(?, name), locale = COALESCE(?, locale) WHERE id = ?').run(b.name ?? null, b.locale ?? null, pr.userId);
+    return { ok: true };
+  });
+
   // ───────────── Vorgänge ─────────────
   app.get('/api/v1/envelopes', async (req) => {
     const pr = auth(req);
@@ -741,6 +748,30 @@ export function apiRoutes(app: FastifyInstance, ctx: Ctx) {
     const rows = ctx.db.prepare(`SELECT a.*, u.name AS user_name FROM activity a LEFT JOIN users u ON u.id = a.user_id WHERE a.org_id = ? ORDER BY a.id DESC LIMIT 200`).all(pr.orgId) as any[];
     const events = ctx.db.prepare(`SELECT ae.envelope_id, ae.ts, ae.type, ae.actor, e.title FROM audit_events ae JOIN envelopes e ON e.id = ae.envelope_id WHERE ae.org_id = ? AND e.test_mode = 0 ORDER BY ae.id DESC LIMIT 200`).all(pr.orgId) as any[];
     return { activity: rows.map((r) => ({ ...r, detail: JSON.parse(r.detail) })), envelope_events: events.map((e) => ({ ...e, actor: JSON.parse(e.actor) })) };
+  });
+
+  // ───────────── Systemzustand (Instanz-Administration) ─────────────
+  app.get('/api/v1/system', async (req) => {
+    const pr = userOnly(req);
+    if (!pr.instanceAdmin) throw forbidden('Nur für Instanz-Administratoren.');
+    const lastBackup = ctx.db.prepare(`SELECT value FROM meta WHERE key = 'last_backup'`).get() as any;
+    const failedJobs = ctx.db.prepare(`SELECT type, last_error, finished_at, run_at FROM jobs WHERE status = 'failed' ORDER BY run_at DESC LIMIT 10`).all();
+    const failedMails = (ctx.db.prepare(`SELECT COUNT(*) AS n FROM emails WHERE status = 'failed'`).get() as any).n;
+    return {
+      version: ctx.cfg.version,
+      storage: ctx.cfg.s3 ? 's3' : 'local',
+      master_key: ctx.cfg.masterKeySource,
+      smtp: !!ctx.cfg.smtp,
+      office_conversion: !!ctx.cfg.gotenbergUrl,
+      timestamp_authority: ctx.cfg.tsaUrl ?? null,
+      oidc: ctx.cfg.oidc ? { issuer: ctx.cfg.oidc.issuer, name: ctx.cfg.oidc.name } : null,
+      sms: !!ctx.cfg.sms,
+      qes: ctx.cfg.qes ? { name: ctx.cfg.qes.name, base_url: ctx.cfg.qes.baseUrl } : null,
+      backup: { interval_hours: ctx.cfg.backup.intervalHours, keep: ctx.cfg.backup.keep, last: lastBackup ? JSON.parse(lastBackup.value) : null },
+      failed_jobs: failedJobs,
+      failed_mails: failedMails,
+      counts: Object.fromEntries(['users', 'orgs', 'envelopes', 'templates', 'blobs'].map((t) => [t, (ctx.db.prepare(`SELECT COUNT(*) AS n FROM ${t}`).get() as any).n])),
+    };
   });
 
   // ───────────── Formhinweise (Katalog) ─────────────
