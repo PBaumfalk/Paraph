@@ -1,0 +1,34 @@
+# Caddy vor Paraph: HTTPS mit automatischem Zertifikat (Let's Encrypt), HTTP→HTTPS-Weiterleitung.
+# DOMAIN und ACME_EMAIL kommen aus .env.
+{
+	email {$ACME_EMAIL}
+	admin off
+}
+
+{$DOMAIN} {
+	encode zstd gzip
+	# Uploads bis 60 MB (Paraph begrenzt zusätzlich per MAX_UPLOAD_MB)
+	request_body {
+		max_size 64MB
+	}
+	# Caddy übernimmt X-Forwarded-For nicht vom Client, sondern setzt die echte Adresse (ein Hop → TRUST_PROXY=true)
+	reverse_proxy paraph:8080 {
+		flush_interval -1
+	}
+	header {
+		-Server
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+	}
+	log {
+		output stdout
+		format filter {
+			wrap console
+			# Signaturlinks und Einladungstokens nicht ins Zugriffsprotokoll schreiben
+			fields {
+				request>uri regexp "/(s|embed/s|invite|reset|f)/[A-Za-z0-9_-]+" "/$1/…"
+				request>headers>Cookie delete
+				request>headers>Authorization delete
+			}
+		}
+	}
+}

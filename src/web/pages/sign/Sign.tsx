@@ -710,10 +710,15 @@ function ReviewSheet({ view, pending, onClose, onFix, submit }: { view: any; pen
             <div className="consent-box">
               <p>{c.statement}</p>
               <p className="muted">{c.electronic}</p>
+              {view.org.privacy_url && (
+                <p className="muted">
+                  <a href={view.org.privacy_url} target="_blank" rel="noopener noreferrer">{t('Hinweise zum Datenschutz ({org})', { org: view.org.name })}</a>
+                </p>
+              )}
             </div>
             <label className="check consent-check">
               <input type="checkbox" checked={accepted} onChange={(e) => setAccepted(e.target.checked)} />
-              <span>{t('Ich habe die Dokumente gelesen und stimme der Erklärung zu.')}</span>
+              <span>{t('Ich stimme der obigen Erklärung zu.')}</span>
             </label>
             <p className="hint">
               {view.documents.map((d: any) => (

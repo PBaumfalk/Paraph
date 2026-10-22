@@ -26,6 +26,8 @@ export interface OrgSettings {
   embedOrigins: string[];
   timezone: string;
   locale: 'de' | 'en';
+  /** Datenschutzhinweise nach Art. 13 DSGVO für Unterzeichner (Link auf der Signaturseite) */
+  privacyUrl: string | null;
 }
 
 export const DEFAULT_BRANDING: Branding = { accent: '#3D5AFE' };
@@ -39,6 +41,7 @@ export const DEFAULT_SETTINGS: OrgSettings = {
   embedOrigins: [],
   timezone: 'Europe/Berlin',
   locale: 'de',
+  privacyUrl: null,
 };
 
 export interface OrgRow {

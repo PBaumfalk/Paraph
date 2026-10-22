@@ -26,7 +26,7 @@ const AUTH_LABEL: Record<string, { de: [string, string]; en: [string, string] }>
   email_otp: { de: ['E-Mail-Code', 'Zugriff auf das E-Mail-Postfach zum Zeitpunkt der Prüfung (kein Identitätsnachweis)'], en: ['Email code', 'Access to the mailbox at the time of the check (not proof of identity)'] },
   sms_otp: { de: ['SMS-Code', 'Zugriff auf die Mobilnummer zum Zeitpunkt der Prüfung (kein Identitätsnachweis)'], en: ['SMS code', 'Access to the mobile number at the time of the check (not proof of identity)'] },
   access_code: { de: ['Zugangscode', 'Kenntnis eines separat mitgeteilten Codes (kein Identitätsnachweis)'], en: ['Access code', 'Knowledge of a separately shared code (not proof of identity)'] },
-  in_person_host: { de: ['Vor Ort', 'Identität durch die gastgebende Person vor Ort geprüft'], en: ['In person', 'Identity checked in person by the host'] },
+  in_person_host: { de: ['Vor Ort', 'Vor Ort auf dem Gerät der gastgebenden Person unterschrieben; diese war zur persönlichen Identitätsprüfung angehalten (Art der Prüfung nicht protokolliert)'], en: ['In person', 'Signed in person on the host’s device; the host was instructed to check identity in person (method of check not logged)'] },
 };
 
 function displayValue(f: any, v: string, locale: 'de' | 'en'): string {

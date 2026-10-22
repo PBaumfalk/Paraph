@@ -7,8 +7,8 @@ const TEXTS: Record<'de' | 'en', Record<ConsentKind, { action: string; statement
   de: {
     signer: {
       action: 'Verbindlich unterschreiben',
-      statement: 'Ich unterschreibe die oben angezeigten Dokumente in genau dieser Fassung. Meine Angaben und meine Unterschrift sollen dieselbe Wirkung haben, als hätte ich sie selbst abgegeben.',
-      electronic: 'Ich bin einverstanden, diese Erklärung elektronisch abzugeben. Es handelt sich um eine einfache elektronische Signatur (EES); der Ablauf wird mit Zeitpunkt und technischen Merkmalen protokolliert.',
+      statement: 'Ich unterschreibe die oben angezeigten Dokumente in genau dieser Fassung. Mit „Verbindlich unterschreiben“ gebe ich die darin enthaltenen Erklärungen als meine eigenen ab.',
+      electronic: 'Ich bin einverstanden, diese Erklärung elektronisch abzugeben. Es handelt sich um eine einfache elektronische Signatur (EES), nicht um eine qualifizierte elektronische Signatur; wo das Gesetz Schriftform oder notarielle Form verlangt, genügt sie nicht. Zum Nachweis werden Zeitpunkte, IP-Adresse, Browserkennung, der Zugangsweg und mein Unterschriftsbild protokolliert. Nach Abschluss erhalte ich eine Kopie der unterschriebenen Dokumente.',
     },
     witness: {
       action: 'Als Zeuge unterschreiben',
@@ -29,8 +29,8 @@ const TEXTS: Record<'de' | 'en', Record<ConsentKind, { action: string; statement
   en: {
     signer: {
       action: 'Sign',
-      statement: 'I sign the documents shown above in exactly this version. My entries and signature shall have the same effect as if I had made them myself.',
-      electronic: 'I agree to make this declaration electronically. This is a simple electronic signature (SES); the process is logged with time and technical details.',
+      statement: 'I sign the documents shown above in exactly this version. By clicking “Sign” I make the declarations contained therein as my own.',
+      electronic: 'I agree to make this declaration electronically. This is a simple electronic signature (SES), not a qualified electronic signature; where the law requires written or notarial form, it is not sufficient. As evidence, times, IP address, browser identification, the access method and my signature image are logged. After completion I will receive a copy of the signed documents.',
     },
     witness: {
       action: 'Sign as witness',

@@ -1,11 +1,16 @@
-# Lokale Testdienste (nie produktiv): Mailpit fängt alle E-Mails ab.
-# docker compose -f docker-compose.yml -f docker-compose.test.yml up -d
+# Lokale Testdienste (nie produktiv): Mailpit fängt alle E-Mails ab – mit erzwungenem STARTTLS und Anmeldung,
+# damit der Test denselben Weg nimmt wie ein echter Mailserver.
+# Zertifikate erzeugt scripts/docker-e2e.mjs unter TEST_CERTS (ca.pem, mail.pem, mail.key, auth).
 services:
   mailpit:
     image: axllent/mailpit:v1.27
+    command: ["--smtp-tls-cert", "/certs/mail.pem", "--smtp-tls-key", "/certs/mail.key", "--smtp-require-starttls", "--smtp-auth-file", "/certs/auth"]
+    volumes: ["${TEST_CERTS:?TEST_CERTS setzen}:/certs:ro"]
     ports: ["127.0.0.1:${MAILPIT_PORT:-8025}:8025"]
-    networks: [frontend]
+    networks:
+      frontend:
+        aliases: [mail.test]
   paraph:
     environment:
-      SMTP_URL: smtp://mailpit:1025
-      MAIL_FROM: "Paraph Test <paraph@test.local>"
+      NODE_EXTRA_CA_CERTS: /certs/ca.pem
+    volumes: ["${TEST_CERTS:?TEST_CERTS setzen}:/certs:ro"]

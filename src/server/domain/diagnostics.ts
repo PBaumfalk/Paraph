@@ -38,6 +38,8 @@ export async function runDiagnostics(ctx: Ctx, opts: { deep?: boolean } = {}): P
   add('trust_proxy', 'Instanz', 'Reverse Proxy', cfg.trustProxy ? 'ok' : cfg.appUrl.startsWith('https://') ? 'warn' : 'info',
     cfg.trustProxy ? `X-Forwarded-For wird ausgewertet (${Array.isArray(cfg.trustProxy) ? cfg.trustProxy.join(', ') : typeof cfg.trustProxy === 'number' ? `${cfg.trustProxy} Hop(s)` : 'alle'})` : 'TRUST_PROXY aus – hinter einem Proxy stünde im Audit-Trail die IP des Proxys.');
   const setupOpen = !(ctx.db.prepare('SELECT 1 FROM users LIMIT 1').get());
+  const orgsWithoutPrivacy = (ctx.db.prepare(`SELECT name FROM orgs WHERE json_extract(settings, '$.privacyUrl') IS NULL`).all() as any[]).map((o) => o.name);
+  if (orgsWithoutPrivacy.length) add('privacy', 'Instanz', 'Datenschutzhinweise (Art. 13 DSGVO)', 'warn', `Kein Link auf der Signaturseite für: ${orgsWithoutPrivacy.join(', ')} (Einstellungen → Organisation).`);
   if (setupOpen) add('setup', 'Instanz', 'Ersteinrichtung', 'warn', 'Noch kein Konto angelegt – die Einrichtung unter /setup ist offen.');
 
   // ── Schlüssel

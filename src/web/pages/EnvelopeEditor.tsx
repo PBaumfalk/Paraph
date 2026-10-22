@@ -522,7 +522,7 @@ function SendDialog({ env, recs, onClose, onSent }: { env: any; recs: RecDraft[]
           {warnings.length > 0 && (
             <label className="check ack">
               <input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} />
-              <span>{blocking.length ? t('Mir ist bewusst, dass eine elektronische Unterschrift für dieses Dokument voraussichtlich nicht genügt. Ich versende es trotzdem, z. B. als Entwurf oder Vorabfassung.') : t('Ich habe den Formhinweis gelesen und versende mit einfacher elektronischer Signatur.')} {t('Die Bestätigung wird protokolliert.')}</span>
+              <span>{blocking.length ? t('Mir ist bewusst, dass eine elektronische Unterschrift für dieses Dokument nach dem Katalog nicht genügt. Ich versende es trotzdem, z. B. als Entwurf oder Vorabfassung.') : t('Ich habe den Formhinweis gelesen. Mir ist bewusst, dass die gesetzliche Form mit einer einfachen elektronischen Signatur nicht gewahrt wird.')} {t('Die Bestätigung wird protokolliert.')}</span>
             </label>
           )}
           {warnings.length === 0 && classes.length > 0 && <Callout kind="done">{t('Für die gewählte Dokumentart genügt nach dem Katalog eine einfache elektronische Signatur.')}</Callout>}

@@ -163,7 +163,7 @@ export function loadConfig(overrides: Partial<Config> = {}): Config {
     anchorIntervalMinutes: Math.max(5, int('ANCHOR_INTERVAL_MINUTES', 60)),
     metricsToken: env('METRICS_TOKEN'),
     devMode: bool('DEV_MODE', false),
-    version: process.env.PARAPH_BUILD_VERSION ?? '0.1.0-dev',
+    version: process.env.PARAPH_BUILD_VERSION ?? '0.2.0-dev',
     ...overrides,
   };
   cfg.masterKey = masterKey;

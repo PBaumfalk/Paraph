@@ -65,7 +65,7 @@ test('C: Signieren auf dem Smartphone mit Finger, Pflichtfeldern, Checkbox und D
   await page.getByRole('button', { name: 'Übernehmen' }).tap();
   await expect(page.getByText('Alles ausgefüllt')).toBeVisible();
   await page.getByRole('button', { name: 'Abschließen' }).tap();
-  await page.getByLabel('Ich habe die Dokumente gelesen und stimme der Erklärung zu.').check();
+  await page.getByLabel('Ich stimme der obigen Erklärung zu.').check();
   await page.getByRole('button', { name: 'Verbindlich unterschreiben' }).tap();
   await expect(page.getByRole('heading', { name: 'Unterschrieben' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Unterschriebenes Dokument' })).toBeVisible({ timeout: 20_000 });

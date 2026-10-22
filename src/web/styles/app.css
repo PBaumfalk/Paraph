@@ -923,3 +923,74 @@
 .md p {
   margin: 0 0 10px;
 }
+
+/* ───────── Systemdiagnose ───────── */
+.checks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--rule);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+.check {
+  display: grid;
+  grid-template-columns: 26px 1fr;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--rule);
+  font-size: 14px;
+}
+.check:last-child {
+  border-bottom: 0;
+}
+.check-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--mute-soft);
+  color: var(--ink-3);
+}
+.check-ok .check-icon {
+  background: var(--done-soft);
+  color: var(--done);
+}
+.check-warn .check-icon {
+  background: var(--wait-soft);
+  color: var(--wait);
+}
+.check-fail .check-icon {
+  background: var(--stop-soft);
+  color: var(--stop);
+}
+.check-fail {
+  background: color-mix(in srgb, var(--stop-soft) 40%, transparent);
+}
+.users-table td {
+  vertical-align: top;
+}
+.users-table .pill {
+  margin-top: 4px;
+}
+@media (max-width: 720px) {
+  .users-table thead {
+    display: none;
+  }
+  .users-table tr {
+    display: block;
+    border-bottom: 1px solid var(--rule);
+    padding: 8px 0;
+  }
+  .users-table td {
+    display: block;
+    border: 0;
+    padding: 4px 18px;
+  }
+  .users-table td:last-child .row {
+    justify-content: flex-start !important;
+  }
+}

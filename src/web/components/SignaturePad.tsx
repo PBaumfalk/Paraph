@@ -252,7 +252,7 @@ export function SignaturePad({ purpose, name, onCancel, onAdopt }: { purpose: 's
           </label>
         )}
         {err && <p className="error-text">{err}</p>}
-        <p className="hint">{t('Mit „Übernehmen“ wird das Bild Ihrer Unterschrift den Feldern zugeordnet. Rechtlich verbindlich wird es erst mit der abschließenden Bestätigung.')}</p>
+        <p className="hint">{t('Mit „Übernehmen“ wird das Bild Ihrer Unterschrift den Feldern zugeordnet. Ihre Erklärung geben Sie erst mit der abschließenden Bestätigung ab.')}</p>
       </div>
     </Dialog>
   );

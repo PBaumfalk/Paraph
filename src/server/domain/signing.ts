@@ -146,7 +146,7 @@ function requireActive(sc: SignerCtx) {
 }
 
 function requireAuth(sc: SignerCtx) {
-  if (sc.rec.auth_method !== 'none' && !sc.session.authenticated) throw forbidden('Bitte bestätigen Sie zuerst Ihre Identität.');
+  if (sc.rec.auth_method !== 'none' && !sc.session.authenticated) throw forbidden('Bitte bestätigen Sie zuerst Ihren Zugang mit dem Code.');
 }
 
 // ───────────────────────────── Identitätsprüfung ─────────────────────────────
@@ -174,7 +174,8 @@ export async function requestOtp(ctx: Ctx, sc: SignerCtx) {
   if (method === 'email_otp') {
     queueMail(ctx, { orgId: sc.env.org_id, envelopeId: sc.env.id, recipientId: sc.rec.id, to: sc.rec.email, kind: 'otp', locale: sc.env.locale, vars: { code, title: sc.env.title }, suppress: !!sc.env.test_mode });
   } else {
-    await sendSms(ctx, sc.rec.phone, `${code} ist Ihr Bestätigungscode für „${sc.env.title.slice(0, 60)}“. Gültig 10 Minuten.`);
+    // Kein Dokumenttitel an den SMS-Anbieter (Verschwiegenheit, § 43a Abs. 2 BRAO)
+    await sendSms(ctx, sc.rec.phone, `${code} ist Ihr Bestätigungscode für ${getOrg(ctx, sc.env.org_id).name.slice(0, 60)}. Gültig 10 Minuten.`);
   }
   tx(ctx.db, () => appendAudit(ctx.db, sc.env.id, sc.env.org_id, 'recipient.otp_sent', recActor(sc.rec), { channel: method === 'sms_otp' ? 'sms' : 'email', to: method === 'sms_otp' ? maskPhone(sc.rec.phone) : maskEmail(sc.rec.email) }));
   return { channel: method === 'sms_otp' ? 'sms' : 'email', to: method === 'sms_otp' ? maskPhone(sc.rec.phone) : maskEmail(sc.rec.email), testCode: sc.env.test_mode ? code : undefined };
@@ -251,7 +252,7 @@ export function signerView(ctx: Ctx, sc: SignerCtx) {
       allow_delegation: !!sc.env.allow_delegation,
       sender: senderName(ctx, sc.env),
     },
-    org: { name: org.name, accent: org.branding.accent, logo: org.branding.logoBlobId ? `/api/public/orgs/${org.id}/logo` : null },
+    org: { name: org.name, accent: org.branding.accent, logo: org.branding.logoBlobId ? `/api/public/orgs/${org.id}/logo` : null, privacy_url: org.settings.privacyUrl ?? null },
     me: { id: sc.rec.id, name: sc.rec.name, email: sc.rec.email, kind: sc.rec.kind, auth_method: sc.rec.auth_method, authenticated: authed, in_person: sc.session.kind === 'inperson' },
     progress: recs
       .filter((r) => r.kind !== 'viewer')
@@ -515,6 +516,7 @@ export function complete(ctx: Ctx, sc0: SignerCtx, input: CompleteInput, meta: R
       consent_version: consent.version,
       consent_sha256: sha256Hex(consent.full),
       consent_text: consent.full,
+      privacy_url: getOrg(ctx, env.org_id).settings.privacyUrl ?? null,
       action: consent.action,
       ip: meta.ip,
       user_agent: meta.ua.slice(0, 300),

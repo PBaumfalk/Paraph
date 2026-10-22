@@ -539,6 +539,7 @@ export function apiRoutes(app: FastifyInstance, ctx: Ctx) {
             embedOrigins: z.array(z.string().url().max(200)).max(20).optional(),
             timezone: z.string().max(60).optional(),
             locale: z.enum(['de', 'en']).optional(),
+            privacyUrl: z.string().url().max(300).refine((u) => u.startsWith('https://') || u.startsWith('http://localhost'), 'Bitte eine https-Adresse angeben').nullable().optional(),
           })
           .optional(),
       })

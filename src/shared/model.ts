@@ -100,4 +100,4 @@ export const SIGNATURE_LEVELS = {
   },
 } as const;
 
-export const CONSENT_VERSION = '2026-10-1';
+export const CONSENT_VERSION = '2026-10-2';

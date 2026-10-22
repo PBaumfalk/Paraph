@@ -172,6 +172,12 @@ function Org() {
           </div>
           <label className="check"><input type="checkbox" checked={s.appendCertificate} onChange={(e) => setS({ ...s, appendCertificate: e.target.checked })} /> {t('Abschlussbestätigung an das fertige PDF anhängen')}</label>
           <label className="check"><input type="checkbox" checked={s.attachCompletedPdf} onChange={(e) => setS({ ...s, attachCompletedPdf: e.target.checked })} /> {t('Fertiges PDF an die Abschluss-E-Mail anhängen (sonst nur persönlicher Link)')}</label>
+          <p className="hint" style={{ marginTop: -4 }}>{t('Wo Textform genügt (z. B. § 3a RVG, Gewerbemiete), sollte jede Partei das unterschriebene PDF dauerhaft erhalten – ein Link allein ist dafür möglicherweise nicht ausreichend. Rechtliche Bewertung: docs/recht/FREIGABELISTE.md.')}</p>
+          <div className="field">
+            <label className="label">{t('Datenschutzhinweise für Unterzeichner (Art. 13 DSGVO)')}</label>
+            <input className="input" type="url" placeholder="https://kanzlei.example/datenschutz" value={s.privacyUrl ?? ''} onChange={(e) => setS({ ...s, privacyUrl: e.target.value || null })} />
+            <span className="hint">{t('Wird auf der Signaturseite neben der Erklärung verlinkt.')}</span>
+          </div>
           <div className="field">
             <label className="label">{t('Aufbewahrung')}</label>
             <select className="select" value={s.retentionDays ?? ''} onChange={(e) => setS({ ...s, retentionDays: e.target.value ? Number(e.target.value) : null })} style={{ maxWidth: 420 }}>
@@ -515,36 +521,161 @@ function Trust() {
   );
 }
 
+const CHECK_ICON: Record<string, string> = { ok: '✓', warn: '!', fail: '✕', info: 'i' };
+
+function Checks({ checks }: { checks: any[] }) {
+  const areas = [...new Set(checks.map((c) => c.area))];
+  return (
+    <div className="stack">
+      {areas.map((a) => (
+        <div key={a}>
+          <div className="label" style={{ marginBottom: 6 }}>{t(a)}</div>
+          <ul className="checks">
+            {checks.filter((c) => c.area === a).map((c) => (
+              <li key={c.id} className={`check check-${c.status}`}>
+                <span className="check-icon" aria-label={c.status}>{CHECK_ICON[c.status]}</span>
+                <div><strong>{t(c.label)}</strong><div className="hint" style={{ overflowWrap: 'anywhere' }}>{c.detail}</div></div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function SystemPage() {
   const q = useQuery({ queryKey: ['system'], queryFn: () => get('/api/v1/system') });
+  const { me } = useSession();
+  const save = useSaver();
+  const toast = useToast();
+  const [deep, setDeep] = useState<any>(null);
+  const [busy, setBusy] = useState('');
+  const [mailTo, setMailTo] = useState('');
   if (q.isLoading) return <Spinner />;
+  if (q.isError) return <Callout kind="stop">{errorText(q.error)}</Callout>;
   const s = q.data;
+  const diag = deep ?? s.diagnostics;
+  const run = async (key: string, fn: () => Promise<any>) => {
+    setBusy(key);
+    try {
+      return await fn();
+    } finally {
+      setBusy('');
+    }
+  };
   return (
     <>
-      <Section title={t('Instanz')}>
-        <dl className="integrity" style={{ padding: 0 }}>
-          <dt>{t('Version')}</dt><dd className="mono">{s.version}</dd>
-          <dt>{t('Dokumentablage')}</dt><dd>{s.storage === 's3' ? 'S3' : t('lokal (verschlüsselt, AES-256-GCM)')}</dd>
-          <dt>{t('Hauptschlüssel')}</dt><dd>{s.master_key === 'generated' ? <span className="error-text">{t('automatisch erzeugt in DATA_DIR/secrets – für den Produktivbetrieb MASTER_KEY_FILE setzen und getrennt sichern')}</span> : t('aus Umgebung/Secret')}</dd>
-          <dt>{t('Datensätze')}</dt><dd>{Object.entries(s.counts).map(([k, v]) => `${k}: ${v}`).join(' · ')}</dd>
-        </dl>
+      <Section
+        title={t('Betriebszustand')}
+        sub={deep ? t('Tiefenprüfung vom {d}', { d: fmtDate(deep.generated_at) }) : t('Schnellprüfung – die Tiefenprüfung kontaktiert Mailserver, Zeitstempeldienst, SSO und Speicher.')}
+        action={<button className="btn" disabled={!!busy} onClick={() => run('deep', async () => { try { setDeep(await post('/api/v1/system/diagnose')); } catch (e) { toast(errorText(e), 'error'); } })}>{busy === 'deep' ? <Spinner size={16} /> : <ShieldCheck />} {t('Tiefenprüfung')}</button>}
+      >
+        <div style={{ marginBottom: 14 }}>
+          {diag.status === 'ok' && <Callout kind="done">{t('Alles in Ordnung.')}</Callout>}
+          {diag.status === 'warn' && <Callout kind="warn">{t('Betriebsbereit, aber mit Hinweisen – siehe unten.')}</Callout>}
+          {diag.status === 'fail' && <Callout kind="stop">{t('Es gibt Fehler, die vor dem Produktivbetrieb behoben werden müssen.')}</Callout>}
+        </div>
+        <Checks checks={diag.checks} />
       </Section>
-      <Section title={t('Sicherung')}>
+      <Section title={t('E-Mail-Versand prüfen')} sub={t('Sendet sofort eine Test-E-Mail über den eingerichteten Mailserver.')}>
+        <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
+          <input className="input grow" type="email" placeholder={me?.principal.email} value={mailTo} onChange={(e) => setMailTo(e.target.value)} style={{ minWidth: 220 }} />
+          <button
+            className="btn"
+            disabled={!!busy}
+            onClick={() =>
+              run('mail', async () => {
+                const r = await post('/api/v1/system/test-mail', mailTo ? { to: mailTo } : {}).catch((e: any) => ({ ok: false, error: { message: errorText(e) } }));
+                if (r.ok) toast(t('Test-E-Mail angenommen ({r})', { r: r.response || 'OK' }));
+                else toast(r.error?.message ?? t('Versand fehlgeschlagen'), 'error');
+              })
+            }
+          >
+            {busy === 'mail' ? <Spinner size={16} /> : <Send />} {t('Test-E-Mail senden')}
+          </button>
+        </div>
+      </Section>
+      <Section
+        title={t('Sicherung')}
+        action={<button className="btn" disabled={!!busy} onClick={() => save(() => post('/api/v1/system/backup'), t('Sicherung wird erstellt'))}><Download /> {t('Jetzt sichern')}</button>}
+      >
         <dl className="integrity" style={{ padding: 0 }}>
           <dt>{t('Automatisch')}</dt><dd>{s.backup.interval_hours > 0 ? t('alle {h} Stunden, {k} werden aufbewahrt', { h: s.backup.interval_hours, k: s.backup.keep }) : t('aus')}</dd>
-          <dt>{t('Letzte Sicherung')}</dt><dd>{s.backup.last ? `${fmtDate(s.backup.last.at)} · ${s.backup.last.file}` : t('noch keine')}</dd>
+          <dt>{t('Letzte Sicherung')}</dt><dd>{s.backup.last ? `${fmtDate(s.backup.last.at)} · ${s.backup.last.file.split('/').pop()}` : t('noch keine')}</dd>
+          <dt>{t('Schlüsselmaterial')}</dt><dd>{s.backup.passphrase ? t('enthalten, geschützt durch die Wiederherstellungs-Passphrase') : <span className="error-text">{t('nicht enthalten – Hauptschlüssel getrennt aufbewahren oder BACKUP_PASSPHRASE_FILE einrichten')}</span>}</dd>
         </dl>
-        <p className="hint" style={{ marginTop: 10 }}>{t('Manuell: docker compose exec paraph paraph backup · Wiederherstellen: siehe Handbuch, Kapitel Sicherung.')}</p>
+        <p className="hint" style={{ marginTop: 10 }}>{t('Sicherungen sind vollständig verschlüsselt. Wiederherstellen: siehe Handbuch, Kapitel Sicherung.')}</p>
       </Section>
-      <Section title={t('Zustand')}>
-        {s.failed_jobs.length === 0 && s.failed_mails === 0 ? <Callout kind="done">{t('Keine fehlgeschlagenen Hintergrundaufgaben.')}</Callout> : (
+      <Section title={t('Hintergrundaufgaben und E-Mails')}>
+        {s.failed_jobs.length === 0 && s.failed_mails.length === 0 ? <Callout kind="done">{t('Keine fehlgeschlagenen Hintergrundaufgaben.')}</Callout> : (
           <div className="stack-sm">
-            {s.failed_mails > 0 && <Callout kind="warn">{t('{n} E-Mails konnten nicht versendet werden. SMTP-Einstellungen prüfen.', { n: s.failed_mails })}</Callout>}
-            {s.failed_jobs.map((j: any, i: number) => <div key={i} className="hint mono">{j.type}: {String(j.last_error).split('\n')[0]}</div>)}
+            {s.failed_jobs.map((j: any) => (
+              <div key={j.id} className="row" style={{ gap: 10, alignItems: 'flex-start' }}>
+                <div className="grow" style={{ minWidth: 0 }}><strong>{j.type}</strong><div className="hint mono" style={{ overflowWrap: 'anywhere' }}>{String(j.last_error).split('\n')[0]}</div></div>
+                <button className="btn btn-sm" onClick={() => save(() => post(`/api/v1/system/jobs/${j.id}/retry`), t('Wird erneut versucht'))}><RotateCw /> {t('Erneut versuchen')}</button>
+              </div>
+            ))}
+            {s.failed_mails.map((m: any) => (
+              <div key={m.id} className="hint"><strong>{m.to_addr}</strong> · {fmtDate(m.created_at)} · {m.last_error}</div>
+            ))}
           </div>
         )}
+        <p className="hint" style={{ marginTop: 10 }}>{t('Warteschlange')}: {s.worker.queued} · {t('in Wiederholung')}: {s.worker.retrying} · {t('überfällig')}: {s.worker.overdue}</p>
       </Section>
+      <InstanceUsers />
     </>
+  );
+}
+
+function InstanceUsers() {
+  const q = useQuery({ queryKey: ['admin-users'], queryFn: () => get('/api/v1/admin/users') });
+  const save = useSaver();
+  const { confirm, node } = useConfirm();
+  const [link, setLink] = useState<{ name: string; url: string } | null>(null);
+  const { me } = useSession();
+  if (q.isLoading) return <Spinner />;
+  return (
+    <Section title={t('Benutzerkonten der Instanz')} sub={t('Konten sperren, Zwei-Faktor zurücksetzen, Instanz-Administration vergeben. Rollen innerhalb einer Organisation verwalten Sie unter „Team“.')}>
+      <div className="table-scroll" style={{ margin: '0 -18px' }}>
+        <table className="kv-table users-table">
+          <thead><tr><th>{t('Name')}</th><th>{t('Organisationen')}</th><th>{t('Anmeldung')}</th><th>{t('Zuletzt')}</th><th /></tr></thead>
+          <tbody>
+            {q.data.data.map((u: any) => (
+              <tr key={u.id} style={u.disabled_at ? { opacity: 0.55 } : undefined}>
+                <td><strong>{u.name}</strong><div className="hint">{u.email}</div>{u.is_instance_admin && <span className="pill">{t('Instanz-Admin')}</span>} {u.disabled_at && <span className="pill pill-stop">{t('gesperrt')}</span>}</td>
+                <td className="hint">{u.orgs.map((o: any) => `${o.name} (${roleLabel(o.role)})`).join(', ') || '—'}</td>
+                <td className="hint">{[u.has_password && t('Passwort'), u.sso && 'SSO', u.totp_enabled && '2FA'].filter(Boolean).join(' · ')}</td>
+                <td className="hint">{u.last_login ? fmtRelative(u.last_login) : '—'}</td>
+                <td>
+                  {u.id !== me?.principal.id && (
+                    <div className="row" style={{ gap: 6, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                      <button className="btn btn-sm" onClick={async () => {
+                        if (!u.disabled_at && !(await confirm({ title: t('Konto sperren?'), text: t('{name} wird sofort abgemeldet und kann sich nicht mehr anmelden. Von der Person angelegte API-Schlüssel verlieren ihre Wirkung.', { name: u.name }), action: t('Sperren'), danger: true }))) return;
+                        save(() => patch(`/api/v1/admin/users/${u.id}`, { disabled: !u.disabled_at }), u.disabled_at ? t('Entsperrt') : t('Gesperrt'));
+                      }}>{u.disabled_at ? t('Entsperren') : t('Sperren')}</button>
+                      {u.totp_enabled && <button className="btn btn-sm" onClick={async () => {
+                        if (!(await confirm({ title: t('Zwei-Faktor zurücksetzen?'), text: t('Nur nach sicherer Prüfung der Identität, z. B. bei verlorenem Telefon.'), action: t('Zurücksetzen') }))) return;
+                        save(() => post(`/api/v1/admin/users/${u.id}/reset-mfa`), t('Zwei-Faktor zurückgesetzt'));
+                      }}>{t('2FA zurücksetzen')}</button>}
+                      {!u.disabled_at && u.has_password && <button className="btn btn-sm" onClick={async () => { const r = await save(() => post(`/api/v1/admin/users/${u.id}/reset-link`), t('Link erstellt')); setLink({ name: u.name, url: r.url }); }}>{t('Passwort-Link')}</button>}
+                      <button className="btn btn-sm" onClick={() => save(() => patch(`/api/v1/admin/users/${u.id}`, { instance_admin: !u.is_instance_admin }))}>{u.is_instance_admin ? t('Admin entziehen') : t('Zum Admin')}</button>
+                    </div>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {link && (
+        <Dialog title={t('Link zum Zurücksetzen für {name}', { name: link.name })} onClose={() => setLink(null)} footer={<button className="btn btn-primary" onClick={() => { navigator.clipboard?.writeText(link.url); setLink(null); }}><Copy /> {t('Kopieren und schließen')}</button>}>
+          <p className="hint">{t('60 Minuten gültig. Geben Sie den Link nur auf sicherem Weg weiter.')}</p>
+          <input className="input mono" readOnly value={link.url} onFocus={(e) => e.target.select()} />
+        </Dialog>
+      )}
+      {node}
+    </Section>
   );
 }
 

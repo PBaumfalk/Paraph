@@ -200,7 +200,7 @@ export default function EnvelopePage() {
                     </div>
                   )}
                   {r.delivery?.status === 'queued' && r.delivery.attempts > 0 && (
-                    <div className="recipient-sub" style={{ color: 'var(--warn, #b26a00)', whiteSpace: 'normal' }}>
+                    <div className="recipient-sub" style={{ color: 'var(--wait)', whiteSpace: 'normal' }}>
                       {t('Versand wird wiederholt')} ({r.delivery.attempts}×){r.delivery.error ? `: ${r.delivery.error}` : ''}
                     </div>
                   )}

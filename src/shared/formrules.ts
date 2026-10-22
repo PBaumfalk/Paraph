@@ -229,7 +229,7 @@ export const FORM_RULES: FormRule[] = [
 
 export const LEVEL_TEXT: Record<MinLevel, { de: string; en: string; severity: 'info' | 'warn' | 'critical' }> = {
   NONE: { de: 'Keine gesetzliche Form', en: 'No statutory form', severity: 'info' },
-  TEXT: { de: 'Textform genügt – einfache elektronische Signatur reicht', en: 'Text form suffices', severity: 'info' },
+  TEXT: { de: 'Textform genügt – einfache elektronische Signatur reicht, wenn alle Parteien das unterschriebene PDF dauerhaft erhalten', en: 'Text form suffices – a simple electronic signature is enough if all parties durably receive the signed PDF', severity: 'info' },
   QES: { de: 'Schriftform – elektronisch nur mit QES', en: 'Written form – electronically only with QES', severity: 'warn' },
   PAPER: { de: 'Papier mit Originalunterschrift erforderlich bzw. empfohlen', en: 'Wet-ink paper signature required or recommended', severity: 'critical' },
   NOTARY: { de: 'Notarielle Beurkundung erforderlich', en: 'Notarisation required', severity: 'critical' },

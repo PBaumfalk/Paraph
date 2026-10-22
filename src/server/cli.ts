@@ -30,6 +30,20 @@ const scratchDir = (dataDir: string) => {
 
 async function main() {
   switch (cmd) {
+    case 'version': {
+      const { openDb, schemaVersion } = await import('./db/index.js');
+      const cfg = loadConfig();
+      let schema = '–';
+      try {
+        const Database = (await import('better-sqlite3')).default;
+        const db = new Database(join(cfg.dataDir, 'paraph.db'), { readonly: true, fileMustExist: true });
+        schema = String(schemaVersion(db));
+        db.close();
+      } catch {}
+      void openDb;
+      console.log(`Paraph ${cfg.version} (Datenbankschema ${schema})`);
+      return;
+    }
     case 'health': {
       const port = process.env.PORT ?? '8080';
       const res = await fetch(`http://127.0.0.1:${port}/api/health/ready`, { signal: AbortSignal.timeout(4000) }).catch(() => null);

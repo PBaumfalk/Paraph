@@ -1,10 +1,19 @@
-# Paraph – Start: ./scripts/init.sh (einmalig), dann: docker compose up -d
+# Paraph – Produktionsbetrieb mit Docker Compose.
+# Einrichtung: sudo ./scripts/install.sh   ·   Aktualisierung: sudo ./scripts/update.sh
 # Konfiguration in .env (Vorlage .env.example). Ausführlich: docs/handbuch/02-installation.md
+#
+# Profil „caddy“: Caddy als Reverse Proxy mit automatischem HTTPS (Let's Encrypt) auf Port 80/443.
+# Ohne Profil lauscht Paraph nur auf 127.0.0.1 – dann übernimmt ein vorhandener Proxy (nginx, Traefik) HTTPS.
+
+name: ${COMPOSE_PROJECT_NAME:-paraph}
 
 services:
   paraph:
-    image: ${PARAPH_IMAGE:-paraph:latest}
-    build: .
+    image: ${PARAPH_IMAGE:-paraph:local}
+    build:
+      context: .
+      args:
+        PARAPH_VERSION: ${PARAPH_VERSION:-0.2.0}
     restart: unless-stopped
     env_file:
       - path: ${PARAPH_ENV_FILE:-.env}
@@ -13,25 +22,28 @@ services:
       APP_URL: ${APP_URL:?APP_URL in .env setzen}
       TZ: ${TZ:-Europe/Berlin}
       MASTER_KEY_FILE: /run/secrets/master_key
+      BACKUP_PASSPHRASE_FILE: /run/secrets/backup_passphrase
       GOTENBERG_URL: http://gotenberg:3000
       BACKUP_DIR: /backups
     secrets:
       - master_key
+      - backup_passphrase
     ports:
-      # Nur lokal binden; HTTPS übernimmt der Reverse Proxy (Caddy, Traefik, nginx)
+      # Nur lokal binden; HTTPS übernimmt der Reverse Proxy (Profil „caddy“ oder vorhandener Proxy)
       - "${BIND:-127.0.0.1}:${HOST_PORT:-8080}:8080"
     volumes:
       - paraph-data:/data
       - ${BACKUP_PATH:-./backups}:/backups
     read_only: true
     tmpfs:
-      - /tmp:size=128m
+      - /tmp:size=256m
     security_opt:
       - no-new-privileges:true
     cap_drop:
       - ALL
-    mem_limit: 1g
+    mem_limit: ${PARAPH_MEM_LIMIT:-1g}
     pids_limit: 256
+    stop_grace_period: 30s
     depends_on:
       - gotenberg
     networks: [frontend, convert]
@@ -41,7 +53,7 @@ services:
 
   # Umwandlung von Word/ODT in PDF – isoliert, ohne Internetzugang, ohne Zugriff auf Paraph-Daten
   gotenberg:
-    image: gotenberg/gotenberg:8
+    image: gotenberg/gotenberg:8.38.1
     restart: unless-stopped
     command:
       - gotenberg
@@ -49,11 +61,45 @@ services:
       - --api-timeout=120s
       - --libreoffice-auto-start=true
     networks: [convert]
-    read_only: false
     security_opt:
       - no-new-privileges:true
     mem_limit: 1g
     pids_limit: 512
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+  # Optional: automatisches HTTPS. Start mit: docker compose --profile caddy up -d
+  caddy:
+    profiles: [caddy]
+    image: caddy:2.10.2-alpine
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN:-}
+      ACME_EMAIL: ${ACME_EMAIL:-}
+    ports:
+      - "${CADDY_HTTP_PORT:-80}:80"
+      - "${CADDY_HTTPS_PORT:-443}:443"
+      - "${CADDY_HTTPS_PORT:-443}:443/udp"
+    volumes:
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    depends_on:
+      - paraph
+    networks: [frontend]
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
 
 networks:
   frontend: {}
@@ -63,6 +109,10 @@ networks:
 secrets:
   master_key:
     file: ./secrets/master.key
+  backup_passphrase:
+    file: ./secrets/backup_passphrase
 
 volumes:
   paraph-data:
+  caddy-data:
+  caddy-config:

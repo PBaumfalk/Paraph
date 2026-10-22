@@ -63,7 +63,7 @@ test('A: Hochladen → Felder → Einladen → Unterschreiben → Herunterladen'
   await signer.getByRole('button', { name: 'Abschließen' }).click();
   const final = signer.getByRole('button', { name: 'Verbindlich unterschreiben' });
   await expect(final).toBeDisabled();
-  await signer.getByLabel('Ich habe die Dokumente gelesen und stimme der Erklärung zu.').check();
+  await signer.getByLabel('Ich stimme der obigen Erklärung zu.').check();
   await final.click();
   await expect(signer.getByRole('heading', { name: 'Unterschrieben' })).toBeVisible();
   await expect(signer.getByRole('button', { name: 'Unterschriebenes Dokument' })).toBeVisible({ timeout: 20_000 });
