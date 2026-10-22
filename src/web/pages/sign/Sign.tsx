@@ -367,7 +367,9 @@ function SignStep({ view, onDone, onDeclined, onError }: { view: any; onDone: ()
       setCurrent(f.key);
       const el = document.getElementById(`sf-${f.key}`);
       el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      setTimeout(() => activate(f), 380);
+      // Ankreuzen und Dateiauswahl nur durch bewusste Handlung der Person – nie automatisch
+      if (f.type !== 'checkbox' && f.type !== 'attachment') setTimeout(() => activate(f), 380);
+      else setTimeout(() => el?.focus(), 380);
     },
     [sigs, adopted],
   );

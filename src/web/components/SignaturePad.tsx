@@ -192,7 +192,8 @@ export function SignaturePad({ purpose, name, onCancel, onAdopt }: { purpose: 's
             }}
             onPointerMove={(e) => {
               if (!current.current) return;
-              const evs = (e.nativeEvent as any).getCoalescedEvents?.() ?? [e.nativeEvent];
+              const co = (e.nativeEvent as any).getCoalescedEvents?.() as PointerEvent[] | undefined;
+              const evs = co && co.length ? co : [e.nativeEvent];
               for (const ev of evs) {
                 const r = canvas.current!.getBoundingClientRect();
                 current.current.push([ev.clientX - r.left, ev.clientY - r.top, ev.pressure || 0.5]);
