@@ -309,6 +309,8 @@ export function removeMember(ctx: Ctx, p: Principal & { kind: 'user' }, userId: 
     ctx.db.prepare('UPDATE sessions SET revoked_at = ? WHERE user_id = ? AND org_id = ? AND revoked_at IS NULL').run(ctx.now().toISOString(), userId, p.orgId);
     // Private Vorlagen bleiben erhalten und gehen an die Organisation über
     ctx.db.prepare(`UPDATE templates SET visibility = 'org' WHERE org_id = ? AND owner_id = ? AND visibility = 'private'`).run(p.orgId, userId);
+    // Von der Person angelegte API-Schlüssel ausdrücklich widerrufen (sichtbar in der Schlüsselliste)
+    ctx.db.prepare('UPDATE api_keys SET revoked_at = ? WHERE org_id = ? AND created_by = ? AND revoked_at IS NULL').run(ctx.now().toISOString(), p.orgId, userId);
   });
   logActivity(ctx, { orgId: p.orgId, userId: p.userId }, 'member.removed', userId);
 }
@@ -343,6 +345,11 @@ export function principalFromApiKey(ctx: Ctx, key: string): Principal | null {
   if (!/^pk_(live|test)_[A-Za-z0-9_-]{30,60}$/.test(key)) return null;
   const k = ctx.db.prepare('SELECT * FROM api_keys WHERE key_hash = ?').get(hashToken(key)) as any;
   if (!k || k.revoked_at || (k.expires_at && new Date(k.expires_at) <= ctx.now())) return null;
+  // Schlüssel einer Person, die gesperrt oder nicht mehr Mitglied ist, verlieren ihre Wirkung
+  if (k.created_by) {
+    const ok = ctx.db.prepare('SELECT 1 FROM memberships m JOIN users u ON u.id = m.user_id WHERE m.org_id = ? AND m.user_id = ? AND u.disabled_at IS NULL').get(k.org_id, k.created_by);
+    if (!ok) return null;
+  }
   const now = ctx.now();
   if (!k.last_used_at || now.getTime() - new Date(k.last_used_at).getTime() > 60_000) ctx.db.prepare('UPDATE api_keys SET last_used_at = ? WHERE id = ?').run(now.toISOString(), k.id);
   return { kind: 'apikey', keyId: k.id, orgId: k.org_id, scopes: JSON.parse(k.scopes), mode: k.mode, name: k.name, createdBy: k.created_by };

@@ -18,6 +18,19 @@ export interface TimestampInfo {
   tsaCertSha256: string;
   serial: string;
   policy: string;
+  /** true = Kette zu einem konfigurierten Vertrauensanker (TSA_CA_FILE) geprüft; null = nicht geprüft (kein Anker eingerichtet) */
+  chainTrusted: boolean | null;
+}
+
+let trustAnchors: pkijs.Certificate[] | null = null;
+/** Vertrauensanker für Zeitstempeldienste (PEM-Bündel, z. B. Wurzel- und Zwischenzertifikate des Anbieters). */
+export function setTsaTrustAnchors(pem: string | null) {
+  if (!pem) {
+    trustAnchors = null;
+    return;
+  }
+  trustAnchors = [...pem.matchAll(/-----BEGIN CERTIFICATE-----([\s\S]+?)-----END CERTIFICATE-----/g)].map((m) => pkijs.Certificate.fromBER(new Uint8Array(Buffer.from(m[1].replace(/\s+/g, ''), 'base64'))));
+  if (!trustAnchors.length) throw new Error('TSA_CA_FILE enthält kein Zertifikat');
 }
 
 function subjectOf(cert: pkijs.Certificate) {
@@ -67,7 +80,15 @@ export async function verifyTimestampToken(token: pkijs.ContentInfo, expectedDig
   if (eku && !(eku.parsedValue as pkijs.ExtKeyUsage | undefined)?.keyPurposes?.includes(KP_TIMESTAMPING)) {
     throw new Error('Zeitstempel: Zertifikat ist nicht für Zeitstempel bestimmt');
   }
+  // Vertrauenskette: Ohne Anker ist nur belegt, DASS ein Dienst gestempelt hat – nicht, WELCHER vertrauenswürdige
+  let chainTrusted: boolean | null = null;
+  if (trustAnchors) {
+    const engine = new pkijs.CertificateChainValidationEngine({ trustedCerts: trustAnchors, certs: [signer, ...certs.filter((c) => c !== signer)], checkDate: tst.genTime });
+    const r = await engine.verify().catch(() => ({ result: false }) as any);
+    chainTrusted = !!r.result;
+  }
   return {
+    chainTrusted,
     genTime: tst.genTime.toISOString(),
     tsaSubject: subjectOf(signer),
     tsaCertSha256: createHash('sha256').update(Buffer.from(signer.toSchema(true).toBER(false))).digest('hex'),

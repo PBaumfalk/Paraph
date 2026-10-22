@@ -4,7 +4,7 @@ import type { Ctx } from './context.js';
 import { AppError, forbidden, unauthorized } from './lib/errors.js';
 import type { Principal } from './domain/authz.js';
 import { principalFromApiKey, principalFromSession, readSession, type SessionInfo } from './domain/users.js';
-import { canonicalJson, safeEqual, sha256Hex } from './lib/crypto.js';
+import { canonicalJson, safeEqual, sha256Hex, sealString, openString } from './lib/crypto.js';
 
 export const SESSION_COOKIE = 'paraph_session';
 export const SIGNER_COOKIE = 'paraph_signer';
@@ -87,13 +87,14 @@ export async function idempotent(ctx: Ctx, req: FastifyRequest, reply: FastifyRe
   if (prev) {
     if (prev.request_hash !== reqHash) throw new AppError(422, 'idempotency_mismatch', 'Idempotency-Key wurde bereits für eine andere Anfrage verwendet.');
     reply.header('idempotent-replayed', 'true');
-    return reply.code(prev.status_code).send(JSON.parse(prev.response));
+    return reply.code(prev.status_code).send(JSON.parse(openString(ctx.keys.secrets, prev.response, 'idem:' + scope + ':' + key)));
   }
   const r = await fn();
   if (r.status < 500) {
     ctx.db
       .prepare('INSERT OR IGNORE INTO idempotency_keys (scope, key, request_hash, status_code, response, created_at) VALUES (?, ?, ?, ?, ?, ?)')
-      .run(scope, key, reqHash, r.status, JSON.stringify(r.body ?? null), ctx.now().toISOString());
+      // Antworten können Signaturlinks enthalten → nur verschlüsselt zwischenspeichern
+      .run(scope, key, reqHash, r.status, sealString(ctx.keys.secrets, JSON.stringify(r.body ?? null), 'idem:' + scope + ':' + key), ctx.now().toISOString());
   }
   return reply.code(r.status).send(r.body);
 }

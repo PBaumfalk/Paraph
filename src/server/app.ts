@@ -52,7 +52,8 @@ export function csp(frameAncestors: string) {
 export async function buildApp(ctx: Ctx): Promise<FastifyInstance> {
   const app = Fastify({
     logger: false,
-    trustProxy: ctx.cfg.trustProxy,
+    // Zahl = vertrauenswürdige Proxy-Hops (von rechts gezählt); weiter links stehende X-Forwarded-For-Einträge sind vom Client frei wählbar
+    trustProxy: typeof ctx.cfg.trustProxy === 'number' ? ((_addr: string, hop: number) => hop < (ctx.cfg.trustProxy as number)) : ctx.cfg.trustProxy,
     bodyLimit: 2 * 1024 * 1024,
     requestIdHeader: false,
     genReqId: () => Math.random().toString(36).slice(2, 10),

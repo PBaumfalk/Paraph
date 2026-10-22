@@ -154,6 +154,7 @@ export function serializeEnvelope(ctx: Ctx, env: EnvelopeRow, opts: { withFields
       completed_at: r.completed_at,
       declined_at: r.declined_at,
       decline_reason: r.decline_reason,
+      delivery: lastDelivery(ctx, r.id),
     })),
     fields: opts.withFields !== false ? fieldsOf(ctx, env.id).map(serializeField) : undefined,
     result: result
@@ -167,6 +168,13 @@ export function serializeEnvelope(ctx: Ctx, env: EnvelopeRow, opts: { withFields
         }
       : null,
   };
+}
+
+/** Zustellstatus der letzten Einladung/Erinnerung an diese Person (für die Vorgangsansicht). */
+function lastDelivery(ctx: Ctx, recipientId: string) {
+  const m = ctx.db.prepare(`SELECT status, last_error, created_at, sent_at, attempts FROM emails WHERE recipient_id = ? AND (kind IS NULL OR kind IN ('signing_request','reminder','completed')) ORDER BY created_at DESC, rowid DESC LIMIT 1`).get(recipientId) as any;
+  if (!m) return null;
+  return { status: m.status as string, error: m.status === 'sent' ? null : m.last_error, attempts: m.attempts as number, queued_at: m.created_at, sent_at: m.sent_at };
 }
 
 export function serializeField(f: any) {
@@ -430,7 +438,7 @@ export const RecipientInput = z.object({
   phone: z.string().trim().max(40).regex(/^\+?[0-9 ()/-]{6,40}$/).nullable().optional(),
   routing_order: z.number().int().min(1).max(50).optional(),
   auth_method: z.enum(AUTH_METHODS).default('none'),
-  access_code: z.string().min(4).max(64).optional(),
+  access_code: z.string().min(6, 'Der Zugangscode muss mindestens 6 Zeichen haben.').max(64).optional(),
   witness_for: z.string().max(80).nullable().optional(),
 });
 export type RecipientInputT = z.infer<typeof RecipientInput>;
@@ -692,6 +700,8 @@ export function sendEnvelope(ctx: Ctx, p: Principal, envelopeId: string, opts: {
       });
     }
     ctx.db.prepare(`UPDATE envelopes SET status = 'sent', sent_at = ?, updated_at = ?, notify = ?, revision = revision + 1 WHERE id = ? AND status = 'draft'`).run(now, now, notify ? 1 : 0, envelopeId);
+    // Volltextauszug wird nur im Entwurf für Formhinweise gebraucht – danach nicht im Klartext aufbewahren
+    ctx.db.prepare(`UPDATE envelope_documents SET text_excerpt = '' WHERE envelope_id = ?`).run(envelopeId);
     ctx.db.prepare(`UPDATE recipients SET status = 'waiting' WHERE envelope_id = ? AND kind != 'viewer'`).run(envelopeId);
     ctx.db.prepare(`UPDATE recipients SET status = 'created' WHERE envelope_id = ? AND kind = 'viewer'`).run(envelopeId);
     // Feldvorbelegungen gelten als Teil des Dokuments, nicht als Eingabe des Empfängers
@@ -788,6 +798,8 @@ export function issueLink(ctx: Ctx, p: Principal, envelopeId: string, recipientI
     if (!['sent', 'opened'].includes(rec.status)) throw conflict('not_pending', 'Diese Person ist gerade nicht am Zug.');
     const token = secretToken();
     ctx.db.prepare('UPDATE recipients SET token_hash = ?, prev_token_hash = NULL, token_issued_at = ? WHERE id = ?').run(hashToken(token), ctx.now().toISOString(), rec.id);
+    // Widerruf wirkt sofort: auch bereits geöffnete Signatursitzungen enden
+    ctx.db.prepare('DELETE FROM signer_sessions WHERE recipient_id = ?').run(rec.id);
     appendAudit(ctx.db, e.id, e.org_id, 'recipient.link_issued', actorOf(p), { recipient_id: rec.id, previous_link_revoked: true });
     return { url: signingUrl(ctx, e.org_id, token) };
   });

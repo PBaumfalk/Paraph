@@ -19,7 +19,10 @@ export interface SigCheck {
   timestamp: string | null;
   timestampOk: boolean | null; // null = kein Zeitstempel vorhanden
   timestampAuthority?: string;
+  timestampTrusted?: boolean | null;
   timestampError?: string;
+  /** Der Bereich für den Signaturwert enthält ausschließlich Hex-Zeichen in spitzen Klammern */
+  contentsOk: boolean;
   error?: string;
 }
 
@@ -32,10 +35,13 @@ export async function verifyPdfSignatures(pdf: Buffer): Promise<SigCheck[]> {
   while ((m = re.exec(text))) {
     index++;
     const [a, b, c, d] = m.slice(1).map(Number);
-    const check: SigCheck = { index, subfilter: '', coversWholeFile: false, digestOk: false, signatureOk: false, signerSubject: '', certSha256: '', signedAt: null, timestamp: null, timestampOk: null };
+    const check: SigCheck = { index, subfilter: '', coversWholeFile: false, digestOk: false, signatureOk: false, signerSubject: '', certSha256: '', signedAt: null, timestamp: null, timestampOk: null, contentsOk: false };
     try {
       if (a !== 0 || b <= 0 || c <= b || c + d > pdf.length) throw new Error('Ungültige ByteRange');
       check.coversWholeFile = c + d === pdf.length;
+      // Nicht abgedeckter Bereich darf nur den Signaturwert enthalten (sonst ließen sich dort Daten verstecken)
+      const gap = pdf.subarray(b, c).toString('latin1');
+      check.contentsOk = /^<[0-9A-Fa-f]*>$/.test(gap);
       const hex = pdf.subarray(b + 1, c - 1).toString('latin1').replace(/0+$/, '');
       const der = Buffer.from(hex.length % 2 ? hex + '0' : hex, 'hex');
       const sf = /\/SubFilter\s*\/([A-Za-z.]+)/.exec(text.slice(Math.max(0, m.index - 2000), m.index + 2000));
@@ -63,6 +69,7 @@ export async function verifyPdfSignatures(pdf: Buffer): Promise<SigCheck[]> {
           const info = await verifyTimestampToken(new pkijs.ContentInfo({ schema: ts.values[0] }), sha256(si.signature.valueBlock.valueHexView));
           check.timestamp = info.genTime;
           check.timestampAuthority = info.tsaSubject;
+          check.timestampTrusted = info.chainTrusted;
           check.timestampOk = true;
         } catch (e: any) {
           check.timestampError = String(e?.message ?? e);

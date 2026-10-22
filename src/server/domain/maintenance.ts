@@ -83,6 +83,11 @@ export async function retentionPurge(ctx: Ctx) {
       }
       tx(ctx.db, () => {
         ctx.db.prepare(`UPDATE fields SET value = NULL WHERE envelope_id = ?`).run(envId);
+        // Inhalte auch außerhalb der Dateien entfernen: Textauszug, Nachricht, Ablehnungsgrund, E-Mail-Reste
+        ctx.db.prepare(`UPDATE envelope_documents SET text_excerpt = '' WHERE envelope_id = ?`).run(envId);
+        ctx.db.prepare(`UPDATE envelopes SET message = '' WHERE id = ?`).run(envId);
+        ctx.db.prepare(`UPDATE recipients SET decline_reason = NULL, phone = NULL WHERE envelope_id = ?`).run(envId);
+        ctx.db.prepare(`DELETE FROM emails WHERE envelope_id = ?`).run(envId);
         ctx.db.prepare(`UPDATE envelopes SET metadata = json_set(metadata, '$.__purged', ?) WHERE id = ?`).run(ctx.now().toISOString(), envId);
         appendAudit(ctx.db, envId, o.id, 'envelope.content_purged', { type: 'system' }, { retention_days: days, files: blobIds.size });
       });

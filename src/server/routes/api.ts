@@ -3,8 +3,8 @@ import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import type { Ctx } from '../context.js';
 import { authenticate, idempotent, sendFile, meta } from '../http.js';
-import { AppError, badRequest, forbidden, notFound } from '../lib/errors.js';
-import { id, secretToken } from '../lib/crypto.js';
+import { AppError, badRequest, conflict, forbidden, notFound } from '../lib/errors.js';
+import { id, secretToken, hashToken } from '../lib/crypto.js';
 import { tx } from '../db/index.js';
 import { require as requirePerm, can, seesAllEnvelopes, actorOf, type Principal, type Role, SCOPES } from '../domain/authz.js';
 import * as E from '../domain/envelopes.js';
@@ -13,7 +13,10 @@ import { listAudit, verifyChain } from '../domain/audit.js';
 import { getOrg, DEFAULT_SETTINGS, type Branding, type OrgSettings } from '../domain/orgs.js';
 import { createApiKey, inviteMember, listMembers, logActivity, removeMember, setMemberRole, createOrg } from '../domain/users.js';
 import { encryptSecret, newWebhookSecret, WEBHOOK_EVENTS } from '../domain/webhooks.js';
-import { enqueue } from '../domain/jobs.js';
+import { enqueue, retryJob, workerStatus } from '../domain/jobs.js';
+import { runDiagnostics } from '../domain/diagnostics.js';
+import { backupStatus } from '../domain/backup.js';
+import { sendTestMail } from '../domain/mail.js';
 import { checkUrlShape, resolveSafe, SsrfError } from '../lib/ssrf.js';
 import { inPersonSession, issueEmbedToken } from '../domain/signing.js';
 import { FORM_RULES, suggestRules } from '../../shared/formrules.js';
@@ -681,13 +684,17 @@ export function apiRoutes(app: FastifyInstance, ctx: Ctx) {
       await resolveSafe(checkUrlShape(url, policy), policy);
     } catch (e) {
       if (e instanceof SsrfError) throw badRequest('webhook_url', e.message);
-      throw e;
+      // DNS- und Netzfehler: verständlich melden statt „Interner Fehler“
+      throw badRequest('webhook_url', `Das Ziel ist nicht erreichbar oder der Name lässt sich nicht auflösen (${String((e as any)?.code ?? (e as any)?.message ?? e).slice(0, 80)}).`);
     }
   };
+  // API-Schlüssel sehen nur Webhooks ihres Modus (Test-Schlüssel dürfen Live-Webhooks weder lesen noch ändern)
+  const modeScope = (pr: Principal) => (pr.kind === 'apikey' ? { sql: ' AND mode = ?', args: [pr.mode] } : { sql: '', args: [] as string[] });
   app.get('/api/v1/webhooks', async (req) => {
     const pr = auth(req);
     requirePerm(pr, 'webhooks.manage');
-    const hooks = ctx.db.prepare('SELECT id, url, events, description, mode, active, created_at FROM webhooks WHERE org_id = ? ORDER BY created_at DESC').all(pr.orgId) as any[];
+    const ms = modeScope(pr);
+    const hooks = ctx.db.prepare(`SELECT id, url, events, description, mode, active, created_at FROM webhooks WHERE org_id = ?${ms.sql} ORDER BY created_at DESC`).all(pr.orgId, ...ms.args) as any[];
     return {
       data: hooks.map((h) => ({ ...h, events: JSON.parse(h.events), active: !!h.active, recent: ctx.db.prepare('SELECT id, event_type, status, attempts, last_status_code, last_error, created_at, delivered_at FROM webhook_deliveries WHERE webhook_id = ? ORDER BY created_at DESC LIMIT 10').all(h.id) })),
       events: WEBHOOK_EVENTS,
@@ -711,22 +718,26 @@ export function apiRoutes(app: FastifyInstance, ctx: Ctx) {
     const pr = auth(req);
     requirePerm(pr, 'webhooks.manage');
     const b = z.object({ url: z.string().url().max(500).optional(), events: z.array(z.string()).min(1).optional(), description: z.string().max(200).optional(), active: z.boolean().optional() }).parse(req.body);
+    const ms = modeScope(pr);
+    if (!ctx.db.prepare(`SELECT 1 FROM webhooks WHERE id = ? AND org_id = ?${ms.sql}`).get(p(req).id, pr.orgId, ...ms.args)) throw notFound();
     if (b.url) await validateHookUrl(b.url);
-    const r = ctx.db.prepare('UPDATE webhooks SET url = COALESCE(?, url), events = COALESCE(?, events), description = COALESCE(?, description), active = COALESCE(?, active) WHERE id = ? AND org_id = ?').run(b.url ?? null, b.events ? JSON.stringify(b.events) : null, b.description ?? null, b.active === undefined ? null : b.active ? 1 : 0, p(req).id, pr.orgId);
+    const r = ctx.db.prepare(`UPDATE webhooks SET url = COALESCE(?, url), events = COALESCE(?, events), description = COALESCE(?, description), active = COALESCE(?, active) WHERE id = ? AND org_id = ?${ms.sql}`).run(b.url ?? null, b.events ? JSON.stringify(b.events) : null, b.description ?? null, b.active === undefined ? null : b.active ? 1 : 0, p(req).id, pr.orgId, ...ms.args);
     if (!r.changes) throw notFound();
     return { ok: true };
   });
   app.delete('/api/v1/webhooks/:id', async (req) => {
     const pr = auth(req);
     requirePerm(pr, 'webhooks.manage');
-    const r = ctx.db.prepare('DELETE FROM webhooks WHERE id = ? AND org_id = ?').run(p(req).id, pr.orgId);
+    const ms = modeScope(pr);
+    const r = ctx.db.prepare(`DELETE FROM webhooks WHERE id = ? AND org_id = ?${ms.sql}`).run(p(req).id, pr.orgId, ...ms.args);
     if (!r.changes) throw notFound();
     return { ok: true };
   });
   app.post('/api/v1/webhooks/:id/test', async (req) => {
     const pr = auth(req);
     requirePerm(pr, 'webhooks.manage');
-    const h = ctx.db.prepare('SELECT * FROM webhooks WHERE id = ? AND org_id = ?').get(p(req).id, pr.orgId) as any;
+    const ms = modeScope(pr);
+    const h = ctx.db.prepare(`SELECT * FROM webhooks WHERE id = ? AND org_id = ?${ms.sql}`).get(p(req).id, pr.orgId, ...ms.args) as any;
     if (!h) throw notFound();
     const did = id('whd');
     const payload = JSON.stringify({ id: id('evt'), type: 'webhook.test', created_at: ctx.now().toISOString(), test_mode: h.mode === 'test', data: { message: 'Testereignis von Paraph' } });
@@ -737,7 +748,8 @@ export function apiRoutes(app: FastifyInstance, ctx: Ctx) {
   app.post('/api/v1/webhooks/deliveries/:id/retry', async (req) => {
     const pr = auth(req);
     requirePerm(pr, 'webhooks.manage');
-    const d = ctx.db.prepare('SELECT d.id FROM webhook_deliveries d JOIN webhooks w ON w.id = d.webhook_id WHERE d.id = ? AND w.org_id = ?').get(p(req).id, pr.orgId) as any;
+    const ms = modeScope(pr);
+    const d = ctx.db.prepare(`SELECT d.id FROM webhook_deliveries d JOIN webhooks w ON w.id = d.webhook_id WHERE d.id = ? AND w.org_id = ?${ms.sql.replace('mode', 'w.mode')}`).get(p(req).id, pr.orgId, ...ms.args) as any;
     if (!d) throw notFound();
     ctx.db.prepare(`UPDATE webhook_deliveries SET status = 'pending', attempts = 0 WHERE id = ?`).run(d.id);
     enqueue(ctx, 'webhook_delivery', { deliveryId: d.id });
@@ -754,12 +766,15 @@ export function apiRoutes(app: FastifyInstance, ctx: Ctx) {
   });
 
   // ───────────── Systemzustand (Instanz-Administration) ─────────────
-  app.get('/api/v1/system', async (req) => {
+  const instanceAdmin = (req: FastifyRequest) => {
     const pr = userOnly(req);
     if (!pr.instanceAdmin) throw forbidden('Nur für Instanz-Administratoren.');
-    const lastBackup = ctx.db.prepare(`SELECT value FROM meta WHERE key = 'last_backup'`).get() as any;
-    const failedJobs = ctx.db.prepare(`SELECT type, last_error, finished_at, run_at FROM jobs WHERE status = 'failed' ORDER BY run_at DESC LIMIT 10`).all();
-    const failedMails = (ctx.db.prepare(`SELECT COUNT(*) AS n FROM emails WHERE status = 'failed'`).get() as any).n;
+    return pr;
+  };
+  app.get('/api/v1/system', async (req) => {
+    instanceAdmin(req);
+    const failedJobs = ctx.db.prepare(`SELECT id, type, last_error, attempts, run_at FROM jobs WHERE status = 'failed' ORDER BY run_at DESC LIMIT 20`).all();
+    const failedMails = ctx.db.prepare(`SELECT id, to_addr, kind, last_error, attempts, created_at FROM emails WHERE status = 'failed' ORDER BY created_at DESC LIMIT 20`).all();
     return {
       version: ctx.cfg.version,
       storage: ctx.cfg.s3 ? 's3' : 'local',
@@ -770,11 +785,84 @@ export function apiRoutes(app: FastifyInstance, ctx: Ctx) {
       oidc: ctx.cfg.oidc ? { issuer: ctx.cfg.oidc.issuer, name: ctx.cfg.oidc.name } : null,
       sms: !!ctx.cfg.sms,
       qes: ctx.cfg.qes ? { name: ctx.cfg.qes.name, base_url: ctx.cfg.qes.baseUrl } : null,
-      backup: { interval_hours: ctx.cfg.backup.intervalHours, keep: ctx.cfg.backup.keep, last: lastBackup ? JSON.parse(lastBackup.value) : null },
+      backup: { interval_hours: ctx.cfg.backup.intervalHours, keep: ctx.cfg.backup.keep, ...backupStatus(ctx) },
+      worker: workerStatus(ctx),
       failed_jobs: failedJobs,
       failed_mails: failedMails,
+      diagnostics: await runDiagnostics(ctx),
       counts: Object.fromEntries(['users', 'orgs', 'envelopes', 'templates', 'blobs'].map((t) => [t, (ctx.db.prepare(`SELECT COUNT(*) AS n FROM ${t}`).get() as any).n])),
     };
+  });
+  // Tiefe Prüfung: kontaktiert Mailserver, Zeitstempeldienst, SSO, Speicher und prüft alle Audit-Ketten
+  app.post('/api/v1/system/diagnose', { config: { rateLimit: { max: 6, timeWindow: '1 minute' } } }, async (req) => {
+    instanceAdmin(req);
+    return runDiagnostics(ctx, { deep: true });
+  });
+  app.post('/api/v1/system/test-mail', { config: { rateLimit: { max: 5, timeWindow: '1 minute' } } }, async (req) => {
+    const pr = instanceAdmin(req);
+    const { to } = z.object({ to: z.string().trim().toLowerCase().email().max(254).optional() }).parse(req.body ?? {});
+    const r = await sendTestMail(ctx, pr.orgId, to ?? pr.email);
+    logActivity(ctx, actorRef(pr), 'system.test_mail', undefined, { to: to ?? pr.email, ok: r.ok });
+    return r;
+  });
+  app.post('/api/v1/system/jobs/:id/retry', async (req) => {
+    const pr = instanceAdmin(req);
+    if (!retryJob(ctx, p(req).id)) throw notFound('Aufgabe nicht gefunden oder nicht fehlgeschlagen');
+    logActivity(ctx, actorRef(pr), 'system.job_retry', p(req).id);
+    return { ok: true };
+  });
+  app.post('/api/v1/system/backup', async (req) => {
+    const pr = instanceAdmin(req);
+    const queued = enqueue(ctx, 'backup_auto', {}, { uniqueKey: 'periodic:backup_auto' });
+    logActivity(ctx, actorRef(pr), 'system.backup_requested');
+    return { ok: true, queued };
+  });
+
+  // ───────────── Benutzerverwaltung (Instanz) ─────────────
+  app.get('/api/v1/admin/users', async (req) => {
+    instanceAdmin(req);
+    const users = ctx.db.prepare(`SELECT id, email, name, is_instance_admin, totp_enabled, oidc_subject IS NOT NULL AS sso, password_hash IS NOT NULL AS has_password, disabled_at, created_at,
+      (SELECT MAX(created_at) FROM sessions s WHERE s.user_id = users.id) AS last_login FROM users ORDER BY created_at`).all() as any[];
+    const orgs = ctx.db.prepare(`SELECT m.user_id, o.name, m.role FROM memberships m JOIN orgs o ON o.id = m.org_id`).all() as any[];
+    return { data: users.map((u) => ({ ...u, is_instance_admin: !!u.is_instance_admin, totp_enabled: !!u.totp_enabled, sso: !!u.sso, has_password: !!u.has_password, orgs: orgs.filter((o) => o.user_id === u.id).map((o) => ({ name: o.name, role: o.role })) })) };
+  });
+  app.patch('/api/v1/admin/users/:id', async (req) => {
+    const pr = instanceAdmin(req);
+    const b = z.object({ disabled: z.boolean().optional(), instance_admin: z.boolean().optional() }).parse(req.body);
+    const target = ctx.db.prepare('SELECT * FROM users WHERE id = ?').get(p(req).id) as any;
+    if (!target) throw notFound();
+    if (target.id === pr.userId && (b.disabled === true || b.instance_admin === false)) throw conflict('self', 'Das eigene Konto lässt sich hier nicht sperren oder herabstufen.');
+    tx(ctx.db, () => {
+      if (b.instance_admin === false && target.is_instance_admin) {
+        const admins = (ctx.db.prepare('SELECT COUNT(*) AS n FROM users WHERE is_instance_admin = 1 AND disabled_at IS NULL').get() as any).n;
+        if (admins <= 1) throw conflict('last_admin', 'Es muss mindestens eine Instanz-Administration geben.');
+      }
+      if (b.instance_admin !== undefined) ctx.db.prepare('UPDATE users SET is_instance_admin = ? WHERE id = ?').run(b.instance_admin ? 1 : 0, target.id);
+      if (b.disabled === true) {
+        ctx.db.prepare('UPDATE users SET disabled_at = COALESCE(disabled_at, ?) WHERE id = ?').run(ctx.now().toISOString(), target.id);
+        ctx.db.prepare('UPDATE sessions SET revoked_at = ? WHERE user_id = ? AND revoked_at IS NULL').run(ctx.now().toISOString(), target.id);
+      }
+      if (b.disabled === false) ctx.db.prepare('UPDATE users SET disabled_at = NULL WHERE id = ?').run(target.id);
+    });
+    logActivity(ctx, actorRef(pr), 'admin.user_changed', target.id, b);
+    return { ok: true };
+  });
+  app.post('/api/v1/admin/users/:id/reset-mfa', async (req) => {
+    const pr = instanceAdmin(req);
+    const r = ctx.db.prepare('UPDATE users SET totp_enabled = 0, totp_secret_enc = NULL WHERE id = ?').run(p(req).id);
+    if (!r.changes) throw notFound();
+    ctx.db.prepare('UPDATE sessions SET revoked_at = ? WHERE user_id = ? AND revoked_at IS NULL').run(ctx.now().toISOString(), p(req).id);
+    logActivity(ctx, actorRef(pr), 'admin.mfa_reset', p(req).id);
+    return { ok: true };
+  });
+  app.post('/api/v1/admin/users/:id/reset-link', async (req) => {
+    const pr = instanceAdmin(req);
+    const u = ctx.db.prepare('SELECT id, email FROM users WHERE id = ? AND disabled_at IS NULL').get(p(req).id) as any;
+    if (!u) throw notFound();
+    const token = secretToken();
+    ctx.db.prepare('INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)').run(`pwreset:${hashToken(token)}`, JSON.stringify({ userId: u.id, exp: ctx.now().getTime() + 3600_000 }));
+    logActivity(ctx, actorRef(pr), 'admin.reset_link', u.id);
+    return { url: `${ctx.cfg.appUrl}/reset/${token}`, expires_in_minutes: 60 };
   });
 
   // ───────────── Formhinweise (Katalog) ─────────────
@@ -793,6 +881,8 @@ export function apiRoutes(app: FastifyInstance, ctx: Ctx) {
     reply.raw.write(': ok\n\n');
     const handler = (ev: any) => {
       const envId = ev.data?.envelope_id;
+      // Test- und Live-Daten strikt trennen (API-Schlüssel sehen nur ihren Modus)
+      if (pr.kind === 'apikey' && (ev.test_mode === true) !== (pr.mode === 'test')) return;
       if (!all && envId && pr.kind === 'user') {
         const e = ctx.db.prepare('SELECT owner_id FROM envelopes WHERE id = ?').get(envId) as any;
         if (!e || e.owner_id !== pr.userId) return;

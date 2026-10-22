@@ -272,7 +272,7 @@ export const UseTemplateInput = z.object({
       email: z.string().trim().email().max(254),
       phone: z.string().max(40).optional(),
       auth_method: z.enum(AUTH_METHODS).optional(),
-      access_code: z.string().min(4).max(64).optional(),
+      access_code: z.string().min(6, 'Der Zugangscode muss mindestens 6 Zeichen haben.').max(64).optional(),
     }),
   ),
   prefill: z.record(z.string(), z.string().max(5000)).default({}),

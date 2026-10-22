@@ -16,6 +16,14 @@ const KIND: Record<string, string> = {
   source: 'Ursprünglich hochgeladene Datei',
 };
 
+const VERDICT: Record<string, string> = {
+  valid: 'Siegel dieser Instanz gültig – Datei seit dem Siegel unverändert',
+  foreign: 'Signatur nicht von dieser Instanz – Herkunft unbekannt',
+  modified: 'Datei wurde nach dem Siegel verändert',
+  timestamp_invalid: 'Siegel gültig, Zeitstempel jedoch ungültig',
+  invalid: 'Siegel ungültig',
+};
+
 export default function Verify() {
   useLang();
   const [file, setFile] = useState<File | null>(null);
@@ -98,9 +106,14 @@ export default function Verify() {
           <div className="sheet sheet-pad" style={{ marginTop: 16 }}>
             {sig.signatures?.length ? sig.signatures.map((s: any) => (
               <div key={s.index} className="stack-sm">
-                <strong>{s.signatureOk && s.digestOk && s.coversWholeFile ? t('Siegel gültig, Datei seither unverändert') : t('Siegel ungültig oder Datei nachträglich verändert')}</strong>
-                <span className="hint">{s.subfilter} · {s.signerSubject} · {s.issued_by_this_instance ? t('von dieser Instanz ausgestellt') : t('fremdes Zertifikat')}{s.timestamp ? ` · ${t('Zeitstempel')} ${fmtDate(s.timestamp)}` : ''}</span>
-                {!s.coversWholeFile && <Callout kind="warn">{t('Nach dem Siegel wurden Daten angehängt.')}</Callout>}
+                <strong>{t(VERDICT[s.verdict] ?? VERDICT.invalid)}</strong>
+                <span className="hint">{s.subfilter} · {s.signerSubject}{s.timestamp ? ` · ${t('Zeitstempel')} ${fmtDate(s.timestamp)}${s.timestampAuthority ? ` (${s.timestampAuthority})` : ''}` : ''}</span>
+                {s.verdict === 'valid' && <p className="hint">{t('Das ist das technische Plattformsiegel dieser Paraph-Instanz. Es belegt die Unversehrtheit seit dem Abschluss – es ist weder ein qualifiziertes Siegel noch eine persönliche Signatur der Unterzeichner.')}</p>}
+                {s.verdict === 'foreign' && <Callout kind="warn">{t('Die Signatur ist rechnerisch korrekt, stammt aber nicht von dieser Instanz. Wer sie erstellt hat, lässt sich hier nicht feststellen.')}</Callout>}
+                {s.verdict === 'modified' && <Callout kind="warn">{t('Nach dem Siegel wurden Daten angehängt oder geändert.')}</Callout>}
+                {s.timestampOk === false && <Callout kind="warn">{t('Der eingebettete Zeitstempel ist ungültig')}{s.timestampError ? `: ${s.timestampError}` : ''}</Callout>}
+                {s.timestampOk && s.timestampTrusted === null && <p className="hint">{t('Zeitstempel rechnerisch geprüft. Ob der Zeitstempeldienst vertrauenswürdig ist, wurde hier nicht geprüft (kein Vertrauensanker eingerichtet).')}</p>}
+                {s.timestampOk && s.timestampTrusted === false && <Callout kind="warn">{t('Der Zeitstempeldienst gehört nicht zu den eingerichteten vertrauenswürdigen Anbietern.')}</Callout>}
               </div>
             )) : <p>{t('Kein eingebettetes Siegel gefunden.')}</p>}
           </div>

@@ -83,8 +83,9 @@ export async function finalizeEnvelope(ctx: Ctx, envelopeId: string) {
     const dh = e.data.document_hashes as string[] | undefined;
     if (dh && (dh.length !== docHashes.length || dh.some((x, i) => x !== docHashes[i]))) throw new Error(`Integritätsfehler: Dokumentfassung weicht von der unterschriebenen Fassung ab (Empfänger ${rid}) – Abschluss abgebrochen`);
     if (typeof e.data.inputs_sha256 === 'string') {
-      const inputs = Object.fromEntries(fields.filter((f) => f.recipient_id === rid && f.type !== 'formula').map((f) => [f.key, f.value ?? '']));
-      if (sha256Hex(canonicalJson(inputs)) !== e.data.inputs_sha256) throw new Error(`Integritätsfehler: Eingaben von Empfänger ${rid} wurden nach der Unterschrift verändert – Abschluss abgebrochen`);
+      // Alle eigenen Felder einschließlich Formeln (diese sind ab dem eigenen Abschluss eingefroren)
+      const all = Object.fromEntries(fields.filter((f) => f.recipient_id === rid).map((f) => [f.key, f.value ?? '']));
+      if (sha256Hex(canonicalJson(all)) !== e.data.values_sha256) throw new Error(`Integritätsfehler: Eingaben von Empfänger ${rid} wurden nach der Unterschrift verändert – Abschluss abgebrochen`);
     }
     for (const s of (e.data.signatures as any[] | undefined) ?? []) {
       const row = sigRows.get(s.signature_id);

@@ -5,6 +5,8 @@ import type { Ctx } from '../context.js';
 import { id, openString, sealString } from '../lib/crypto.js';
 import { registerJob, enqueue } from './jobs.js';
 import { getOrg, type Branding } from './orgs.js';
+import { appendAudit } from './audit.js';
+import { emit } from './webhooks.js';
 
 export type MailKind =
   | 'signing_request'
@@ -184,8 +186,8 @@ export function queueMail(ctx: Ctx, m: QueueMail) {
   const aad = 'mail:' + emailId;
   ctx.db
     .prepare(
-      `INSERT INTO emails (id, org_id, envelope_id, recipient_id, to_addr, subject, text_body, html_body, reply_to, from_name, attachments, status, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO emails (id, org_id, envelope_id, recipient_id, to_addr, subject, text_body, html_body, reply_to, from_name, attachments, status, created_at, kind)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .run(
       emailId,
@@ -201,6 +203,7 @@ export function queueMail(ctx: Ctx, m: QueueMail) {
       JSON.stringify(m.attachments ?? []),
       m.suppress ? 'suppressed' : 'queued',
       ctx.now().toISOString(),
+      m.kind,
     );
   if (!m.suppress) enqueue(ctx, 'send_email', { emailId });
   // Nur für Entwicklung und lokale Tests: Link im Log, wenn kein SMTP konfiguriert ist
@@ -211,13 +214,118 @@ export function queueMail(ctx: Ctx, m: QueueMail) {
 let transporter: Transporter | null = null;
 let transporterUrl = '';
 
+/** Lokale Testserver (Mailpit) dürfen ohne TLS laufen – alles andere muss verschlüsselt sein. */
+function isLocalHost(h: string) {
+  return ['localhost', '127.0.0.1', '::1', 'mailpit', 'mailhog'].includes(h.toLowerCase());
+}
+
+export function smtpTransportOptions(url: string, allowInsecure = process.env.SMTP_ALLOW_INSECURE === 'true') {
+  const u = new URL(url);
+  const implicitTls = u.protocol === 'smtps:';
+  // Signaturlinks und Codes dürfen nie im Klartext übertragen werden: STARTTLS erzwingen (requireTLS)
+  const requireTLS = !implicitTls && !(allowInsecure || isLocalHost(u.hostname));
+  if (/rejectUnauthorized=false/i.test(u.search) && !allowInsecure) throw new Error('SMTP_URL deaktiviert die Zertifikatsprüfung (rejectUnauthorized=false). Das ist nur mit SMTP_ALLOW_INSECURE=true zulässig.');
+  return {
+    url,
+    requireTLS,
+    pool: true,
+    maxConnections: 2,
+    connectionTimeout: 15_000,
+    greetingTimeout: 10_000,
+    socketTimeout: 30_000,
+    tls: { minVersion: 'TLSv1.2' as const },
+  };
+}
+
 function getTransport(ctx: Ctx): Transporter | null {
   if (!ctx.cfg.smtp) return null;
   if (!transporter || transporterUrl !== ctx.cfg.smtp.url) {
-    transporter = nodemailer.createTransport(ctx.cfg.smtp.url);
+    transporter?.close();
+    const o = smtpTransportOptions(ctx.cfg.smtp.url);
+    const { url, ...rest } = o;
+    transporter = nodemailer.createTransport(url, rest as any);
     transporterUrl = ctx.cfg.smtp.url;
   }
   return transporter;
+}
+
+export interface MailError {
+  permanent: boolean;
+  code: string;
+  message: string; // verständlich, ohne Zugangsdaten
+}
+
+/** Ordnet SMTP-Fehler ein: dauerhaft (Adresse/Absender abgelehnt) oder vorübergehend (Netz, Server). */
+export function classifyMailError(err: any): MailError {
+  const rc = Number(err?.responseCode) || 0;
+  const smtpText = String(err?.response ?? '').replace(/\s+/g, ' ').slice(0, 200);
+  const code = String(err?.code ?? '');
+  if (code === 'EAUTH') return { permanent: false, code: 'auth', message: 'Anmeldung am Mailserver fehlgeschlagen – Benutzername oder Passwort in SMTP_URL prüfen.' };
+  if (code === 'ETLS' || /STARTTLS|TLS/i.test(String(err?.message)) && code !== 'EENVELOPE') return { permanent: false, code: 'tls', message: 'Verschlüsselte Verbindung zum Mailserver nicht möglich (TLS). Port und Protokoll prüfen (smtps:// für Port 465, smtp:// mit STARTTLS für 587).' };
+  if (['ECONNECTION', 'ESOCKET', 'ETIMEDOUT', 'EDNS', 'ECONNREFUSED', 'ENOTFOUND', 'EAI_AGAIN'].includes(code) || /ECONNREFUSED|ENOTFOUND|ETIMEDOUT|EAI_AGAIN/.test(String(err?.message))) {
+    return { permanent: false, code: 'connection', message: 'Mailserver nicht erreichbar (Verbindung oder Zeitüberschreitung). Paraph versucht es automatisch erneut.' };
+  }
+  if (rc >= 500 && rc < 600) {
+    if (rc === 550 || rc === 551 || rc === 553 || /user unknown|mailbox unavailable|no such user|recipient.*reject|does not exist/i.test(smtpText)) {
+      return { permanent: true, code: 'recipient_rejected', message: `Empfängeradresse abgelehnt (${rc}). Bitte die E-Mail-Adresse prüfen. Server: ${smtpText}` };
+    }
+    if (rc === 552) return { permanent: true, code: 'too_large', message: `Nachricht zu groß für das Postfach (${rc}). Ohne PDF-Anhang erneut senden.` };
+    if (rc === 554 && /spam|policy|blocked|blacklist|dmarc|spf|dkim/i.test(smtpText)) return { permanent: true, code: 'policy', message: `Als unzulässig abgewiesen (${rc}) – SPF/DKIM/DMARC der Absenderdomain prüfen. Server: ${smtpText}` };
+    return { permanent: true, code: 'rejected', message: `Vom Mailserver abgewiesen (${rc}). Server: ${smtpText}` };
+  }
+  if (rc >= 400 && rc < 500) return { permanent: false, code: 'deferred', message: `Vorübergehend abgewiesen (${rc}). Paraph versucht es erneut. Server: ${smtpText}` };
+  return { permanent: false, code: 'unknown', message: `Versand fehlgeschlagen: ${String(err?.message ?? err).replace(/\/\/[^@\s]+@/g, '//***@').slice(0, 200)}` };
+}
+
+/** Prüft Verbindung und Anmeldung zum Mailserver (ohne etwas zu versenden). */
+export async function verifySmtp(ctx: Ctx): Promise<{ ok: boolean; error?: MailError; secure?: string }> {
+  const t = getTransport(ctx);
+  if (!t) return { ok: false, error: { permanent: true, code: 'not_configured', message: 'SMTP ist nicht eingerichtet (SMTP_URL).' } };
+  try {
+    await t.verify();
+    const u = new URL(ctx.cfg.smtp!.url);
+    return { ok: true, secure: u.protocol === 'smtps:' ? 'TLS (implizit)' : smtpTransportOptions(ctx.cfg.smtp!.url).requireTLS ? 'STARTTLS (erzwungen)' : 'unverschlüsselt (nur lokal zulässig)' };
+  } catch (e) {
+    return { ok: false, error: classifyMailError(e) };
+  }
+}
+
+function fromOf(ctx: Ctx, name: string | null) {
+  const fromCfg = ctx.cfg.smtp!.from;
+  const fromAddr = /<([^>]+)>/.exec(fromCfg)?.[1] ?? fromCfg;
+  return { name: name ?? 'Paraph', address: fromAddr };
+}
+
+const SYSTEM_KINDS = new Set(['system_alert', 'delivery_failed', 'test', 'owner_completed', 'owner_declined']);
+
+/** Sendet sofort (ohne Warteschlange) – für die Test-E-Mail der Administration. */
+export async function sendTestMail(ctx: Ctx, orgId: string, to: string) {
+  const t = getTransport(ctx);
+  if (!t) return { ok: false, error: { permanent: true, code: 'not_configured', message: 'SMTP ist nicht eingerichtet (SMTP_URL).' } };
+  const org = getOrg(ctx, orgId);
+  const r = renderMail('test', { from: ctx.cfg.smtp!.from, at: ctx.now().toISOString() }, { locale: org.settings.locale, branding: org.branding, orgName: org.name });
+  try {
+    const info = await t.sendMail({ from: fromOf(ctx, org.branding.senderName ?? org.name), to, subject: r.subject, text: r.text, html: r.html, headers: { 'Auto-Submitted': 'auto-generated' } });
+    return { ok: true, message_id: info.messageId, accepted: info.accepted?.length ?? 0, response: String(info.response ?? '').slice(0, 200) };
+  } catch (e) {
+    return { ok: false, error: classifyMailError(e) };
+  }
+}
+
+/** Endgültiger Zustellfehler: Vorgang protokollieren und die versendende Person informieren. */
+function onDeliveryFailed(ctx: Ctx, e: any, err: MailError) {
+  if (!e.envelope_id || SYSTEM_KINDS.has(e.kind ?? '')) return;
+  const env = ctx.db.prepare('SELECT id, org_id, title, owner_id FROM envelopes WHERE id = ?').get(e.envelope_id) as any;
+  if (!env) return;
+  const rec = e.recipient_id ? (ctx.db.prepare('SELECT id, name, email FROM recipients WHERE id = ?').get(e.recipient_id) as any) : null;
+  ctx.db.transaction(() => {
+    appendAudit(ctx.db, env.id, env.org_id, 'recipient.delivery_failed', { type: 'system' }, { recipient_id: rec?.id ?? null, email: e.to_addr, kind: e.kind, reason: err.code, detail: err.message.slice(0, 300) });
+  }).immediate();
+  emit(ctx, env.org_id, 'recipient.delivery_failed', { envelope_id: env.id, recipient_id: rec?.id ?? null, reason: err.code });
+  const owner = env.owner_id ? (ctx.db.prepare('SELECT email FROM users WHERE id = ? AND disabled_at IS NULL').get(env.owner_id) as any) : null;
+  if (owner && owner.email !== e.to_addr) {
+    queueMail(ctx, { orgId: env.org_id, envelopeId: env.id, to: owner.email, kind: 'delivery_failed', link: `${ctx.cfg.appUrl}/envelopes/${env.id}`, vars: { title: env.title, recipient: rec?.name ?? e.to_addr, email: e.to_addr, error: err.message } });
+  }
 }
 
 registerJob('send_email', async (ctx, { emailId }) => {
@@ -225,31 +333,40 @@ registerJob('send_email', async (ctx, { emailId }) => {
   if (!e || e.status !== 'queued') return;
   const t = getTransport(ctx);
   if (!t) {
-    ctx.db.prepare(`UPDATE emails SET status = 'failed', last_error = ? WHERE id = ?`).run('SMTP ist nicht konfiguriert (SMTP_URL).', emailId);
+    ctx.db.prepare(`UPDATE emails SET status = 'failed', last_error = ? WHERE id = ?`).run('SMTP ist nicht eingerichtet (SMTP_URL).', emailId);
+    onDeliveryFailed(ctx, e, { permanent: true, code: 'not_configured', message: 'SMTP ist nicht eingerichtet – E-Mail nicht versendet.' });
     return;
   }
   const aad = 'mail:' + emailId;
-  const fromCfg = ctx.cfg.smtp!.from;
-  const fromAddr = /<([^>]+)>/.exec(fromCfg)?.[1] ?? fromCfg;
   const atts = JSON.parse(e.attachments) as { filename: string; blobId: string }[];
   const attachments = [];
   for (const a of atts) attachments.push({ filename: a.filename, content: await ctx.blobs.get(a.blobId) });
   try {
-    await t.sendMail({
-      from: { name: e.from_name ?? 'Paraph', address: fromAddr },
+    const info = await t.sendMail({
+      from: fromOf(ctx, e.from_name),
       to: e.to_addr,
       replyTo: e.reply_to ?? undefined,
       subject: e.subject,
       text: openString(ctx.keys.secrets, e.text_body, aad),
       html: openString(ctx.keys.secrets, e.html_body, aad),
       attachments,
+      headers: { 'Auto-Submitted': 'auto-generated', 'X-Auto-Response-Suppress': 'All' },
     });
     // Inhalt verwerfen: enthält ggf. einen gültigen Signaturlink
-    ctx.db.prepare(`UPDATE emails SET status = 'sent', sent_at = ?, attempts = attempts + 1, text_body = '', html_body = '' WHERE id = ?`).run(ctx.now().toISOString(), emailId);
-  } catch (err: any) {
+    ctx.db.prepare(`UPDATE emails SET status = 'sent', sent_at = ?, attempts = attempts + 1, last_error = ?, text_body = '', html_body = '' WHERE id = ?`).run(ctx.now().toISOString(), String(info?.response ?? '').slice(0, 200) || null, emailId);
+  } catch (raw: any) {
+    const err = classifyMailError(raw);
     const attempts = (e.attempts ?? 0) + 1;
-    // Nach dem letzten Versuch endgültig als fehlgeschlagen markieren (sichtbar unter Einstellungen → System)
-    ctx.db.prepare(`UPDATE emails SET attempts = ?, last_error = ?, status = CASE WHEN ? >= 8 THEN 'failed' ELSE status END WHERE id = ?`).run(attempts, String(err?.message ?? err).slice(0, 500), attempts, emailId);
-    throw err;
+    const final = err.permanent || attempts >= 8;
+    // Dauerhafte Fehler nicht achtmal wiederholen; Inhalt dann verwerfen
+    ctx.db
+      .prepare(`UPDATE emails SET attempts = ?, last_error = ?, status = CASE WHEN ? THEN 'failed' ELSE status END, text_body = CASE WHEN ? THEN '' ELSE text_body END, html_body = CASE WHEN ? THEN '' ELSE html_body END WHERE id = ?`)
+      .run(attempts, err.message.slice(0, 500), final ? 1 : 0, final ? 1 : 0, final ? 1 : 0, emailId);
+    ctx.log.warn({ email: emailId, kind: e.kind, code: err.code, permanent: err.permanent, attempts }, 'E-Mail nicht zugestellt');
+    if (final) {
+      onDeliveryFailed(ctx, e, err);
+      return;
+    }
+    throw new Error(err.message);
   }
 });

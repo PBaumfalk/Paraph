@@ -5,6 +5,7 @@ import { openDb, type DB } from './db/index.js';
 import { BlobStore, LocalBackend, type BlobBackend } from './lib/storage.js';
 import { join } from 'node:path';
 import { deriveKey } from './lib/crypto.js';
+import { setTsaTrustAnchors } from './pdf/timestamp.js';
 
 export interface Ctx {
   cfg: Config;
@@ -17,6 +18,7 @@ export interface Ctx {
 }
 
 export function createContext(cfg: Config, opts: { backend?: BlobBackend; log?: Logger } = {}): Ctx {
+  setTsaTrustAnchors(cfg.tsaCaPem ?? null);
   const db = openDb(cfg.dataDir);
   const log =
     opts.log ??

@@ -2,7 +2,7 @@
 
 > **STATUS: NICHT ANWALTLICH FREIGEGEBEN.** Dieses Dokument ist eine technische Vorbereitung für die anwaltliche Prüfung. Es ersetzt keine Rechtsberatung und keine Einzelfallprüfung. Bewertungen sind Vorschläge.
 
-Stand: 22.10.2026. Geprüfter Code-Stand: Arbeitskopie auf `b309198` mit nicht committeten Änderungen in `src/server/domain/finalize.ts` (Verankerung, Integritätsprüfung). Zeilennummern beziehen sich auf diesen Stand.
+Stand: 22.10.2026. Geprüfter Code-Stand: `6934010` (enthält `e0d8ae9` mit Verankerung und Integritätsprüfung in `finalize.ts`). Zeilennummern beziehen sich auf diesen Stand.
 
 Freigabeliste mit Kästchen: [FREIGABELISTE.md](FREIGABELISTE.md).
 

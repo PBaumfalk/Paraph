@@ -194,12 +194,22 @@ export default function EnvelopePage() {
                     {r.completed_at ? ` · ${fmtRelative(r.completed_at)}` : r.opened_at ? ` · ${t('geöffnet')} ${fmtRelative(r.opened_at)}` : r.sent_at ? ` · ${fmtRelative(r.sent_at)}` : ''}
                     {r.kind === 'viewer' && ` · ${t('erhält Kopie')}`}
                   </div>
+                  {r.delivery?.status === 'failed' && ['sent', 'opened'].includes(r.status) && (
+                    <div className="recipient-sub" style={{ color: 'var(--stop)', whiteSpace: 'normal' }}>
+                      {t('E-Mail nicht zugestellt')}: {r.delivery.error ?? t('unbekannter Fehler')}
+                    </div>
+                  )}
+                  {r.delivery?.status === 'queued' && r.delivery.attempts > 0 && (
+                    <div className="recipient-sub" style={{ color: 'var(--warn, #b26a00)', whiteSpace: 'normal' }}>
+                      {t('Versand wird wiederholt')} ({r.delivery.attempts}×){r.delivery.error ? `: ${r.delivery.error}` : ''}
+                    </div>
+                  )}
                 </div>
                 {env.status === 'sent' && canWrite && ['sent', 'opened'].includes(r.status) && (
                   <Menu trigger={(open) => <button className="icon-btn" onClick={open} aria-label={t('Aktionen')}><MoreHorizontal /></button>}>
                     {() => (
                       <>
-                        <button onClick={() => act(() => post(`/api/v1/envelopes/${id}/recipients/${r.id}/remind`), t('Erinnerung versendet'))}><Bell /> {t('Erinnern (neuer Link)')}</button>
+                        <button onClick={() => act(() => post(`/api/v1/envelopes/${id}/recipients/${r.id}/remind`), t('Erinnerung versendet'))}><Bell /> {t('Erinnern')}</button>
                         <button
                           onClick={async () => {
                             if (!(await confirm({ title: t('Neuen Link ausstellen?'), text: t('Der bisherige Link von {name} wird ungültig. Sie geben den neuen Link selbst weiter.', { name: r.name }), action: t('Link ausstellen') }))) return;

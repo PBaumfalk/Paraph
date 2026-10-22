@@ -16,6 +16,7 @@ export const WEBHOOK_EVENTS = [
   'recipient.signed',
   'recipient.declined',
   'recipient.delegated',
+  'recipient.delivery_failed',
   'template.published',
 ] as const;
 
@@ -39,7 +40,7 @@ export function decryptSecret(ctx: Ctx, webhookId: string, enc: string) {
 export function emit(ctx: Ctx, orgId: string, type: string, data: Record<string, unknown>, opts: { testMode?: boolean } = {}) {
   const eventId = id('evt');
   const ts = ctx.now().toISOString();
-  ctx.bus.emit('org:' + orgId, { id: eventId, type, ts, data });
+  ctx.bus.emit('org:' + orgId, { id: eventId, type, ts, data, test_mode: !!opts.testMode });
   const hooks = ctx.db.prepare(`SELECT id, events FROM webhooks WHERE org_id = ? AND active = 1 AND mode = ?`).all(orgId, opts.testMode ? 'test' : 'live') as {
     id: string;
     events: string;

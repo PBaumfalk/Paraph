@@ -30,6 +30,18 @@ function int(name: string, fallback: number): number {
   return n;
 }
 
+/**
+ * TRUST_PROXY: „true“ bedeutet bewusst NICHT „allem vertrauen“, sondern genau einem Proxy-Hop. Sonst könnte jeder
+ * Client per X-Forwarded-For eine beliebige IP vortäuschen (Audit-Trail, Rate-Limits). Alternativ: Anzahl der
+ * Hops (z. B. 2 bei CDN + Proxy) oder kommagetrennte Proxy-Adressen/Netze (z. B. 172.16.0.0/12).
+ */
+export function trustProxySetting(v: string | undefined): boolean | number | string[] {
+  if (v === undefined || ['0', 'false', 'no', 'nein', 'off', ''].includes(v.toLowerCase())) return false;
+  if (['1', 'true', 'yes', 'ja', 'on'].includes(v.toLowerCase())) return 1;
+  if (/^\d+$/.test(v)) return Number(v);
+  return v.split(',').map((x) => x.trim()).filter(Boolean);
+}
+
 export interface Config {
   appUrl: string;
   host: string;
@@ -38,13 +50,14 @@ export interface Config {
   masterKey: Buffer;
   masterKeySource: 'env' | 'file' | 'generated';
   setupCode?: string;
-  trustProxy: boolean;
+  trustProxy: boolean | number | string[];
   logLevel: string;
   maxUploadBytes: number;
   maxPages: number;
   smtp?: { url: string; from: string };
   gotenbergUrl?: string;
   tsaUrl?: string;
+  tsaCaPem?: string;
   webhookAllowPrivate: boolean;
   webhookAllowHosts: string[];
   oidc?: { issuer: string; clientId: string; clientSecret: string; name: string; autoCreate: boolean };
@@ -53,6 +66,7 @@ export interface Config {
   qes?: { name: string; baseUrl: string; clientId: string; clientSecret: string; tokenUrl?: string };
   backup: { intervalHours: number; keep: number };
   anchorIntervalMinutes: number;
+  metricsToken?: string;
   devMode: boolean;
   version: string;
 }
@@ -103,13 +117,14 @@ export function loadConfig(overrides: Partial<Config> = {}): Config {
     masterKey,
     masterKeySource,
     setupCode: env('SETUP_CODE'),
-    trustProxy: bool('TRUST_PROXY', false),
+    trustProxy: trustProxySetting(env('TRUST_PROXY')),
     logLevel: env('LOG_LEVEL', 'info')!,
     maxUploadBytes: int('MAX_UPLOAD_MB', 25) * 1024 * 1024,
     maxPages: int('MAX_PAGES', 500),
     smtp: smtpUrl ? { url: smtpUrl, from: env('MAIL_FROM', 'Paraph <no-reply@localhost>')! } : undefined,
     gotenbergUrl: env('GOTENBERG_URL'),
     tsaUrl: env('TSA_URL'),
+    tsaCaPem: env('TSA_CA'), // PEM-Bündel; üblich als TSA_CA_FILE
     webhookAllowPrivate: bool('WEBHOOK_ALLOW_PRIVATE_NETWORKS', false),
     webhookAllowHosts: (env('WEBHOOK_ALLOW_HOSTS', '') ?? '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean),
     oidc: oidcIssuer
@@ -146,6 +161,7 @@ export function loadConfig(overrides: Partial<Config> = {}): Config {
       : undefined,
     backup: { intervalHours: int('BACKUP_INTERVAL_HOURS', 24), keep: int('BACKUP_KEEP', 14) },
     anchorIntervalMinutes: Math.max(5, int('ANCHOR_INTERVAL_MINUTES', 60)),
+    metricsToken: env('METRICS_TOKEN'),
     devMode: bool('DEV_MODE', false),
     version: process.env.PARAPH_BUILD_VERSION ?? '0.1.0-dev',
     ...overrides,

@@ -13,6 +13,7 @@ import { useTemplate, versionContent } from '../domain/templates.js';
 import { queueMail } from '../domain/mail.js';
 import { createSession, signerView, sessionFrom } from '../domain/signing.js';
 import { verifyPdfSignatures } from '../pdf/verify.js';
+import { metrics } from '../domain/diagnostics.js';
 import { envRow } from '../domain/envelopes.js';
 import type { Principal } from '../domain/authz.js';
 
@@ -38,6 +39,14 @@ export function publicRoutes(app: FastifyInstance, ctx: Ctx) {
     const failedJobs = (ctx.db.prepare(`SELECT COUNT(*) AS n FROM jobs WHERE status = 'failed'`).get() as any).n;
     const ok = Object.values(checks).every(Boolean);
     return reply.code(ok ? 200 : 503).send({ status: ok ? 'ready' : 'degraded', checks, schema: schemaVersion(ctx.db), failed_jobs: failedJobs, version: ctx.cfg.version });
+  });
+
+  // Prometheus-Metriken (nur Zählwerte). Ohne METRICS_TOKEN abgeschaltet.
+  app.get('/metrics', { config: { rateLimit: false } } as any, async (req, reply) => {
+    const tok = ctx.cfg.metricsToken;
+    const given = String(req.headers.authorization ?? '').replace(/^Bearer\s+/i, '');
+    if (!tok || !given || !safeEqual(given, tok)) return reply.code(404).send({ error: { code: 'not_found', message: 'Nicht gefunden' } });
+    return reply.type('text/plain; version=0.0.4; charset=utf-8').header('cache-control', 'no-store').send(metrics(ctx));
   });
 
   app.get('/api/public/orgs/:id/logo', limit(120), async (req, reply) => {
@@ -84,7 +93,18 @@ export function publicRoutes(app: FastifyInstance, ctx: Ctx) {
     const sigs = await verifyPdfSignatures(bytes);
     const known = new Set((ctx.db.prepare('SELECT cert_chain FROM seal_keys').all() as any[]).map((r) => sha256Hex(Buffer.from(JSON.parse(r.cert_chain)[0], 'base64'))));
     const registered = !!ctx.db.prepare('SELECT 1 FROM hash_register WHERE sha256 = ?').get(sha);
-    return { sha256: sha, registered, signatures: sigs.map((s) => ({ ...s, issued_by_this_instance: known.has(s.certSha256) })) };
+    return {
+      sha256: sha,
+      registered,
+      signatures: sigs.map((s, i) => {
+        const own = known.has(s.certSha256);
+        const intact = s.signatureOk && s.digestOk && s.contentsOk && !s.error;
+        // Gesamturteil: nur die letzte Signatur muss die ganze Datei abdecken; Zeitstempel muss – falls vorhanden – geprüft sein
+        const last = i === sigs.length - 1;
+        const verdict = !intact ? 'invalid' : !own ? 'foreign' : last && !s.coversWholeFile ? 'modified' : s.timestampOk === false ? 'timestamp_invalid' : 'valid';
+        return { ...s, issued_by_this_instance: own, verdict };
+      }),
+    };
   });
 
   // ───────────── Öffentliche Formulare ─────────────
@@ -132,7 +152,7 @@ export function publicRoutes(app: FastifyInstance, ctx: Ctx) {
       const session = startEnvelope(f, b.name, b.email, req);
       return { session, view: signerView(ctx, sessionFrom(ctx, session)) };
     }
-    const recent = (ctx.db.prepare(`SELECT COUNT(*) AS n FROM meta WHERE key LIKE ? `).get(`pfotp:${f.id}:${hashToken(b.email)}:%`) as any).n;
+    const recent = (ctx.db.prepare(`SELECT COUNT(*) AS n FROM meta WHERE key LIKE ? ESCAPE '\\'`).get(`pfotp:${f.id}:${hashToken(b.email)}:%`.replace(/_/g, '\\_')) as any).n;
     if (recent >= 3) throw tooMany('Zu viele Codes angefordert. Bitte später erneut versuchen.');
     const code = numericCode(6);
     const chId = id('pfc');
@@ -143,8 +163,10 @@ export function publicRoutes(app: FastifyInstance, ctx: Ctx) {
 
   app.post('/api/public/forms/:slug/confirm', limit(10), async (req) => {
     const f = loadForm((req.params as any).slug);
-    const b = z.object({ challenge: z.string().max(60), code: z.string().max(12) }).parse(req.body);
-    const row = ctx.db.prepare(`SELECT key, value FROM meta WHERE key LIKE ?`).get(`pfotp:${f.id}:%:${b.challenge}`) as any;
+    const b = z.object({ challenge: z.string().regex(/^pfc_[A-Za-z0-9_-]{10,40}$/), code: z.string().max(12) }).parse(req.body);
+    // LIKE-Platzhalter in den Bestandteilen maskieren: die Kennung muss exakt passen
+    const like = (x: string) => x.replace(/[\\%_]/g, (c) => '\\' + c);
+    const row = ctx.db.prepare(`SELECT key, value FROM meta WHERE key LIKE ? ESCAPE '\\'`).get(`${like(`pfotp:${f.id}:`)}%${like(`:${b.challenge}`)}`) as any;
     if (!row) throw new AppError(401, 'code_expired', 'Der Code ist abgelaufen. Bitte erneut anfordern.');
     const ch = JSON.parse(row.value);
     if (ch.exp < ctx.now().getTime() || ch.tries >= 5) {

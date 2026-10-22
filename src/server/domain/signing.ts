@@ -164,7 +164,7 @@ export async function requestOtp(ctx: Ctx, sc: SignerCtx) {
   const method = sc.rec.auth_method;
   if (method !== 'email_otp' && method !== 'sms_otp') throw badRequest('no_otp', 'Für diesen Empfänger ist kein Einmalcode vorgesehen.');
   const hourAgo = new Date(ctx.now().getTime() - 3600_000).toISOString();
-  const recent = (ctx.db.prepare(`SELECT COUNT(*) AS n FROM otp_challenges WHERE recipient_id = ? AND channel != 'access_code' AND created_at > ?`).get(sc.rec.id, hourAgo) as any).n;
+  const recent = (ctx.db.prepare(`SELECT COUNT(*) AS n FROM otp_challenges WHERE recipient_id = ? AND channel IN ('email','sms') AND created_at > ?`).get(sc.rec.id, hourAgo) as any).n;
   if (recent >= 5) throw tooMany('Zu viele Codes angefordert. Bitte in einer Stunde erneut versuchen.');
   const code = numericCode(6);
   const chId = id('otp');
@@ -184,25 +184,29 @@ export function verifyAuth(ctx: Ctx, sc: SignerCtx, code: string, meta: ReqMeta)
   requireActive(sc);
   const method = sc.rec.auth_method;
   const now = ctx.now();
-  return tx(ctx.db, () => {
+  // Fehlversuche werden in derselben Transaktion festgeschrieben und erst DANACH als Fehler gemeldet –
+  // sonst würde das Zurückrollen der Transaktion Zähler und Audit-Eintrag wieder löschen.
+  const outcome = tx(ctx.db, (): AppError | { ok: true } => {
+    // Sperre je Empfänger (nicht je IP): 5 Fehlversuche in 15 Minuten, unabhängig vom Verfahren
+    const since = new Date(now.getTime() - 15 * 60_000).toISOString();
+    const recentFails = (ctx.db.prepare(`SELECT COUNT(*) AS n FROM otp_challenges WHERE recipient_id = ? AND channel = 'failure' AND created_at > ?`).get(sc.rec.id, since) as any).n;
+    if (recentFails >= 5) return tooMany('Zu viele Fehlversuche. Bitte in 15 Minuten erneut versuchen.');
+    const fail = (err: AppError) => {
+      ctx.db.prepare(`INSERT INTO otp_challenges (id, recipient_id, channel, code_hash, attempts, expires_at, created_at) VALUES (?, ?, 'failure', '', 1, ?, ?)`).run(id('otp'), sc.rec.id, new Date(now.getTime() + 15 * 60_000).toISOString(), now.toISOString());
+      appendAudit(ctx.db, sc.env.id, sc.env.org_id, 'recipient.auth_failed', recActor(sc.rec), { method, ip: meta.ip, failures_in_window: recentFails + 1 });
+      if (recentFails + 1 >= 5) appendAudit(ctx.db, sc.env.id, sc.env.org_id, 'recipient.auth_locked', recActor(sc.rec), { method, minutes: 15 });
+      return err;
+    };
     if (method === 'access_code') {
-      const since = new Date(now.getTime() - 15 * 60_000).toISOString();
-      const fails = (ctx.db.prepare(`SELECT COUNT(*) AS n FROM otp_challenges WHERE recipient_id = ? AND channel = 'access_code' AND created_at > ?`).get(sc.rec.id, since) as any).n;
-      if (fails >= 5) throw tooMany('Zu viele Fehlversuche. Bitte in 15 Minuten erneut versuchen.');
-      if (!verifySecret(sc.rec.access_code_hash, code)) {
-        ctx.db.prepare(`INSERT INTO otp_challenges (id, recipient_id, channel, code_hash, attempts, expires_at, created_at) VALUES (?, ?, 'access_code', '', 1, ?, ?)`).run(id('otp'), sc.rec.id, since, now.toISOString());
-        appendAudit(ctx.db, sc.env.id, sc.env.org_id, 'recipient.auth_failed', recActor(sc.rec), { method, ip: meta.ip });
-        throw new AppError(401, 'wrong_code', 'Der Zugangscode ist falsch.');
-      }
+      if (!verifySecret(sc.rec.access_code_hash, code)) return fail(new AppError(401, 'wrong_code', 'Der Zugangscode ist falsch.'));
     } else if (method === 'email_otp' || method === 'sms_otp') {
-      const ch = ctx.db.prepare(`SELECT * FROM otp_challenges WHERE recipient_id = ? AND channel != 'access_code' AND verified_at IS NULL ORDER BY created_at DESC LIMIT 1`).get(sc.rec.id) as any;
-      if (!ch || new Date(ch.expires_at) <= now) throw new AppError(401, 'code_expired', 'Der Code ist abgelaufen. Bitte einen neuen anfordern.');
-      if (ch.attempts >= 5) throw tooMany('Zu viele Fehlversuche. Bitte einen neuen Code anfordern.');
+      const ch = ctx.db.prepare(`SELECT * FROM otp_challenges WHERE recipient_id = ? AND channel IN ('email','sms') AND verified_at IS NULL ORDER BY created_at DESC LIMIT 1`).get(sc.rec.id) as any;
+      if (!ch || new Date(ch.expires_at) <= now) return new AppError(401, 'code_expired', 'Der Code ist abgelaufen. Bitte einen neuen anfordern.');
+      if (ch.attempts >= 5) return tooMany('Zu viele Fehlversuche. Bitte einen neuen Code anfordern.');
       const clean = code.replace(/\s/g, '');
       if (!safeEqual(hashToken(ch.id + ':' + clean), ch.code_hash)) {
         ctx.db.prepare('UPDATE otp_challenges SET attempts = attempts + 1 WHERE id = ?').run(ch.id);
-        appendAudit(ctx.db, sc.env.id, sc.env.org_id, 'recipient.auth_failed', recActor(sc.rec), { method, ip: meta.ip });
-        throw new AppError(401, 'wrong_code', 'Der Code ist falsch.');
+        return fail(new AppError(401, 'wrong_code', ch.attempts + 1 >= 5 ? 'Der Code ist falsch. Bitte einen neuen Code anfordern.' : 'Der Code ist falsch.'));
       }
       ctx.db.prepare('UPDATE otp_challenges SET verified_at = ? WHERE id = ?').run(now.toISOString(), ch.id);
     } else {
@@ -223,6 +227,8 @@ export function verifyAuth(ctx: Ctx, sc: SignerCtx, code: string, meta: ReqMeta)
     });
     return { ok: true };
   });
+  if (outcome instanceof AppError) throw outcome;
+  return outcome;
 }
 
 // ───────────────────────────── Ansicht ─────────────────────────────
@@ -318,6 +324,11 @@ const MAX_SIG_BYTES = 1_500_000;
 /** Prüft und bereinigt ein Unterschriftsbild: dekodieren, Größe begrenzen, neu kodieren (entfernt Metadaten). */
 export function sanitizePng(input: Buffer): Buffer {
   if (input.length > MAX_SIG_BYTES) throw badRequest('signature_too_large', 'Das Bild ist zu groß (max. 1,5 MB).');
+  // Abmessungen vor dem Dekodieren aus dem IHDR-Block lesen (Schutz vor Dekompressionsbomben)
+  if (input.length < 24 || input.readUInt32BE(0) !== 0x89504e47 || input.subarray(12, 16).toString('latin1') !== 'IHDR') throw badRequest('signature_invalid', 'Das Unterschriftsbild ist kein gültiges PNG.');
+  const w0 = input.readUInt32BE(16);
+  const h0 = input.readUInt32BE(20);
+  if (w0 < 20 || h0 < 10 || w0 > 2400 || h0 > 1200) throw badRequest('signature_dimensions', 'Ungültige Bildgröße.');
   let png: PNG;
   try {
     png = PNG.sync.read(input);
@@ -481,8 +492,10 @@ export function complete(ctx: Ctx, sc0: SignerCtx, input: CompleteInput, meta: R
       const v = active.has(f.key) ? (computed[f.key] ?? '') : '';
       upd.run(v === '' ? null : v, now.toISOString(), f.id, rec.id);
     }
-    // Formelfelder anderer Empfänger hängen ggf. von meinen Werten ab: neu berechnen
-    for (const f of all.filter((x) => x.type === 'formula' && x.recipient_id !== rec.id)) {
+    // Formelfelder anderer, noch offener Empfänger hängen ggf. von meinen Werten ab: neu berechnen.
+    // Wer bereits abgeschlossen hat, behält genau die Werte, die er gesehen und unterschrieben hat.
+    const closed = new Set((ctx.db.prepare(`SELECT id FROM recipients WHERE envelope_id = ? AND status IN ('completed','declined','delegated')`).all(env.id) as { id: string }[]).map((x) => x.id));
+    for (const f of all.filter((x) => x.type === 'formula' && x.recipient_id !== rec.id && !closed.has(x.recipient_id))) {
       ctx.db.prepare('UPDATE fields SET value = ? WHERE id = ?').run(computed[f.key] || null, f.id);
     }
     const r = ctx.db

@@ -521,4 +521,13 @@ WHEN NEW.token_hash IS NULL AND NEW.prev_token_hash IS NOT NULL
 BEGIN UPDATE recipients SET prev_token_hash = NULL WHERE id = NEW.id; END;
 `,
   },
+  {
+    id: 5,
+    name: 'mail_art',
+    sql: `
+-- Art der E-Mail (für Zustellstatus je Empfänger und zur Vermeidung von Benachrichtigungsschleifen)
+ALTER TABLE emails ADD COLUMN kind TEXT;
+CREATE INDEX emails_recipient ON emails(recipient_id, created_at);
+`,
+  },
 ];
