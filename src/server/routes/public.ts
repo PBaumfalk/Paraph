@@ -61,8 +61,11 @@ export function publicRoutes(app: FastifyInstance, ctx: Ctx) {
   // Hash-Abfrage: der Browser berechnet den SHA-256 lokal; das Dokument verlässt das Gerät nicht.
   app.post('/api/public/verify/hash', limit(30), async (req) => {
     const { sha256 } = z.object({ sha256: z.string().regex(/^[0-9a-f]{64}$/) }).parse(req.body);
-    const hits = ctx.db.prepare('SELECT * FROM hash_register WHERE sha256 = ?').all(sha256) as any[];
-    if (!hits.length) return { found: false };
+    const all = ctx.db.prepare('SELECT * FROM hash_register WHERE sha256 = ?').all(sha256) as any[];
+    if (!all.length) return { found: false };
+    // Bei einem Einzeldokument sind Gesamt-PDF und Einzeldokument dieselbe Datei: je Vorgang nur ein Treffer
+    const rank = ['final', 'final_document', 'certificate', 'evidence', 'audit', 'authoritative', 'source'];
+    const hits = [...new Map(all.sort((a, b) => rank.indexOf(b.kind) - rank.indexOf(a.kind)).map((h) => [h.envelope_id, h])).values()]; // letzter Eintrag gewinnt → höchster Rang zuletzt
     const out = hits.map((h) => {
       const env = envRow(ctx, h.envelope_id);
       const org = getOrg(ctx, h.org_id);

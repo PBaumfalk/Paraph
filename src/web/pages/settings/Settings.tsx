@@ -174,8 +174,8 @@ function Org() {
           <label className="check"><input type="checkbox" checked={s.attachCompletedPdf} onChange={(e) => setS({ ...s, attachCompletedPdf: e.target.checked })} /> {t('Fertiges PDF an die Abschluss-E-Mail anhängen (sonst nur persönlicher Link)')}</label>
           <p className="hint" style={{ marginTop: -4 }}>{t('Wo Textform genügt (z. B. § 3a RVG, Gewerbemiete), sollte jede Partei das unterschriebene PDF dauerhaft erhalten – ein Link allein ist dafür möglicherweise nicht ausreichend. Rechtliche Bewertung: docs/recht/FREIGABELISTE.md.')}</p>
           <div className="field">
-            <label className="label">{t('Datenschutzhinweise für Unterzeichner (Art. 13 DSGVO)')}</label>
-            <input className="input" type="url" placeholder="https://kanzlei.example/datenschutz" value={s.privacyUrl ?? ''} onChange={(e) => setS({ ...s, privacyUrl: e.target.value || null })} />
+            <label className="label" htmlFor="privacy-url">{t('Datenschutzhinweise für Unterzeichner (Art. 13 DSGVO)')}</label>
+            <input id="privacy-url" className="input" type="url" placeholder="https://kanzlei.example/datenschutz" value={s.privacyUrl ?? ''} onChange={(e) => setS({ ...s, privacyUrl: e.target.value || null })} />
             <span className="hint">{t('Wird auf der Signaturseite neben der Erklärung verlinkt.')}</span>
           </div>
           <div className="field">
