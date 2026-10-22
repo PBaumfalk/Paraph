@@ -227,7 +227,9 @@ registerJob('send_email', async (ctx, { emailId }) => {
     // Inhalt verwerfen: enthält ggf. einen gültigen Signaturlink
     ctx.db.prepare(`UPDATE emails SET status = 'sent', sent_at = ?, attempts = attempts + 1, text_body = '', html_body = '' WHERE id = ?`).run(ctx.now().toISOString(), emailId);
   } catch (err: any) {
-    ctx.db.prepare(`UPDATE emails SET attempts = attempts + 1, last_error = ? WHERE id = ?`).run(String(err?.message ?? err).slice(0, 500), emailId);
+    const attempts = (e.attempts ?? 0) + 1;
+    // Nach dem letzten Versuch endgültig als fehlgeschlagen markieren (sichtbar unter Einstellungen → System)
+    ctx.db.prepare(`UPDATE emails SET attempts = ?, last_error = ?, status = CASE WHEN ? >= 8 THEN 'failed' ELSE status END WHERE id = ?`).run(attempts, String(err?.message ?? err).slice(0, 500), attempts, emailId);
     throw err;
   }
 });

@@ -22,6 +22,7 @@ export default function Templates() {
   const [use, setUse] = useState<string | null>(sp.get('use'));
   const [bulk, setBulk] = useState<any>(null);
   const [create, setCreate] = useState(false);
+  const [folderDlg, setFolderDlg] = useState<string | null>(null);
   const canWrite = me?.permissions.includes('template.write');
   useEffect(() => setUse(sp.get('use')), [sp]);
 
@@ -42,7 +43,7 @@ export default function Templates() {
           <button className="tab" aria-selected={archived} onClick={() => { setArchived(true); setFolder(''); }}>{t('Archiv')}</button>
         </div>
         {canWrite && (
-          <button className="btn btn-sm btn-ghost" onClick={async () => { const name = prompt(t('Name des Ordners')); if (name) { await post('/api/v1/folders', { name }); qc.invalidateQueries({ queryKey: ['folders'] }); } }}>
+          <button className="btn btn-sm btn-ghost" onClick={() => setFolderDlg('')}>
             <FolderPlus /> {t('Ordner')}
           </button>
         )}
@@ -90,6 +91,15 @@ export default function Templates() {
       )}
       {use && <UseTemplateDialog id={use} onClose={() => { setUse(null); sp.delete('use'); setSp(sp, { replace: true }); }} />}
       {bulk && <BulkDialog tpl={bulk} onClose={() => setBulk(null)} />}
+      {folderDlg !== null && (
+        <Dialog
+          title={t('Neuer Ordner')}
+          onClose={() => setFolderDlg(null)}
+          footer={<><button className="btn" onClick={() => setFolderDlg(null)}>{t('Abbrechen')}</button><button className="btn btn-primary" disabled={!folderDlg.trim()} onClick={async () => { try { await post('/api/v1/folders', { name: folderDlg.trim() }); qc.invalidateQueries({ queryKey: ['folders'] }); setFolderDlg(null); } catch (e) { toast(errorText(e), 'error'); } }}>{t('Anlegen')}</button></>}
+        >
+          <div className="field"><label className="label" htmlFor="fname">{t('Name des Ordners')}</label><input id="fname" className="input" value={folderDlg} onChange={(e) => setFolderDlg(e.target.value)} autoFocus /></div>
+        </Dialog>
+      )}
       {create && (
         <CreateDialog
           folders={folders.data?.data ?? []}

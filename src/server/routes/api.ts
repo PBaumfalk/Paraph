@@ -14,7 +14,7 @@ import { getOrg, DEFAULT_SETTINGS, type Branding, type OrgSettings } from '../do
 import { createApiKey, inviteMember, listMembers, logActivity, removeMember, setMemberRole, createOrg } from '../domain/users.js';
 import { encryptSecret, newWebhookSecret, WEBHOOK_EVENTS } from '../domain/webhooks.js';
 import { enqueue } from '../domain/jobs.js';
-import { checkUrlShape, SsrfError } from '../lib/ssrf.js';
+import { checkUrlShape, resolveSafe, SsrfError } from '../lib/ssrf.js';
 import { inPersonSession, issueEmbedToken } from '../domain/signing.js';
 import { FORM_RULES, suggestRules } from '../../shared/formrules.js';
 import { getSealKey, importOrgSealKey } from '../domain/sealkeys.js';
@@ -673,9 +673,11 @@ export function apiRoutes(app: FastifyInstance, ctx: Ctx) {
   });
 
   // ───────────── Webhooks ─────────────
-  const validateHookUrl = (url: string) => {
+  const validateHookUrl = async (url: string) => {
     try {
-      checkUrlShape(url, { allowPrivate: ctx.cfg.webhookAllowPrivate, allowHosts: ctx.cfg.webhookAllowHosts });
+      const policy = { allowPrivate: ctx.cfg.webhookAllowPrivate, allowHosts: ctx.cfg.webhookAllowHosts };
+      // Schon beim Anlegen auflösen: interne Ziele sofort ablehnen (bei der Zustellung wird erneut geprüft)
+      await resolveSafe(checkUrlShape(url, policy), policy);
     } catch (e) {
       if (e instanceof SsrfError) throw badRequest('webhook_url', e.message);
       throw e;
@@ -694,7 +696,7 @@ export function apiRoutes(app: FastifyInstance, ctx: Ctx) {
     const pr = auth(req);
     requirePerm(pr, 'webhooks.manage');
     const b = z.object({ url: z.string().url().max(500), events: z.array(z.string()).min(1), description: z.string().max(200).default(''), mode: z.enum(['live', 'test']).optional() }).parse(req.body);
-    validateHookUrl(b.url);
+    await validateHookUrl(b.url);
     const events = b.events.filter((e) => e === '*' || (WEBHOOK_EVENTS as readonly string[]).includes(e));
     if (!events.length) throw badRequest('events', 'Keine gültigen Ereignisse gewählt.');
     const wid = id('wh');
@@ -708,7 +710,7 @@ export function apiRoutes(app: FastifyInstance, ctx: Ctx) {
     const pr = auth(req);
     requirePerm(pr, 'webhooks.manage');
     const b = z.object({ url: z.string().url().max(500).optional(), events: z.array(z.string()).min(1).optional(), description: z.string().max(200).optional(), active: z.boolean().optional() }).parse(req.body);
-    if (b.url) validateHookUrl(b.url);
+    if (b.url) await validateHookUrl(b.url);
     const r = ctx.db.prepare('UPDATE webhooks SET url = COALESCE(?, url), events = COALESCE(?, events), description = COALESCE(?, description), active = COALESCE(?, active) WHERE id = ? AND org_id = ?').run(b.url ?? null, b.events ? JSON.stringify(b.events) : null, b.description ?? null, b.active === undefined ? null : b.active ? 1 : 0, p(req).id, pr.orgId);
     if (!r.changes) throw notFound();
     return { ok: true };

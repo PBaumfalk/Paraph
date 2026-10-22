@@ -102,7 +102,7 @@ export function cleanup(ctx: Ctx) {
   // Versandte E-Mails nach 90 Tagen nur noch als Metadaten
   ctx.db.prepare(`DELETE FROM emails WHERE created_at < ?`).run(new Date(ctx.now().getTime() - 90 * 86400_000).toISOString());
   ctx.db.prepare(`DELETE FROM webhook_deliveries WHERE created_at < ?`).run(new Date(ctx.now().getTime() - 30 * 86400_000).toISOString());
-  ctx.db.prepare(`DELETE FROM meta WHERE key LIKE 'pwreset:%' AND json_extract(value, '$.exp') < ?`).run(ctx.now().getTime());
+  ctx.db.prepare(`DELETE FROM meta WHERE (key LIKE 'pwreset:%' OR key LIKE 'pfotp:%') AND json_extract(value, '$.exp') < ?`).run(ctx.now().getTime());
 }
 
 registerJob('expire_scan', async (ctx) => void expireScan(ctx));

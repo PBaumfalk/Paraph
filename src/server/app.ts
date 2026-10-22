@@ -57,7 +57,8 @@ export async function buildApp(ctx: Ctx): Promise<FastifyInstance> {
   });
 
   await app.register(cookie);
-  await app.register(rateLimit, { global: true, max: 600, timeWindow: '1 minute', keyGenerator: (req) => req.ip });
+  // Begrenzung nur für die API; statische Dateien der Oberfläche bleiben immer erreichbar
+  await app.register(rateLimit, { global: true, max: 600, timeWindow: '1 minute', keyGenerator: (req) => req.ip, allowList: (req) => !req.url.startsWith('/api/') });
   await app.register(multipart, { limits: { fileSize: ctx.cfg.maxUploadBytes, files: 1, fields: 10 } });
 
   app.addHook('onSend', async (req, reply, payload) => {

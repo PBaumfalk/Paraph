@@ -748,4 +748,5 @@ export const EN: Record<string, string> = {
   'Weitergeben': 'Delegate',
   'Die Vertretung erhält einen eigenen Link und unterschreibt an Ihrer Stelle. Das wird protokolliert; Ihr Link wird ungültig.': 'The representative receives their own link and signs on your behalf. This is logged; your link becomes invalid.',
   'Grund (optional)': 'Reason (optional)',
+  'Neuer Ordner': 'New folder',
 };
