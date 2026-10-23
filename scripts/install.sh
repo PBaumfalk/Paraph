@@ -53,8 +53,20 @@ ask SMTP_URL "SMTP-Zugang (smtps://benutzer:passwort@server:465 oder smtp://…:
 MAIL_FROM=${PARAPH_MAIL_FROM:-}
 ask MAIL_FROM "Absender (z. B. Kanzlei Muster <signatur@kanzlei.de>)" "Paraph <signatur@$DOMAIN>"
 TSA_URL=${PARAPH_TSA_URL:-}
-ask TSA_URL "Zeitstempeldienst (RFC 3161, leer = keiner; dringend empfohlen)" ""
+ask TSA_URL "Zeitstempeldienst (RFC 3161: „freetsa“, eigene URL oder „keiner“)" "freetsa"
 TSA_CA_SRC=${PARAPH_TSA_CA_FILE:-}
+case "$TSA_URL" in
+  keiner|none|-) TSA_URL= ;;
+  freetsa|https://freetsa.org/tsr)
+    # Mitgeliefertes Wurzelzertifikat; der Fingerabdruck ist hier fest hinterlegt, damit ein veränderter Checkout auffällt
+    TSA_URL=https://freetsa.org/tsr
+    TSA_CA_SRC=${TSA_CA_SRC:-docker/tsa/freetsa-root-ca.pem}
+    if [ "$TSA_CA_SRC" = docker/tsa/freetsa-root-ca.pem ]; then
+      FP=$(openssl x509 -in "$TSA_CA_SRC" -noout -fingerprint -sha256 2>/dev/null | cut -d= -f2 | tr -d : | tr 'A-F' 'a-f') || FP="kein lesbares Zertifikat"
+      [ "$FP" = a6379e7cecc05faa3cbf076013d745e327bbbaa38c0b9af22469d4701d18aabc ] || die "Fingerabdruck von $TSA_CA_SRC passt nicht zum FreeTSA-Wurzelzertifikat ($FP)."
+    fi
+    say "Zeitstempeldienst: FreeTSA (kostenlos, nicht qualifiziert, ohne Verfügbarkeitszusage)" ;;
+esac
 if [ -n "$TSA_URL" ]; then
   # Ohne Vertrauensanker ließen sich Zeitstempel von jemandem mit Serverzugriff selbst erzeugen
   ask TSA_CA_SRC "PEM-Datei mit Wurzel-/Zwischenzertifikat des Zeitstempeldienstes (vom Anbieter)" ""

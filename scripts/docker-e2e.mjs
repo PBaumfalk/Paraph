@@ -78,6 +78,8 @@ function installEnv(name, extra = {}) {
     PARAPH_ACME_EMAIL: 'it@kanzlei.test',
     PARAPH_SMTP_URL: 'smtp://paraph:test-passwort-1@mail.test:1025',
     PARAPH_MAIL_FROM: 'Kanzlei Test <signatur@kanzlei.test>',
+    // Offline bleiben: install.sh würde sonst FreeTSA voreinstellen
+    PARAPH_TSA_URL: 'keiner',
     PARAPH_EXTRA_ENV: [
       `COMPOSE_PROJECT_NAME=${name}`,
       'COMPOSE_FILE=docker-compose.yml:docker-compose.test.yml',

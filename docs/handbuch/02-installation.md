@@ -11,7 +11,7 @@ Stand: Version 0.2.0.
 - eine Domain, deren DNS-Eintrag auf den Server zeigt
 - entweder freie Ports 80 und 443 für den mitgelieferten Caddy (automatisches HTTPS) oder ein vorhandener Reverse Proxy (nginx, Traefik)
 - ein SMTP-Konto für den Versand der Einladungen
-- empfohlen: ein Zeitstempeldienst (TSA) nach RFC 3161
+- empfohlen: ein Zeitstempeldienst (TSA) nach RFC 3161; FreeTSA ist voreingestellt
 - optional: SMS-Gateway, OIDC-Anbieter, S3-Speicher
 
 Für den Betrieb ohne Docker ist Node.js 24 nötig (`package.json`: `"node": ">=24"`). Dieses Handbuch beschreibt nur den Docker-Betrieb.
@@ -32,17 +32,18 @@ Das Skript fragt nacheinander:
 | E-Mail für Let's Encrypt | nur mit Caddy, Pflicht. Ohne gültige Adresse bricht das Skript ab. |
 | SMTP-Zugang | `SMTP_URL`, z. B. `smtps://benutzer:passwort@server:465` |
 | Absender | `MAIL_FROM`, Vorgabe `Paraph <signatur@<Domain>>` |
-| Zeitstempeldienst | `TSA_URL`, leer = keiner |
+| Zeitstempeldienst (Vorgabe: `freetsa`) | `freetsa` setzt `TSA_URL=https://freetsa.org/tsr` und übernimmt das mitgelieferte Wurzelzertifikat `docker/tsa/freetsa-root-ca.pem` nach `secrets/tsa_ca.pem`; das Skript prüft vorher dessen SHA-256-Fingerabdruck und bricht bei Abweichung ab. Eine eigene URL fragt zusätzlich nach der PEM-Datei des Anbieters. `keiner` = ohne Zeitstempeldienst. |
 
 Danach
 
 1. legt es `secrets/` (0700) und `backups/` (0700) an,
 2. erzeugt den Hauptschlüssel `secrets/master.key` (32 Byte, Base64) und die Wiederherstellungs-Passphrase `secrets/backup_passphrase` (32 Zeichen), falls sie fehlen; beide gehören UID 1000 und haben die Rechte 0400,
-3. kopiert `.env.example` nach `.env` (Rechte 0600), falls `.env` fehlt, und trägt `APP_URL`, `DOMAIN`, `ACME_EMAIL`, einen zufälligen `SETUP_CODE`, `SMTP_URL`, `MAIL_FROM`, `TSA_URL` und `TRUST_PROXY=true` ein,
-4. schreibt `PARAPH_IMAGE=paraph:<Version>` und `COMPOSE_PROFILES` (`caddy` oder leer) in `.env`, damit auch ein späteres `docker compose up -d` genau diesen Stand verwendet,
-5. baut das Image (`docker compose build --pull paraph`), startet alle Dienste und wartet bis zu drei Minuten auf Bereitschaft,
-6. führt `paraph doctor --quick` aus und legt `.paraph-install` an (Zeitpunkt und Version; `update.sh` setzt diese Datei voraus),
-7. zeigt den Einrichtungscode und, wenn neu erzeugt, die Wiederherstellungs-Passphrase.
+3. legt `secrets/tsa_ca.pem` an (Zertifikat des Zeitstempeldienstes, leer ohne Dienst),
+4. kopiert `.env.example` nach `.env` (Rechte 0600), falls `.env` fehlt, und trägt `APP_URL`, `DOMAIN`, `ACME_EMAIL`, einen zufälligen `SETUP_CODE`, `SMTP_URL`, `MAIL_FROM`, `TSA_URL` und `TRUST_PROXY=true` ein,
+5. schreibt `PARAPH_IMAGE=paraph:<Version>` und `COMPOSE_PROFILES` (`caddy` oder leer) in `.env`, damit auch ein späteres `docker compose up -d` genau diesen Stand verwendet,
+6. baut das Image (`docker compose build --pull paraph`), startet alle Dienste und wartet bis zu drei Minuten auf Bereitschaft,
+7. führt `paraph doctor --quick` aus und legt `.paraph-install` an (Zeitpunkt und Version; `update.sh` setzt diese Datei voraus),
+8. zeigt den Einrichtungscode und, wenn neu erzeugt, die Wiederherstellungs-Passphrase.
 
 Ein erneuter Aufruf überschreibt weder Schlüssel noch `.env`; er prüft, baut und startet.
 
@@ -61,14 +62,15 @@ sudo PARAPH_NONINTERACTIVE=1 \
      PARAPH_ACME_EMAIL=it@kanzlei.example \
      PARAPH_SMTP_URL='smtps://benutzer:passwort@smtp.example.org:465' \
      PARAPH_MAIL_FROM='Kanzlei Muster <signatur@kanzlei.example>' \
-     PARAPH_TSA_URL='https://tsa.example/tsr' \
+     PARAPH_TSA_URL=freetsa \
      ./scripts/install.sh
 ```
 
 | Variable | Zweck |
 |---|---|
 | `PARAPH_NONINTERACTIVE=1` | keine Rückfragen; fehlende Angaben erhalten die Vorgabe |
-| `PARAPH_DOMAIN`, `PARAPH_USE_CADDY`, `PARAPH_ACME_EMAIL`, `PARAPH_SMTP_URL`, `PARAPH_MAIL_FROM`, `PARAPH_TSA_URL` | Antworten auf die Fragen oben |
+| `PARAPH_DOMAIN`, `PARAPH_USE_CADDY`, `PARAPH_ACME_EMAIL`, `PARAPH_SMTP_URL`, `PARAPH_MAIL_FROM`, `PARAPH_TSA_URL` | Antworten auf die Fragen oben. Ohne `PARAPH_TSA_URL` gilt auch hier `freetsa`; `keiner` schaltet den Zeitstempeldienst ab. |
+| `PARAPH_TSA_CA_FILE` | PEM-Datei des Zeitstempeldienstes bei eigener `PARAPH_TSA_URL` |
 | `PARAPH_APP_URL` | abweichende öffentliche Adresse (Vorgabe `https://<Domain>`) |
 | `PARAPH_EXTRA_ENV` | weitere Zeilen, die an eine neu angelegte `.env` angehängt werden |
 | `PARAPH_SKIP_BUILD=1` | nicht bauen, sondern das Image aus `PARAPH_IMAGE` verwenden (muss vorhanden sein) |

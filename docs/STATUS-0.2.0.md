@@ -12,6 +12,8 @@ Die technisch prüfbaren Voraussetzungen sind erfüllt (siehe Abschnitte 1 und 2
 2. **Echte Gegenstellen sind nicht verifiziert**: Mailserver mit SPF/DKIM/DMARC, Domain mit Let's-Encrypt-Zertifikat, Zeitstempeldienst. Alles wurde nur gegen lokale Testdienste geprüft.
 3. **Zeitstempeldienst nicht gewählt.** Ohne `TSA_URL` und das Anbieterzertifikat (`secrets/tsa_ca.pem`) schützt die Verankerung der Audit-Ketten nicht gegen jemanden mit vollem Serverzugriff. Für vertrauliche Kanzleidokumente ist das ein Pflichtbaustein. Paraph erzwingt das jetzt: Ist `TSA_URL` ohne Vertrauensanker gesetzt, melden Diagnose und `verify-audit` einen Fehler.
 
+> **Nachtrag 23.10.2026 zu Punkt 3:** Gewählt ist FreeTSA. `install.sh` stellt es voreingestellt ein (`TSA_URL=https://freetsa.org/tsr`, Wurzelzertifikat aus `docker/tsa/freetsa-root-ca.pem` mit Fingerabdruckprüfung). Erledigt ist der Punkt, sobald `paraph doctor` auf dem Server den Zeitstempeldienst mit „Kette vertrauenswürdig“ meldet. FreeTSA ist nicht qualifiziert (Freigabeliste F-55).
+
 Sind diese drei Punkte erledigt und der Abnahmelauf auf dem Server (Abschnitt 6) grün, kann der Status auf READY FOR PRODUCTION gesetzt werden.
 
 ## 1. Vollständig implementiert und nachweislich getestet
@@ -49,7 +51,7 @@ Zahlen (letzter Lauf): Vitest 87 bestanden / 18 übersprungen (MinIO, authentik 
 | Docker-Betrieb, Update, Rückweg, Wiederherstellung | echte Container, echtes Compose, echte Images (Docker Desktop, macOS) | **verifiziert lokal**; auf Linux-Server noch auszuführen |
 | HTTPS | Caddy mit interner CA für `localhost` | **simuliert** – Let's Encrypt mit echter Domain nicht geprüft |
 | E-Mail | Mailpit mit STARTTLS-Pflicht, SMTP-Anmeldung, eigener CA; lokaler SMTP-Stub für 4xx/5xx | **simuliert** – echte Zustellung, SPF/DKIM/DMARC, Spam-Einstufung nicht geprüft |
-| Zeitstempel | OpenSSL-Zeitstempeldienst (unabhängige Implementierung) | **simuliert** – kein echter TSA kontaktiert |
+| Zeitstempel | OpenSSL-Zeitstempeldienst (unabhängige Implementierung); seit 23.10.2026 zusätzlich FreeTSA live (`tests/freetsa.test.ts`) | **gegen FreeTSA verifiziert** (Kette, Nonce, PAdES-B-T); qualifizierter Anbieter nicht geprüft |
 | S3 | MinIO RELEASE.2025-09-07 | **lokal verifiziert** – AWS/Hetzner/Wasabi nicht |
 | OIDC | authentik 2026.8.5 in Docker | **lokal verifiziert** – Ihr authentik nicht |
 | SMS | – | **ungetestet** |
