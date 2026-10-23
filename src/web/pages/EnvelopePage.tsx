@@ -131,7 +131,7 @@ export default function EnvelopePage() {
   const done = actors.filter((r: any) => r.status === 'completed').length;
 
   return (
-    <div className="pdfpage" style={{ maxWidth: 1240 }}>
+    <div className="page" style={{ maxWidth: 1240 }}>
       <div className="page-head">
         <div className="grow" style={{ minWidth: 0 }}>
           <Link to="/" className="btn btn-ghost btn-sm" style={{ marginBottom: 8, marginLeft: -10 }}><ArrowLeft /> {t('Übersicht')}</Link>

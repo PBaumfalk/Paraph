@@ -53,7 +53,7 @@ export function RecipientsPanel({ recs, setRecs, order, setOrder, features }: { 
   };
   return (
     <section className="insp-section">
-      <div className="row">
+      <div className="row row-wrap insp-head">
         <div className="eyebrow grow">{t('Beteiligte')}</div>
         <div className="segmented" role="group" aria-label={t('Reihenfolge')}>
           <button aria-pressed={order === 'parallel'} onClick={() => setOrder('parallel')} title={t('Alle gleichzeitig')}>{t('Gleichzeitig')}</button>
