@@ -120,16 +120,14 @@ Ein zweiter Aufruf überschreibt weder `secrets/master.key` noch `secrets/backup
 
 ## Das fertige Image von GitHub verwenden
 
-Der GitHub-Workflow (`.github/workflows/ci.yml`) baut nach erfolgreichen Tests und einem Rauchtest ein Image und veröffentlicht es unter `ghcr.io/pbaumfalk/paraph`:
+Der GitHub-Workflow (`.github/workflows/ci.yml`) baut bei jeder Freigabe (Git-Tag `v*`) nach erfolgreichen Tests und einem Rauchtest ein Image für amd64 und arm64 und veröffentlicht es unter `ghcr.io/pbaumfalk/paraph`. Pushes auf `main` werden gebaut und geprüft, aber nicht veröffentlicht, weil Images bei privaten Repositories zum Speicherkontingent des Kontos zählen.
 
 | Tag | Inhalt |
 |---|---|
-| `main` | aktueller Entwicklungsstand (jeder Push auf `main`), nur amd64 |
-| `sha-<kurz>` | ein bestimmter Commit |
-| `0.2.0`, `0.2` | Freigabe aus einem Git-Tag `v0.2.0`, amd64 und arm64 |
-| `latest` | die letzte Freigabe (nur bei Git-Tags `v*`) |
+| `0.2.0`, `0.2` | Freigabe aus einem Git-Tag `v0.2.0` |
+| `latest` | die letzte Freigabe |
 
-Für den Produktivbetrieb verwenden Sie einen Versions-Tag, nicht `main`. Ist das Paket nicht öffentlich, melden Sie sich vorher an (`docker login ghcr.io` mit einem Token, das Pakete lesen darf).
+Verwenden Sie für den Betrieb einen Versions-Tag. Ist das Paket nicht öffentlich, melden Sie sich vorher an (`docker login ghcr.io` mit einem Token, das Pakete lesen darf).
 
 Erstinstallation mit dem fertigen Image:
 

@@ -68,7 +68,7 @@ sudo ./scripts/update.sh              # Update mit Sicherung vorab
 sudo ./scripts/update.sh --rollback   # zurück auf den Stand davor
 ```
 
-Fertige Images liegen unter `ghcr.io/pbaumfalk/paraph` (`latest` = letzte Freigabe, `main` = Entwicklungsstand). Alles Weitere, auch hinter nginx oder Traefik und ohne Rückfragen: [Handbuch, Kapitel 11](docs/handbuch/11-installation.md).
+Zu jeder Freigabe liegt ein fertiges Image unter `ghcr.io/pbaumfalk/paraph` (`latest` und die Versionsnummer, amd64 und arm64). Alles Weitere, auch hinter nginx oder Traefik und ohne Rückfragen: [Handbuch, Kapitel 11](docs/handbuch/11-installation.md).
 
 ## Handbuch
 

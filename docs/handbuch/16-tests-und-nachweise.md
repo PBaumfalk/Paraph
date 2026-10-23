@@ -91,7 +91,7 @@ Der Workflow „Tests, Image & Release“ (`.github/workflows/ci.yml`) läuft be
 |---|---|
 | `tests` | Node 24, Poppler; `npm ci`; Typprüfung (`npm run typecheck`); Syntaxprüfung aller `scripts/*.sh`; Vitest. MinIO-, authentik- und FreeTSA-Live-Tests überspringen sich ohne ihre Dienste. |
 | `e2e` | Mailpit als Dienst; Chromium und WebKit; `npm run build`; Playwright. Bei Fehlschlag wird der Bericht 14 Tage aufbewahrt. |
-| `image` | Image bauen und **Rauchtest** so gehärtet wie in `docker-compose.yml` (schreibgeschützt, ohne Capabilities): bereit innerhalb von 60 Sekunden, Version im Image gleich `package.json`, Oberfläche und OpenAPI werden ausgeliefert, UID 1000, `paraph health`, kein npm im Image. Bei Push: Veröffentlichung unter `ghcr.io/pbaumfalk/paraph` (Tags: Branch, kurzer Commit, Version; `latest` nur für Freigaben; arm64 nur für Freigaben). |
+| `image` | Image bauen und **Rauchtest** so gehärtet wie in `docker-compose.yml` (schreibgeschützt, ohne Capabilities): bereit innerhalb von 60 Sekunden, Version im Image gleich `package.json`, Oberfläche und OpenAPI werden ausgeliefert, UID 1000, `paraph health`, kein npm im Image. Nur bei Freigaben (Git-Tag `v*`): Veröffentlichung unter `ghcr.io/pbaumfalk/paraph` für amd64 und arm64 (Tags: Version, `latest`). |
 | `release` | nur bei Tags: Tag passt zu `package.json`, Abschnitt aus `CHANGELOG.md` als Freigabetext, GitHub-Release (bei `v0.*` als Vorabversion) |
 
 Dependabot (`.github/dependabot.yml`) schlägt Updates für npm (wöchentlich), GitHub-Actions, Docker-Basis-Images und die gepinnten Images in `docker-compose.yml` (monatlich) vor.
