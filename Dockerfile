@@ -1,5 +1,5 @@
 # Paraph – selbst gehostete Plattform für elektronische Signaturen. Mehrstufiger Build (amd64/arm64).
-FROM node:24-bookworm-slim AS build
+FROM node:25-bookworm-slim AS build
 WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends python3 make g++ ca-certificates \
   && rm -rf /var/lib/apt/lists/*
@@ -12,7 +12,7 @@ COPY src ./src
 RUN npm run build && npm prune --omit=dev --no-audit --no-fund \
   && node -e "new (require('better-sqlite3'))(':memory:').prepare('select 1').get()"
 
-FROM node:24-bookworm-slim
+FROM node:25-bookworm-slim
 ARG PARAPH_VERSION=0.2.0
 LABEL org.opencontainers.image.title="Paraph" \
       org.opencontainers.image.description="Selbst gehostete Plattform für elektronische Signaturen" \
