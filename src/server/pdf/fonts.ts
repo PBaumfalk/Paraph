@@ -6,7 +6,7 @@ import fontkit from '@pdf-lib/fontkit';
 import type { PDFDocument, PDFFont, PDFPage, Color } from 'pdf-lib';
 
 const require = createRequire(import.meta.url);
-const SUBSETS = ['latin', 'latin-ext', 'cyrillic', 'greek'];
+const SUBSETS = ['latin', 'latin-ext', 'cyrillic', 'cyrillic-ext', 'greek'];
 
 function fontFiles(pkg: string, family: string, weight: number): Buffer[] {
   let dir: string;
@@ -36,21 +36,28 @@ export type FontRole = 'regular' | 'semibold' | 'mono' | 'serif';
 export class FontChain {
   private constructor(private parts: { font: PDFFont; fk: any }[], private fallback: PDFFont) {}
 
+  /** Anzahl eingebetteter Schriftdateien (0 = nur Helvetica-Notbehelf, Umlaute würden zu „?“) */
+  get embedded() {
+    return this.parts.length;
+  }
+
   static async create(doc: PDFDocument, role: FontRole): Promise<FontChain> {
     doc.registerFontkit(fontkit as any);
+    // Dieselben Schriften wie die Oberfläche: IBM Plex Sans für Text, Literata für Titel. Prüfwerte in Geist Mono,
+    // weil fontkit die WOFF-Dateien von IBM Plex Mono nicht lesen kann (tests/pdf-fonts.test.ts).
     const spec: Record<FontRole, [string, string, number]> = {
-      regular: ['@fontsource/geist', 'geist', 400],
-      semibold: ['@fontsource/geist', 'geist', 600],
+      regular: ['@fontsource/ibm-plex-sans', 'ibm-plex-sans', 400],
+      semibold: ['@fontsource/ibm-plex-sans', 'ibm-plex-sans', 600],
       mono: ['@fontsource/geist-mono', 'geist-mono', 400],
-      serif: ['@fontsource/newsreader', 'newsreader', 400],
+      serif: ['@fontsource/literata', 'literata', 400],
     };
     const [pkg, fam, w] = spec[role];
     const files = load(pkg, fam, w);
     const parts: { font: PDFFont; fk: any }[] = [];
     for (const f of files) parts.push({ font: await doc.embedFont(f.bytes, { subset: true }), fk: f.fk });
-    // Ergänzend Geist für Zeichen, die z. B. Instrument Serif nicht enthält
+    // Ergänzend Plex Sans für Zeichen, die die Titel- oder Monoschrift nicht enthält (z. B. Griechisch in Plex Mono)
     if (role !== 'regular') {
-      for (const f of load('@fontsource/geist', 'geist', 400)) parts.push({ font: await doc.embedFont(f.bytes, { subset: true }), fk: f.fk });
+      for (const f of load('@fontsource/ibm-plex-sans', 'ibm-plex-sans', 400)) parts.push({ font: await doc.embedFont(f.bytes, { subset: true }), fk: f.fk });
     }
     const { StandardFonts } = await import('pdf-lib');
     const fallback = await doc.embedFont(StandardFonts.Helvetica);

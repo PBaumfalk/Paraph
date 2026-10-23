@@ -465,9 +465,7 @@ export const EN: Record<string, string> = {
   'Nach dem Siegel wurden Daten angehängt.': 'Data was appended after the seal.',
   'Kein eingebettetes Siegel gefunden.': 'No embedded seal found.',
   // pages/auth/AuthLayout.tsx
-  'Unterschreiben lassen,': 'Get documents signed,',
-  'ohne': 'without',
-  'Papier zu bewegen.': 'moving paper.',
+  'Unterschreiben lassen, ohne Papier zu bewegen.': 'Get documents signed without moving paper.',
   'Selbst gehostet. Jede Signatur mit nachvollziehbarem Protokoll, jedes Ergebnis versiegelt.': 'Self-hosted. Every signature with a traceable log, every result sealed.',
   // pages/auth/Invite.tsx
   'Einladung ungültig': 'Invitation invalid',

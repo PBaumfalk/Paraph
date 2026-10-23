@@ -87,7 +87,8 @@ export interface FieldDef extends NormRect {
   config: FieldConfig;
 }
 
-export const RECIPIENT_COLORS = ['#3D5AFE', '#D9480F', '#0B8457', '#9C36B5', '#C2255C', '#1971C2', '#E67700', '#5F3DC4'];
+// Unterscheidbar nebeneinander im Editor, abgestimmt auf Petrol; kein Indigo
+export const RECIPIENT_COLORS = ['#0D5C63', '#B4541A', '#2F6FB0', '#6E7F12', '#A23B5C', '#8F6A00', '#5B4B8A', '#2E7D5B'];
 
 export const SIGNATURE_LEVELS = {
   ses: {

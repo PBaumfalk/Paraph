@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Bell, Ban, Copy, Download, FileArchive, FileCheck2, FileJson, MoreHorizontal, PenTool, ShieldCheck, Link2, Send, Eye, KeyRound, CheckCircle2, XCircle, CircleDot, FilePlus2, Repeat } from 'lucide-react';
-import { Avatar, Callout, Dialog, Menu, Paraph, PdfPage, RSTATUS, Spinner, StatusPill, errorText, useToast, useConfirm } from '../components/ui';
+import { Avatar, Callout, Dialog, Menu, Paraph, PdfPage, RSTATUS, Spinner, StatusPill, errorText, useToast, useConfirm, Seal } from '../components/ui';
 import { download, fetchBytes, get, post } from '../lib/api';
 import { loadPdf, type PdfDoc } from '../lib/pdf';
 import { t } from '../lib/i18n';
@@ -158,7 +158,7 @@ export default function EnvelopePage() {
 
       {env.status === 'completed' && (
         <div className="sheet complete-hero" style={{ marginBottom: 20 }}>
-          <Paraph size={84} draw />
+          <Seal size={84} press />
           <div className="grow">
             <h2>{t('Alle haben unterschrieben.')}</h2>
             <p className="muted">{t('Abgeschlossen {when}. Das Dokument ist versiegelt; jede spätere Änderung wäre nachweisbar.', { when: fmtDate(env.completed_at) })}</p>

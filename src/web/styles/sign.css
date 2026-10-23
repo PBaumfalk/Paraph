@@ -56,7 +56,7 @@
 .signer-card {
   width: min(440px, 100%);
   background: var(--paper);
-  border-radius: 20px;
+  border-radius: 12px;
   box-shadow: var(--sheet-shadow);
   padding: 32px 26px;
   display: grid;
@@ -93,7 +93,7 @@
   align-items: flex-start;
   padding: 18px 20px;
   background: var(--paper);
-  border-radius: 16px;
+  border-radius: 12px;
   box-shadow: var(--sheet-shadow);
   animation: rise 0.3s var(--ease);
 }
@@ -133,7 +133,7 @@
 }
 .route-step.me {
   color: var(--tinte);
-  font-weight: 650;
+  font-weight: 600;
   box-shadow: 0 0 0 1.5px var(--tinte);
 }
 .route-dot {
@@ -339,7 +339,7 @@
   line-height: 1.55;
 }
 .consent-check {
-  font-weight: 550;
+  font-weight: 500;
   font-size: 15px;
   padding: 12px 14px;
   border: 1.5px solid var(--rule-2);
@@ -385,7 +385,7 @@
 .sigpad {
   position: relative;
   width: 100%;
-  border-radius: 14px;
+  border-radius: 12px;
   background: #fbfbfd;
   border: 1.5px solid var(--rule-2);
   overflow: hidden;

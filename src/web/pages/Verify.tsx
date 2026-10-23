@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { ShieldCheck, ShieldAlert, FileSearch, Lock } from 'lucide-react';
-import { Logo, Paraph, Spinner, Callout } from '../components/ui';
+import { Logo, Paraph, Spinner, Callout, Seal } from '../components/ui';
 import { sha256File } from '../lib/pdf';
 import { t, useLang, setLang, getLang } from '../lib/i18n';
 import { fmtDate } from '../lib/format';
@@ -73,7 +73,7 @@ export default function Verify() {
             <div className="stack">
               {res.matches.map((m: any, i: number) => (
                 <div key={i} className="sheet verdict">
-                  <Paraph size={64} draw />
+                  <Seal size={68} press />
                   <div className="grow stack-sm">
                     <h2>{t('Echt und unverändert')}</h2>
                     <p>{t(KIND[m.kind] ?? m.kind)} {t('zu „{title}“', { title: m.envelope.title })} · {m.org}</p>

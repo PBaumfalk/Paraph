@@ -105,7 +105,7 @@ Einstellungen → Organisation → „Datenschutzhinweise für Unterzeichner (Ar
 
 Je Organisation (Einstellungen → Erscheinungsbild und E-Mails):
 
-- Akzentfarbe
+- Akzentfarbe (Standard: Petrol `#0D5C63`; färbt Knöpfe und Markierungen auf der Signaturseite und in E-Mails). Steht noch der frühere Standard `#3D5AFE` gespeichert, gilt seit dem Redesign automatisch Petrol; eine selbst gewählte Farbe bleibt unverändert.
 - Logo (Upload; erscheint auf der Signaturseite und in E-Mails)
 - Absendername, Antwortadresse (`Reply-To`), Absenderadresse
 - Fußzeile der E-Mails

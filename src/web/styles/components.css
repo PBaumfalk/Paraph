@@ -10,11 +10,11 @@
   border: 1px solid var(--rule-2);
   background: var(--paper);
   color: var(--ink);
-  font-weight: 550;
+  font-weight: 500;
   font-size: 14px;
   cursor: pointer;
   white-space: nowrap;
-  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.08s;
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
   text-decoration: none;
   user-select: none;
 }
@@ -22,12 +22,11 @@
   border-color: var(--ink-4);
 }
 .btn:active {
-  transform: translateY(1px);
+  background: var(--desk-2);
 }
 .btn[disabled] {
   opacity: 0.5;
   cursor: not-allowed;
-  transform: none;
 }
 .btn svg {
   width: 16px;
@@ -38,7 +37,10 @@
   background: var(--tinte);
   border-color: var(--tinte);
   color: #fff;
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.2) inset, 0 6px 16px -8px var(--tinte);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.14) inset;
+}
+.btn-primary:active {
+  background: var(--tinte-2);
 }
 .btn-primary:hover {
   background: var(--tinte-2);
@@ -50,7 +52,7 @@
   color: #fff;
 }
 .btn-ink:hover {
-  background: #262b45;
+  background: #2b3734;
 }
 .btn-ghost {
   background: transparent;
@@ -71,13 +73,13 @@
   height: 30px;
   padding: 0 11px;
   font-size: 13px;
-  border-radius: 8px;
+  border-radius: 6px;
 }
 .btn-lg {
   height: 48px;
   padding: 0 22px;
   font-size: 15.5px;
-  border-radius: 12px;
+  border-radius: 9px;
 }
 .btn-block {
   width: 100%;
@@ -110,7 +112,7 @@
 .field > label,
 .label {
   font-size: 13px;
-  font-weight: 550;
+  font-weight: 500;
   color: var(--ink-2);
 }
 .hint {
@@ -137,7 +139,7 @@
 }
 .select {
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7189' stroke-width='2.5'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2366716d' stroke-width='2.5'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 12px center;
   padding-right: 32px;
@@ -156,7 +158,7 @@
 }
 .input[aria-invalid='true'] {
   border-color: var(--stop);
-  box-shadow: 0 0 0 3px rgba(194, 54, 43, 0.12);
+  box-shadow: 0 0 0 3px rgba(180, 35, 24, 0.12);
 }
 .error-text {
   color: var(--stop);
@@ -258,11 +260,9 @@
   font-size: 15px;
 }
 .eyebrow {
-  font-size: 11.5px;
+  font-size: 13px;
   font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--ink-3);
+  color: var(--ink-2);
 }
 .divider {
   height: 1px;
@@ -276,11 +276,11 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 24px;
-  padding: 0 10px;
-  border-radius: 99px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: var(--r-sm);
   font-size: 12.5px;
-  font-weight: 550;
+  font-weight: 500;
   white-space: nowrap;
   background: var(--mute-soft);
   color: var(--ink-2);
@@ -334,7 +334,7 @@
   background: var(--paper);
   color: var(--ink-2);
   font-size: 11.5px;
-  font-weight: 650;
+  font-weight: 600;
   box-shadow: 0 0 0 2px var(--paper), inset 0 0 0 1.5px var(--c);
   flex: none;
 }
@@ -364,7 +364,7 @@
   position: fixed;
   inset: 0;
   z-index: 100;
-  background: rgba(22, 26, 46, 0.36);
+  background: rgba(23, 33, 31, 0.36);
   backdrop-filter: blur(2px);
   display: grid;
   place-items: center;
@@ -376,7 +376,7 @@
   max-height: calc(100dvh - 40px);
   overflow: auto;
   background: var(--paper);
-  border-radius: 18px;
+  border-radius: 12px;
   box-shadow: var(--pop-shadow);
   animation: rise 0.22s var(--ease);
 }
@@ -409,7 +409,7 @@
   }
   .dialog {
     width: 100%;
-    border-radius: 18px 18px 0 0;
+    border-radius: 12px 12px 0 0;
     max-height: 92dvh;
     animation: slideup 0.26s var(--ease);
     padding-bottom: env(safe-area-inset-bottom);
@@ -504,7 +504,7 @@
 }
 .callout-info {
   background: var(--tinte-soft);
-  color: #18237a;
+  color: #0b3f44;
 }
 .callout-done {
   background: var(--done-soft);
@@ -512,54 +512,65 @@
 }
 
 /* Tabs */
+/* Reiter wie Register einer Akte: unterstrichen statt schwebend */
 .tabs {
   display: flex;
-  gap: 4px;
+  gap: 2px;
   overflow-x: auto;
   scrollbar-width: none;
+  box-shadow: inset 0 -1px 0 var(--rule);
 }
 .tab {
-  height: 34px;
-  padding: 0 13px;
-  border-radius: 9px;
+  height: 38px;
+  padding: 0 12px;
   border: 0;
+  border-bottom: 2px solid transparent;
   background: transparent;
   color: var(--ink-3);
-  font-weight: 550;
+  font-weight: 500;
   font-size: 14px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
   white-space: nowrap;
 }
 .tab:hover {
   color: var(--ink);
 }
 .tab[aria-selected='true'] {
-  background: var(--paper);
   color: var(--ink);
-  box-shadow: var(--sheet-shadow);
+  font-weight: 600;
+  border-bottom-color: var(--tinte);
 }
 .tab .count {
-  font-family: var(--font-mono);
-  font-size: 11.5px;
-  color: var(--ink-4);
+  min-width: 18px;
+  padding: 0 5px;
+  border-radius: 4px;
+  background: var(--desk-2);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-3);
+  text-align: center;
+}
+.tab[aria-selected='true'] .count {
+  background: var(--tinte-soft);
+  color: var(--tinte);
 }
 .segmented {
   display: inline-flex;
   padding: 3px;
   background: var(--desk-2);
-  border-radius: 10px;
+  border-radius: var(--r);
 }
 .segmented button {
   height: 30px;
   padding: 0 12px;
   border: 0;
-  border-radius: 8px;
+  border-radius: 5px;
   background: none;
   font-size: 13.5px;
-  font-weight: 550;
+  font-weight: 500;
   color: var(--ink-3);
   cursor: pointer;
   display: inline-flex;
@@ -569,7 +580,7 @@
 .segmented button[aria-pressed='true'] {
   background: var(--paper);
   color: var(--ink);
-  box-shadow: 0 1px 2px rgba(22, 26, 46, 0.12);
+  box-shadow: 0 1px 2px rgba(23, 33, 31, 0.12);
 }
 .segmented svg {
   width: 15px;
@@ -614,6 +625,36 @@
 .paraph[data-draw='true'] path {
   animation: ink 1.1s var(--ease) forwards;
   stroke-dashoffset: 1;
+}
+/* Siegel: einmal aufgedrückt, dann zieht die Tinte */
+.seal {
+  flex: none;
+  transform: rotate(-6deg);
+  filter: drop-shadow(0 2px 3px rgba(126, 34, 32, 0.28));
+}
+.seal-ink {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+}
+.seal[data-press='true'] {
+  animation: seal-press 0.55s var(--ease) both;
+}
+.seal[data-press='true'] .seal-ink {
+  stroke-dashoffset: 1;
+  animation: ink 0.9s var(--ease) 0.35s forwards;
+}
+@keyframes seal-press {
+  0% {
+    opacity: 0;
+    transform: rotate(-14deg) scale(1.25);
+  }
+  60% {
+    opacity: 1;
+    transform: rotate(-5deg) scale(0.96);
+  }
+  100% {
+    transform: rotate(-6deg) scale(1);
+  }
 }
 .spinner path {
   stroke-dasharray: 0.32 0.68;

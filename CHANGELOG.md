@@ -25,6 +25,28 @@ Konfiguration zwischen Versionen ändern; `update.sh` migriert die Daten.
 - GitHub-Workflow: Typprüfung, Tests, Docker-Image mit Rauchtest,
   Veröffentlichung unter `ghcr.io/pbaumfalk/paraph`, Release bei Tags.
 
+### Geändert
+
+- **Neue Gestaltung „Der Rand“.** Petrol statt Indigo, Schrift Literata
+  (Titel) und IBM Plex Sans (Bedienung), Flächen als Bögen mit Haarlinie,
+  Reiter wie Register einer Akte, keine Überschriften in Versalien. Die
+  Seitenleiste ist der Rand des Bogens: feine rote Randlinie, der aktive
+  Eintrag trägt die Paraphe. Abgeschlossenes zeigt ein Siegel aus
+  Siegellack mit eingeprägter Paraphe (Vorgang, Signaturseite, Prüfstelle).
+  Neue Anmeldeseite, Favicon und Abschlussbestätigung in Petrol.
+- Standard-Akzentfarbe der Kanzlei ist Petrol (`#0D5C63`). War der
+  frühere Standard `#3D5AFE` gespeichert, gilt automatisch Petrol; eine
+  eigene Farbe bleibt.
+
+### Behoben
+
+- Einstellungen: Ein Klick im Untermenü führte ins Leere (relative Links,
+  z. B. `/settings/profile/team`). Betraf alle Browser.
+- Langer Kanzleiname ragte über die Seitenleiste hinaus; er bricht jetzt
+  auf höchstens zwei Zeilen um.
+- Übersicht am Telefon: Reiter und Suchfeld teilten sich eine Zeile, die
+  Reiter waren nicht lesbar.
+
 ## [0.2.0] – 2026-10-22
 
 Härtung, Betrieb und unabhängige Abnahme. Stand und offene Punkte:

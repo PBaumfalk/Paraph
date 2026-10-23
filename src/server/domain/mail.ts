@@ -4,7 +4,7 @@ import nodemailer, { type Transporter } from 'nodemailer';
 import type { Ctx } from '../context.js';
 import { id, openString, sealString } from '../lib/crypto.js';
 import { registerJob, enqueue } from './jobs.js';
-import { getOrg, type Branding } from './orgs.js';
+import { getOrg, DEFAULT_ACCENT, type Branding } from './orgs.js';
 import { appendAudit } from './audit.js';
 import { emit } from './webhooks.js';
 
@@ -137,7 +137,7 @@ export function fill(tpl: string, vars: Vars): string {
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 
 function safeColor(c: string | undefined) {
-  return c && /^#[0-9a-fA-F]{6}$/.test(c) ? c : '#3D5AFE';
+  return c && /^#[0-9a-fA-F]{6}$/.test(c) ? c : DEFAULT_ACCENT;
 }
 
 export function renderMail(

@@ -1,12 +1,15 @@
 // Screenshots für README und Handbuch (docs/screenshots) mit erfundenen Demodaten.
 // Kein Test im eigentlichen Sinn: läuft nur mit PARAPH_SCREENSHOTS=1, z. B.
 //   npm run build && PARAPH_SCREENSHOTS=1 npx playwright test e2e/screenshots.spec.ts
+// Galerie aller Hauptansichten: zusätzlich PARAPH_SCREENSHOTS_OUT=.tmp/galerie
 import { test, expect, devices, type Page } from '@playwright/test';
 import { mkdirSync, readFileSync } from 'node:fs';
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import { clearMail, waitMail, setupOrLogin, drawSignature } from './helpers';
 
-const OUT = 'docs/screenshots';
+const OUT = process.env.PARAPH_SCREENSHOTS_OUT ?? 'docs/screenshots';
+// Mit eigenem Ausgabeverzeichnis entstehen zusätzlich Galeriebilder aller Hauptansichten (für die Gestaltung)
+const GALLERY = !!process.env.PARAPH_SCREENSHOTS_OUT;
 test.skip(process.env.PARAPH_SCREENSHOTS !== '1', 'nur mit PARAPH_SCREENSHOTS=1');
 
 /** Mandatsvereinbarung im A4-Format; liefert die Bytes und die Lage der Unterschriftszeilen (0..1, von oben). */
@@ -124,6 +127,7 @@ test('Screenshots', async ({ page, browser }) => {
   const dl = phone.waitForEvent('download');
   await phone.getByRole('button', { name: 'Unterschriebenes Dokument' }).click();
   const signed = readFileSync((await (await dl).path())!);
+  await phone.waitForTimeout(1600); // Siegel aufgedrückt, Tinte gezogen
   await phone.screenshot({ path: `${OUT}/signieren-fertig-iphone.png` });
 
   // Prüfstelle (Desktop)
@@ -152,4 +156,36 @@ test('Screenshots', async ({ page, browser }) => {
   await page.locator('.fbox').first().click();
   await page.waitForTimeout(1500);
   await page.screenshot({ path: `${OUT}/editor.png` });
+
+  if (!GALLERY) return;
+  const shot = async (p: Page, name: string, full = false) => {
+    await p.waitForLoadState('networkidle');
+    await p.waitForTimeout(900);
+    await p.screenshot({ path: `${OUT}/${name}.png`, fullPage: full });
+  };
+  await page.goto(`/envelopes/${done}`);
+  await expect(page.getByText('Alle haben unterschrieben.')).toBeVisible({ timeout: 20_000 });
+  await shot(page, 'vorgang-ganz', true);
+  for (const [path, name] of [['/templates', 'vorlagen'], ['/activity', 'aktivitaet'], ['/settings/profile', 'einst-profil'], ['/settings/org', 'einst-organisation'], ['/settings/branding', 'einst-erscheinungsbild'], ['/settings/team', 'einst-team'], ['/settings/system', 'einst-system']] as const) {
+    await page.goto(path);
+    await shot(page, name);
+  }
+  await page.goto('/');
+  await page.getByRole('button', { name: /Suchen/ }).first().click();
+  await shot(page, 'suche');
+  await page.keyboard.press('Escape');
+  // Neues Dokument: leerer Editor
+  const fresh = await browser.newContext({ locale: 'de-DE', viewport: { width: 1440, height: 900 } });
+  const anon = await fresh.newPage();
+  await anon.goto('/login');
+  await shot(anon, 'anmeldung');
+  await phone.goto('/verify');
+  await phone.locator('input[type=file]').setInputFiles({ name: 'Mandatsvereinbarung Schneider.pdf', mimeType: 'application/pdf', buffer: signed });
+  await expect(phone.getByRole('heading', { name: 'Echt und unverändert' })).toBeVisible();
+  await phone.waitForTimeout(1500);
+  await phone.screenshot({ path: `${OUT}/pruefstelle-iphone.png`, fullPage: true });
+  const ph2 = await (await browser.newContext({ ...devices['iPhone 14'], locale: 'de-DE' })).newPage();
+  await ph2.goto('/');
+  await setupOrLogin(ph2).catch(() => {});
+  await shot(ph2, 'uebersicht-iphone');
 });

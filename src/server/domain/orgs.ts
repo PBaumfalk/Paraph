@@ -30,7 +30,10 @@ export interface OrgSettings {
   privacyUrl: string | null;
 }
 
-export const DEFAULT_BRANDING: Branding = { accent: '#3D5AFE' };
+export const DEFAULT_ACCENT = '#0D5C63';
+/** Standardfarbe bis 0.2.0 (Indigo). Gespeichert bedeutet sie „nie geändert“ und folgt dem neuen Standard. */
+const LEGACY_DEFAULT_ACCENT = '#3D5AFE';
+export const DEFAULT_BRANDING: Branding = { accent: DEFAULT_ACCENT };
 export const DEFAULT_SETTINGS: OrgSettings = {
   envelopeVisibility: 'own',
   retentionDays: null,
@@ -53,12 +56,16 @@ export interface OrgRow {
   settings: OrgSettings;
 }
 
+function withDefaultAccent(b: Branding): Branding {
+  return b.accent?.toUpperCase() === LEGACY_DEFAULT_ACCENT ? { ...b, accent: DEFAULT_ACCENT } : b;
+}
+
 export function getOrg(ctx: Ctx, orgId: string): OrgRow {
   const r = ctx.db.prepare('SELECT id, name, slug, custom_domain, branding, settings FROM orgs WHERE id = ?').get(orgId) as any;
   if (!r) throw notFound();
   return {
     ...r,
-    branding: { ...DEFAULT_BRANDING, ...JSON.parse(r.branding) },
+    branding: withDefaultAccent({ ...DEFAULT_BRANDING, ...JSON.parse(r.branding) }),
     settings: { ...DEFAULT_SETTINGS, ...JSON.parse(r.settings) },
   };
 }

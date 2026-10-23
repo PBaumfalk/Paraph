@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { ArrowRight, Check, ChevronDown, Download, FileText, Languages, MoreHorizontal, Paperclip, ShieldCheck, UserRoundPlus, X } from 'lucide-react';
-import { Callout, Dialog, Menu, Paraph, PdfPage, Spinner } from '../../components/ui';
+import { Callout, Dialog, Menu, Paraph, PdfPage, Spinner, Seal } from '../../components/ui';
 import { SignaturePad, type AdoptedSignature } from '../../components/SignaturePad';
 import { ApiError, download } from '../../lib/api';
 import { loadPdf, type PdfDoc } from '../../lib/pdf';
@@ -106,7 +106,7 @@ export default function Sign({ embedded = false }: { embedded?: boolean }) {
     if (embedded && window.parent !== window && origin) window.parent.postMessage({ type, envelope_id: view?.envelope?.id }, origin);
   };
 
-  const accent = view?.org?.accent ?? '#2338E0';
+  const accent = view?.org?.accent ?? '#0D5C63';
   return (
     <div className="signer" style={{ ['--tinte' as any]: accent }}>
       <header className="signer-bar">
@@ -260,7 +260,7 @@ function DoneStep({ view, again, onReturn }: { view: any; again?: boolean; onRet
   return (
     <div className="signer-center">
       <div className="signer-card done-card">
-        <Paraph size={110} draw={!again} />
+        {completed ? <Seal size={116} press={!again} /> : <Paraph size={110} draw={!again} />}
         <h1 className="display">{again ? t('Bereits unterschrieben') : v.me.kind === 'approver' ? t('Freigegeben') : v.me.kind === 'filler' ? t('Übermittelt') : t('Unterschrieben')}</h1>
         <p className="muted">
           {completed

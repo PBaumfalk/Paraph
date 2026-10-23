@@ -14,6 +14,30 @@ export function Paraph({ size = 28, draw = false, color = 'var(--tinte)', stroke
   );
 }
 
+const SEAL_EDGE =
+  'M94.1 44.0Q97.3 50.0 94.7 56.2Q92.1 62.4 91.0 69.0Q89.8 75.6 83.9 78.9Q77.9 82.2 73.5 86.9Q69.0 91.6 62.5 91.4Q55.9 91.3 49.7 93.5Q43.4 95.7 37.7 92.5Q32.0 89.3 25.4 87.7Q18.8 86.0 16.0 79.8Q13.2 73.6 9.2 68.4Q5.1 63.2 6.5 56.6Q7.9 50.0 7.1 43.6Q6.3 37.2 10.5 32.2Q14.6 27.3 17.0 21.0Q19.4 14.7 25.6 12.5Q31.8 10.2 37.5 6.5Q43.2 2.8 49.7 5.0Q56.2 7.2 62.7 7.6Q69.2 8.0 73.3 13.2Q77.3 18.4 82.9 21.9Q88.4 25.3 89.7 31.7Q90.9 38.0 94.1 44.0Z';
+
+/** Das Siegel – Siegellack mit eingeprägter Paraphe. Der eine laute Moment: erscheint nur, wenn etwas abgeschlossen und versiegelt ist. */
+export function Seal({ size = 88, press = false }: { size?: number; press?: boolean }) {
+  return (
+    <svg className="seal" data-press={press} width={size} height={size} viewBox="0 0 100 100" aria-hidden="true">
+      <defs>
+        <radialGradient id="seal-wax" cx="38%" cy="32%" r="75%">
+          <stop offset="0" stopColor="#c0473f" />
+          <stop offset="0.55" stopColor="var(--seal)" />
+          <stop offset="1" stopColor="var(--seal-2)" />
+        </radialGradient>
+      </defs>
+      <path d={SEAL_EDGE} fill="url(#seal-wax)" />
+      <circle cx="50" cy="50" r="33" fill="none" stroke="rgba(255,255,255,0.28)" strokeWidth="1.2" />
+      <circle cx="50" cy="50" r="29.5" fill="none" stroke="rgba(0,0,0,0.12)" strokeWidth="1" />
+      <g transform="translate(24 37) scale(1)">
+        <path className="seal-ink" pathLength={1} d="M3 22c4-11 9-17 12-15s-4 14 1 13 7-12 12-11c3 .6-1 8-5 11 6-3 13-10 17-9 3 .8-2 7 0 8s7-4 9-6" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+      </g>
+    </svg>
+  );
+}
+
 export function Spinner({ size = 36, label }: { size?: number; label?: string }) {
   return (
     <div className="row" role="status" aria-live="polite" style={{ justifyContent: 'center', gap: 10 }}>

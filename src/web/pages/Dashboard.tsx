@@ -106,7 +106,7 @@ export default function Dashboard() {
       )}
 
       <div className="row row-wrap" style={{ marginBottom: 12 }}>
-        <div className="tabs grow" role="tablist">
+        <div className="tabs grow dash-tabs" role="tablist">
           {tabs.map((x) => (
             <button key={x.id} role="tab" className="tab" aria-selected={tab === x.id} onClick={() => setTab(x.id)}>
               {x.label}
@@ -114,9 +114,9 @@ export default function Dashboard() {
             </button>
           ))}
         </div>
-        <label className="row" style={{ position: 'relative' }}>
+        <label className="row dash-search" style={{ position: 'relative' }}>
           <Search size={15} style={{ position: 'absolute', left: 11, color: 'var(--ink-3)' }} />
-          <input className="input" style={{ paddingLeft: 32, width: 230, height: 36 }} placeholder={t('Titel, Name, E-Mail')} value={search} onChange={(e) => setSearch(e.target.value)} aria-label={t('Suchen')} />
+          <input className="input" style={{ paddingLeft: 32, height: 36 }} placeholder={t('Titel, Name, E-Mail')} value={search} onChange={(e) => setSearch(e.target.value)} aria-label={t('Suchen')} />
         </label>
       </div>
 

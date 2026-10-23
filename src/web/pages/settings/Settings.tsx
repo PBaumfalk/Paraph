@@ -216,7 +216,7 @@ function Branding() {
   const { me } = useSession();
   const save = useSaver();
   const b = me!.org.branding;
-  const [f, setF] = useState({ accent: b.accent ?? '#3D5AFE', senderName: b.senderName ?? '', replyTo: b.replyTo ?? '', footer: b.footer ?? '' });
+  const [f, setF] = useState({ accent: b.accent ?? '#0D5C63', senderName: b.senderName ?? '', replyTo: b.replyTo ?? '', footer: b.footer ?? '' });
   const [mail, setMail] = useState<Record<string, { subject: string; body: string }>>(Object.fromEntries(MAIL_KINDS.map(([k, , s, body]) => [k, b.mail?.[k] ?? { subject: s, body }])));
   const [kind, setKind] = useState('signing_request');
   const [logoV, setLogoV] = useState(Date.now());
