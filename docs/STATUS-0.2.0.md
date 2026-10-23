@@ -122,7 +122,7 @@ sudo docker compose exec paraph paraph doctor        # Diagnose
 sudo docker compose exec paraph paraph verify-audit  # Audit-Ketten und Verankerung
 ```
 
-Ausführlich: `docs/handbuch/02-installation.md` und `06-sicherung.md`.
+Ausführlich: `docs/handbuch/11-installation.md` und `13-sicherung-und-updates.md`.
 
 **Abnahmelauf auf dem Server** (danach Status neu bewerten):
 1. `paraph doctor` ohne FEHL, mit `TSA_URL`.

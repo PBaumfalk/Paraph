@@ -27,6 +27,12 @@ Konfiguration zwischen Versionen ändern; `update.sh` migriert die Daten.
 
 ### Geändert
 
+- **Handbuch neu geschrieben**, nach Aufgaben statt nach Technik: Teil A
+  für die Arbeit mit Paraph (Kapitel 1–7), Teil B für die Einrichtung
+  (8–10), Teil C für den Betrieb (11–17), dazu ein Glossar und Bilder aus
+  der App. Jede Angabe gegen den Code geprüft; wo das alte Handbuch mehr
+  versprach als die Oberfläche kann, steht jetzt der tatsächliche Stand.
+- **README neu.**
 - **Neue Gestaltung „Der Rand“.** Petrol statt Indigo, Schrift Literata
   (Titel) und IBM Plex Sans (Bedienung), Flächen als Bögen mit Haarlinie,
   Reiter wie Register einer Akte, keine Überschriften in Versalien. Die
@@ -40,6 +46,10 @@ Konfiguration zwischen Versionen ändern; `update.sh` migriert die Daten.
 
 ### Behoben
 
+- `install.sh`: Ein erneuter Aufruf ersetzte `secrets/tsa_ca.pem` durch die
+  Antwort auf die Zeitstempel-Frage (Vorgabe FreeTSA), ließ `TSA_URL` in
+  `.env` aber stehen. Bei vorhandener `.env` bleiben Dienst und Zertifikat
+  jetzt unverändert.
 - Einstellungen: Ein Klick im Untermenü führte ins Leere (relative Links,
   z. B. `/settings/profile/team`). Betraf alle Browser.
 - Langer Kanzleiname ragte über die Seitenleiste hinaus; er bricht jetzt

@@ -66,7 +66,7 @@
   - OIDC gegen authentik.
   - S3 (MinIO/AWS).
   - Echte Mailzustellung (SPF/DKIM).
-- Weitere Einschränkungen siehe `docs/handbuch/10-einschraenkungen.md`.
+- Weitere Einschränkungen siehe `docs/handbuch/17-grenzen.md`.
 
 **Entscheidungen Patrick:**
 - Formhinweistexte in `src/shared/formrules.ts` anwaltlich freigeben, besonders bei unsicherer Rechtslage: § 80 ZPO/§ 174 BGB und § 74 HGB.

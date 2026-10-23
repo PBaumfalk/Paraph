@@ -1,6 +1,6 @@
 # Paraph – Produktionsbetrieb mit Docker Compose.
 # Einrichtung: sudo ./scripts/install.sh   ·   Aktualisierung: sudo ./scripts/update.sh
-# Konfiguration in .env (Vorlage .env.example). Ausführlich: docs/handbuch/02-installation.md
+# Konfiguration in .env (Vorlage .env.example). Ausführlich: docs/handbuch/11-installation.md
 #
 # Profil „caddy“: Caddy als Reverse Proxy mit automatischem HTTPS (Let's Encrypt) auf Port 80/443.
 # Ohne Profil lauscht Paraph nur auf 127.0.0.1 – dann übernimmt ein vorhandener Proxy (nginx, Traefik) HTTPS.

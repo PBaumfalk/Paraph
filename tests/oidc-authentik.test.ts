@@ -56,7 +56,7 @@ describe.skipIf(!AK)('OIDC mit echtem authentik', () => {
   const group = `${TAG}-paraph`;
 
   beforeAll(async () => {
-    // ── authentik einrichten (wie in docs/handbuch/03-konfiguration.md beschrieben) ──
+    // ── authentik einrichten (wie in docs/handbuch/09-anmeldung-und-sso.md beschrieben) ──
     const flows = (await ak('GET', '/flows/instances/?designation=authorization')).results;
     const authz = flows.find((f: any) => f.slug === 'default-provider-authorization-implicit-consent').pk;
     const inval = (await ak('GET', '/flows/instances/?slug=default-provider-invalidation-flow')).results[0].pk;

@@ -53,8 +53,16 @@ ask SMTP_URL "SMTP-Zugang (smtps://benutzer:passwort@server:465 oder smtp://…:
 MAIL_FROM=${PARAPH_MAIL_FROM:-}
 ask MAIL_FROM "Absender (z. B. Kanzlei Muster <signatur@kanzlei.de>)" "Paraph <signatur@$DOMAIN>"
 TSA_URL=${PARAPH_TSA_URL:-}
-ask TSA_URL "Zeitstempeldienst (RFC 3161: „freetsa“, eigene URL oder „keiner“)" "freetsa"
 TSA_CA_SRC=${PARAPH_TSA_CA_FILE:-}
+if [ -f .env ]; then
+  # Erneuter Aufruf: TSA_URL steht in der vorhandenen .env, die hier nicht geändert wird. Den Vertrauensanker
+  # nicht ersetzen – sonst passten Dienst und Zertifikat nicht mehr zusammen. Wechsel: Handbuch, Kapitel 14.
+  [ -n "$TSA_URL$TSA_CA_SRC" ] && warn "PARAPH_TSA_URL/PARAPH_TSA_CA_FILE werden ignoriert: .env ist vorhanden, der Zeitstempeldienst bleibt unverändert."
+  TSA_URL=
+  TSA_CA_SRC=
+else
+  ask TSA_URL "Zeitstempeldienst (RFC 3161: „freetsa“, eigene URL oder „keiner“)" "freetsa"
+fi
 case "$TSA_URL" in
   keiner|none|-) TSA_URL= ;;
   freetsa|https://freetsa.org/tsr)

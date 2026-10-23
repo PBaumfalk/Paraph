@@ -96,7 +96,7 @@ test('Screenshots', async ({ page, browser }) => {
 
   // Bestand: abgeschlossen, unterwegs, Entwurf
   const done = await envelope(page, 'Mandatsvereinbarung Schneider', 'Lena Schneider', 'lena.schneider@example.org', true);
-  await envelope(page, 'Mandatsvereinbarung Weber', 'Jonas Weber', 'jonas.weber@example.org', true);
+  const weber = await envelope(page, 'Mandatsvereinbarung Weber', 'Jonas Weber', 'jonas.weber@example.org', true);
   await envelope(page, 'Vergütungsvereinbarung Klein GmbH', 'Sabine Klein', 'sabine.klein@example.org', true);
   await envelope(page, 'Vollmacht Yilmaz ./. Nordwerk GmbH', 'Deniz Yilmaz', 'deniz.yilmaz@example.org', true);
   await envelope(page, 'Datenschutzeinwilligung Hoffmann', 'Mia Hoffmann', 'mia.hoffmann@example.org', true);
@@ -121,6 +121,11 @@ test('Screenshots', async ({ page, browser }) => {
   await phone.getByRole('dialog').locator('input').fill('Köln');
   await phone.getByRole('button', { name: 'Weiter', exact: true }).click();
   await phone.getByRole('button', { name: /Abschließen/ }).click();
+  if (GALLERY) {
+    await expect(phone.getByLabel('Ich stimme der obigen Erklärung zu.')).toBeVisible();
+    await phone.waitForTimeout(600);
+    await phone.screenshot({ path: `${OUT}/signieren-erklaerung-iphone.png` });
+  }
   await phone.getByLabel('Ich stimme der obigen Erklärung zu.').check();
   await phone.getByRole('button', { name: 'Verbindlich unterschreiben' }).click();
   await expect(phone.getByRole('button', { name: 'Unterschriebenes Dokument' })).toBeVisible({ timeout: 30_000 });
@@ -166,7 +171,17 @@ test('Screenshots', async ({ page, browser }) => {
   await page.goto(`/envelopes/${done}`);
   await expect(page.getByText('Alle haben unterschrieben.')).toBeVisible({ timeout: 20_000 });
   await shot(page, 'vorgang-ganz', true);
-  for (const [path, name] of [['/templates', 'vorlagen'], ['/activity', 'aktivitaet'], ['/settings/profile', 'einst-profil'], ['/settings/org', 'einst-organisation'], ['/settings/branding', 'einst-erscheinungsbild'], ['/settings/team', 'einst-team'], ['/settings/system', 'einst-system']] as const) {
+  await page.goto(`/envelopes/${weber}`);
+  await shot(page, 'vorgang-unterwegs');
+  // Versandschritt mit Formhinweis (Vollmacht)
+  const vollmacht = await envelope(page, 'Vollmacht Becker ./. Stadtwerke', 'Tom Becker', 'tom.becker@example.org', false);
+  await page.goto(`/envelopes/${vollmacht}/edit`);
+  await expect(page.locator('.fbox')).toHaveCount(2);
+  await page.getByRole('button', { name: 'Weiter zum Versand' }).click();
+  await shot(page, 'versand');
+  await page.goto(`/envelopes/${vollmacht}/edit`);
+  await shot(page, 'editor-start');
+  for (const [path, name] of [['/forms', 'formulare'], ['/settings/api', 'einst-api'], ['/settings/trust', 'einst-siegel'], ['/docs/api', 'api-doku'], ['/templates', 'vorlagen'], ['/activity', 'aktivitaet'], ['/settings/profile', 'einst-profil'], ['/settings/org', 'einst-organisation'], ['/settings/branding', 'einst-erscheinungsbild'], ['/settings/team', 'einst-team'], ['/settings/system', 'einst-system']] as const) {
     await page.goto(path);
     await shot(page, name);
   }

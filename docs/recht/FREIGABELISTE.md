@@ -31,7 +31,7 @@
 ## A – Vor Produktivstart zwingend
 
 ### F-01 · Formhinweis-Katalog als Ganzes
-- **Fundstelle:** `src/shared/formrules.ts:1–269`; Anzeige `src/web/pages/EnvelopeEditor.tsx:495–528`; Handbuch `docs/handbuch/08-recht.md:44–83`
+- **Fundstelle:** `src/shared/formrules.ts:1–269`; Anzeige `src/web/pages/EnvelopeEditor.tsx:495–528`; Handbuch `docs/handbuch/07-recht.md`, Abschnitt „Formvorschriften beachten“
 - **Offene Rechtsfrage:** Darf der Katalog als regelbasierter Hinweis (Schlüsselwörter, keine Einzelfallprüfung) produktiv eingesetzt werden? Reicht der Hinweis „ersetzt keine rechtliche Prüfung“ (EnvelopeEditor.tsx:499)?
 - **Empfehlung:** Freigabe nur zusammen mit den Einzelpunkten der Gruppe B. Bis dahin Regeln, die nicht einzeln freigegeben sind, weiter anzeigen, aber im UI als „ungeprüft“ kennzeichnen.
 - [ ] freigegeben  [ ] geändert  [ ] gestrichen — Datum/Kürzel: ________ — Vermerk: ____________________
@@ -58,7 +58,7 @@
 - [ ] freigegeben  [ ] geändert  [ ] gestrichen — Datum/Kürzel: ________ — Vermerk: ____________________
 
 ### F-05 · Auftragsverarbeitung (Art. 28 DSGVO) mit externen Diensten
-- **Fundstelle:** `docs/handbuch/08-recht.md:112–120`; Konfiguration SMTP, `SMS_GATEWAY_URL` (`src/server/domain/sms.ts`), S3, `TSA_URL` (`src/server/config.ts:111`), Hoster
+- **Fundstelle:** `docs/handbuch/07-recht.md`, Abschnitt „Auftragsverarbeitung und Berufsrecht klären“; Konfiguration SMTP, `SMS_GATEWAY_URL` (`src/server/domain/sms.ts`), S3, `TSA_URL` (`src/server/config.ts:111`), Hoster
 - **Offene Rechtsfrage:** Für welche Anbieter ist ein AVV nötig? SMTP (Adresse, Betreff mit Dokumenttitel, Link, optional PDF), SMS (Nummer, Code, Dokumenttitel – siehe F-10/T20), S3 (verschlüsselte Dateien; Schlüssel beim Betreiber – trotzdem Verarbeitung), Hoster. TSA erhält nur Hashwerte (Dokument-Hash bzw. Merkle-Wurzel der Ankerkette, `src/server/domain/anchor.ts`) – personenbezogen? Drittlandübermittlung (Art. 44 ff.) bei US-Anbietern.
 - **Empfehlung:** AVV mit SMTP-, SMS-, S3-Anbieter und Hoster abschließen; TSA: Einordnung dokumentieren (Tendenz: kein AVV, weil kein Personenbezug erkennbar – anwaltlich bestätigen). Nur Anbieter mit Sitz/Verarbeitung in EU/EWR.
 - [ ] freigegeben  [ ] geändert  [ ] gestrichen — Datum/Kürzel: ________ — Vermerk: ____________________
@@ -70,7 +70,7 @@
 - [ ] freigegeben  [ ] geändert  [ ] gestrichen — Datum/Kürzel: ________ — Vermerk: ____________________
 
 ### F-07 · Aufbewahrung und Löschung (§ 50 BRAO, § 147 AO, § 257 HGB vs. Art. 5 Abs. 1 lit. e, Art. 17 DSGVO)
-- **Fundstelle:** Aufbewahrungsfrist der Organisation `src/web/pages/settings/Settings.tsx:181` (Hinweis „§ 50 BRAO: 6 Jahre Handakte“); Handbuch `08-recht.md:103–108`, `10-einschraenkungen.md:40`
+- **Fundstelle:** Aufbewahrungsfrist der Organisation `src/web/pages/settings/Settings.tsx:181` (Hinweis „§ 50 BRAO: 6 Jahre Handakte“); Handbuch `07-recht.md`, Abschnitt „Aufbewahrung und Löschung festlegen“; `17-grenzen.md`
 - **Offene Rechtsfrage:**
   - § 50 Abs. 1 BRAO [GII]: Handakten 6 Jahre ab Ende des Kalenderjahres der Auftragsbeendigung; § 50 Abs. 4: gilt auch elektronisch.
   - § 147 Abs. 3 AO [GII]: Bücher/Abschlüsse 10 Jahre, **Buchungsbelege 8 Jahre** (seit BEG IV), sonstige Unterlagen (Geschäftsbriefe) 6 Jahre; Ablaufhemmung bei offener Festsetzungsfrist. § 257 Abs. 4 HGB [GII] gleichlaufend; gilt nur für Kaufleute (z. B. Rechtsanwalts-GmbH), nicht für Einzelanwalt/PartG. Ob § 147 AO für die Kanzlei (Gewinnermittlung) im konkreten Umfang greift, ist steuerlich zu prüfen.
@@ -105,7 +105,7 @@
 - [ ] freigegeben  [ ] geändert  [ ] gestrichen — Datum/Kürzel: ________ — Vermerk: ____________________
 
 ### F-11 · QES nur über Vertrauensdiensteanbieter, nicht vorgetäuscht
-- **Fundstelle:** `src/shared/model.ts:97–100`; Settings `src/web/pages/settings/Settings.tsx:464–477`; Handbuch `08-recht.md:32`, `10-einschraenkungen.md:7`; Abschlussbestätigung `src/server/pdf/certificate.ts:89` (fest „EES“)
+- **Fundstelle:** `src/shared/model.ts:97–100`; Settings `src/web/pages/settings/Settings.tsx:464–477`; Handbuch `07-recht.md`, Abschnitt „Signaturstufen unterscheiden“; `17-grenzen.md`, Abschnitt „Signaturstufen“; Abschlussbestätigung `src/server/pdf/certificate.ts:89` (fest „EES“)
 - **Offene Rechtsfrage:** Ist sichergestellt, dass nirgends eine QES behauptet wird? Ist der Satz „Erfüllt die elektronische Form nach § 126a BGB“ (Settings.tsx:476) zu weit (Namenszusatz, gleichlautende Dokumente, gesetzliche Ausschlüsse)?
 - **Empfehlung:** Befund: keine Vortäuschung; Versand mit Stufe `qes` wird blockiert. Text T10: „Ermöglicht die elektronische Form nach § 126a BGB, soweit das Gesetz sie nicht ausschließt.“ Bei künftiger QTSP-Anbindung: QTSP-Status in der Vertrauensliste prüfen, Abschlussbestätigung und Prüfanleitung stufenabhängig machen, keine „QES“-Anzeige ohne erfolgreiche Validierung.
 - [ ] freigegeben  [ ] geändert  [ ] gestrichen — Datum/Kürzel: ________ — Vermerk: ____________________
@@ -123,7 +123,7 @@
 - [ ] freigegeben  [ ] geändert  [ ] gestrichen — Datum/Kürzel: ________ — Vermerk: ____________________
 
 ### F-14 · Beweiswert der EES (§ 371a ZPO, freie Beweiswürdigung)
-- **Fundstelle:** Handbuch `08-recht.md:17`; Abschlussbestätigung; interne Kanzleipraxis
+- **Fundstelle:** Handbuch `07-recht.md`, Abschnitt „Signaturstufen unterscheiden“; Abschlussbestätigung; interne Kanzleipraxis
 - **Offene Rechtsfrage:** § 371a Abs. 1 ZPO [GII] (Anscheinsbeweis) gilt nur für QES; EES ist Augenscheinsobjekt, freie Beweiswürdigung (§ 286 ZPO). Welche Zugangswege verlangt die Kanzlei für streitanfällige Dokumente (z. B. Vergleiche, Vergütungsvereinbarungen)?
 - **Empfehlung:** Interne Arbeitsanweisung: für beweiskritische Erklärungen mindestens E-Mail- oder SMS-Code, Abschluss-PDF als Anhang, externer Zeitstempeldienst (`TSA_URL`) aktiv. Keine Außendarstellung als „rechtssicher“, „beweissicher“, „gerichtsfest“.
 - [ ] freigegeben  [ ] geändert  [ ] gestrichen — Datum/Kürzel: ________ — Vermerk: ____________________
@@ -131,7 +131,7 @@
 ### F-15 · Datenschutz-Folgenabschätzung (Art. 35 DSGVO) und Verzeichnis (Art. 30 DSGVO)
 - **Fundstelle:** – (Betriebsdokumentation)
 - **Offene Rechtsfrage:** DSFA erforderlich? Faktoren: Daten unter Berufsgeheimnis, Dokumente können besondere Kategorien (Gesundheit, Strafverfahren) enthalten, Protokollierung von IP/Geräten Dritter, Unterschriftsbilder. Ob der Vorgang auf der DSK-Muss-Liste steht: unverifiziert.
-- **Empfehlung:** Schwellwertanalyse dokumentieren; bei Zweifel DSFA durchführen (Tendenz: durchführen). Eintrag im Verzeichnis der Verarbeitungstätigkeiten; TOM nach Art. 32 einschließlich der dokumentierten Grenze „Root-Zugriff“ (`10-einschraenkungen.md:39`).
+- **Empfehlung:** Schwellwertanalyse dokumentieren; bei Zweifel DSFA durchführen (Tendenz: durchführen). Eintrag im Verzeichnis der Verarbeitungstätigkeiten; TOM nach Art. 32 einschließlich der dokumentierten Grenze „Root-Zugriff“ (`17-grenzen.md`, Abschnitt „Grenzen der Schutzmaßnahmen“).
 - [ ] freigegeben  [ ] geändert  [ ] gestrichen — Datum/Kürzel: ________ — Vermerk: ____________________
 
 ### F-16 · Stufentexte und Warnstufen
@@ -169,7 +169,7 @@ Jede Regel darf erst nach Freigabe als „geprüft“ angezeigt werden. Ersatzte
 | F-38 | Datenschutz-Einwilligung, Art. 7 DSGVO | formrules.ts:210–218 | Widerrufshinweis Art. 7 Abs. 3 S. 3; Art. 9; § 26 BDSG (Änderungsstand unverifiziert) | Text nach A19 | [ ] freigegeben  [ ] geändert  [ ] gestrichen | |
 | F-39 | Mandatsvertrag | formrules.ts:219–227 | Fernabsatz/Verbraucher; § 356a BGB ungeprüft | Text nach A20 | [ ] freigegeben  [ ] geändert  [ ] gestrichen | |
 | F-40 | Neue Regeln N1–N11 (Staffelmiete, § 41 SGB VI, Vorsorgevollmacht § 1820 Abs. 2 BGB [GII], Patientenverfügung, Leibrente, § 655b/§ 484/§ 650h, öffentliche Beglaubigung, Erfolgshonorar, vorzeitiger Leistungsbeginn, § 22 BBiG, GwG-Identifizierung § 12 GwG [GII]) | Analyse A22 | QES-Tauglichkeit bei § 1820/§ 1827 BGB und § 22 BBiG unverifiziert | einzeln aufnehmen oder streichen | [ ] freigegeben  [ ] geändert  [ ] gestrichen | |
-| F-41 | Mustervorlagen (z. B. Mandatsvereinbarung) | Handbuch `08-recht.md:85–87` | Inhaltliche Prüfung vor Verwendung | vor erster Nutzung prüfen | [ ] freigegeben  [ ] geändert  [ ] gestrichen | |
+| F-41 | Mustervorlagen (z. B. Mandatsvereinbarung) | Handbuch `07-recht.md`, Abschnitt „Mustervorlagen anpassen“ | Inhaltliche Prüfung vor Verwendung | vor erster Nutzung prüfen | [ ] freigegeben  [ ] geändert  [ ] gestrichen | |
 | F-42 | GwG: Paraph ist kein Identifizierungsverfahren | – | § 12 Abs. 1 GwG [GII]: Ausweis, eID, QES u. a.; EES/OTP genügt nicht | Interne Anweisung: Identifizierung außerhalb von Paraph | [ ] freigegeben  [ ] geändert  [ ] gestrichen | |
 
 ---
@@ -183,12 +183,12 @@ Jede Regel darf erst nach Freigabe als „geprüft“ angezeigt werden. Ersatzte
 | F-52 | Zugangsweg „per E-Mail zugestellt“ | finalize.ts:25 | falsch bei Zustellart ohne E-Mail | T4 | [ ] freigegeben  [ ] geändert  [ ] gestrichen | |
 | F-53 | Englische Bezeichnung „AdES“ | en.ts:618 | Verwechslung mit PAdES-Format | T17 | [ ] freigegeben  [ ] geändert  [ ] gestrichen | |
 | F-54 | Frei anpassbare Mailtexte der Organisation | `branding.mail`, mail.ts:127 | Organisationsadmins können „rechtsgültig“ o. Ä. einfügen | Hinweis im Einstellungsdialog; interne Richtlinie | [ ] freigegeben  [ ] geändert  [ ] gestrichen | |
-| F-55 | Qualifizierter Zeitstempel | `TSA_URL`; Handbuch 10:10 | Vermutung Art. 41 Abs. 2 eIDAS nur bei qualifiziertem Dienst | Kosten/Nutzen; ggf. D-Trust o. a. (Vertrauensliste prüfen) | [ ] freigegeben  [ ] geändert  [ ] gestrichen | |
+| F-55 | Qualifizierter Zeitstempel | `TSA_URL`; Handbuch 17, Abschnitt „Signaturstufen“ | Vermutung Art. 41 Abs. 2 eIDAS nur bei qualifiziertem Dienst | Kosten/Nutzen; ggf. D-Trust o. a. (Vertrauensliste prüfen) | [ ] freigegeben  [ ] geändert  [ ] gestrichen | |
 | F-56 | FES-Referenzstandards Art. 26 Abs. 2 eIDAS | – | Durchführungsrechtsakt erlassen? unverifiziert | beobachten; FES weiter nicht beanspruchen | [ ] freigegeben  [ ] geändert  [ ] gestrichen | |
 | F-57 | Behördenkommunikation, § 3a VwVfG [GII] | – | EES ersetzt dort keine Schriftform; Alternativen: QES, beA-Weg (§ 3a Abs. 3 Nr. 2 VwVfG) | Hinweis im Handbuch | [ ] freigegeben  [ ] geändert  [ ] gestrichen | |
 | F-58 | Gerichtliche Einreichung, § 130a ZPO [GII] | – | Paraph-PDF ist kein Schriftsatz i. S. v. § 130a Abs. 3; Einreichung nur über beA mit einfacher Signatur des Anwalts oder QES | Hinweis im Handbuch | [ ] freigegeben  [ ] geändert  [ ] gestrichen | |
-| F-59 | Barrierefreiheit der Unterzeichnerseite | Handbuch 10:35 | Anwendbarkeit BFSG auf die Kanzleiplattform unverifiziert | prüfen, ob Pflicht oder nur Empfehlung | [ ] freigegeben  [ ] geändert  [ ] gestrichen | |
-| F-60 | Handbuch `08-recht.md` an Freigabeergebnis anpassen | 08-recht.md:44–83, 103–120 | Tabelle und Datenschutzteil spiegeln Freigaben | nach Abschluss von A/B aktualisieren | [ ] freigegeben  [ ] geändert  [ ] gestrichen | |
+| F-59 | Barrierefreiheit der Unterzeichnerseite | Handbuch 17, Abschnitt „Oberfläche und Barrierefreiheit“ | Anwendbarkeit BFSG auf die Kanzleiplattform unverifiziert | prüfen, ob Pflicht oder nur Empfehlung | [ ] freigegeben  [ ] geändert  [ ] gestrichen | |
+| F-60 | Handbuch `07-recht.md` an Freigabeergebnis anpassen | 07-recht.md, Abschnitte „Formvorschriften beachten“ und „Datenschutz einhalten“ | Tabelle und Datenschutzteil spiegeln Freigaben | nach Abschluss von A/B aktualisieren | [ ] freigegeben  [ ] geändert  [ ] gestrichen | |
 
 ---
 
