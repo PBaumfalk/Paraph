@@ -31,8 +31,9 @@ test('F: Systemseite, Benutzerverwaltung, Datenschutzhinweis, Prüfstelle', asyn
   await expect(page.locator('.users-table tbody tr')).toHaveCount(1);
   await expect(page.locator('.users-table').getByRole('button', { name: 'Sperren' })).toHaveCount(0);
 
-  // Datenschutzhinweis hinterlegen
-  await page.goto('/settings/org');
+  // Datenschutzhinweis hinterlegen – über das Untermenü, nicht per Adresse (relative Links führten ins Leere)
+  await page.locator('.settings-nav').getByRole('link', { name: 'Organisation', exact: true }).click();
+  await expect(page).toHaveURL(/\/settings\/org$/);
   await page.getByLabel('Datenschutzhinweise für Unterzeichner (Art. 13 DSGVO)').fill('https://kanzlei.example/datenschutz');
   await page.getByRole('button', { name: 'Speichern' }).first().click();
   await expect(page.getByText('Gespeichert').first()).toBeVisible();

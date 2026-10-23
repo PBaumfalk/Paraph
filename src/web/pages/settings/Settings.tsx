@@ -59,7 +59,7 @@ export default function Settings() {
       <div className="page-head"><h1>{t('Einstellungen')}</h1></div>
       <div className="settings-layout">
         <nav className="settings-nav">
-          {items.map((i) => <NavLink key={i.to} to={i.to} className="sidenav-link">{i.label}</NavLink>)}
+          {items.map((i) => <NavLink key={i.to} to={`/settings/${i.to}`} className="sidenav-link">{i.label}</NavLink>)}
         </nav>
         <div>
           <Routes>

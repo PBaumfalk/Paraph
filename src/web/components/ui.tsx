@@ -100,7 +100,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 }
 export const useToast = () => useContext(ToastCtx);
 
-export function Menu({ trigger, children, align = 'right' }: { trigger: (open: () => void) => ReactNode; children: (close: () => void) => ReactNode; align?: 'left' | 'right' }) {
+export function Menu({ trigger, children, align = 'right', block = false }: { trigger: (open: () => void) => ReactNode; children: (close: () => void) => ReactNode; align?: 'left' | 'right'; block?: boolean }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -115,7 +115,7 @@ export function Menu({ trigger, children, align = 'right' }: { trigger: (open: (
     };
   }, [open]);
   return (
-    <div ref={ref} style={{ position: 'relative', display: 'inline-block' }}>
+    <div ref={ref} style={{ position: 'relative', display: block ? 'block' : 'inline-block' }}>
       {trigger(() => setOpen((o) => !o))}
       {open && (
         <div className="menu" role="menu" style={{ [align]: 0, top: 'calc(100% + 6px)' }} onClick={() => setOpen(false)}>

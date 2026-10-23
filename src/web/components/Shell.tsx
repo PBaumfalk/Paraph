@@ -49,11 +49,12 @@ function OrgSwitcher() {
   return (
     <Menu
       align="left"
+      block
       trigger={(open) => (
         <button className="org-switch" onClick={open} aria-label={t('Organisation wechseln')}>
           <span className="org-mark">{me?.org.name.slice(0, 1)}</span>
           <span className="grow" style={{ textAlign: 'left', minWidth: 0 }}>
-            <span className="org-name">{me?.org.name}</span>
+            <span className="org-name" title={me?.org.name}>{me?.org.name}</span>
             <span className="org-role">{t(roleLabel(me?.principal.role ?? ''))}</span>
           </span>
           {orgs.length > 1 && <ChevronsUpDown size={15} />}
@@ -239,6 +240,7 @@ export function Shell({ children }: { children: ReactNode }) {
           <OrgSwitcher />
           <Menu
             align="left"
+            block
             trigger={(open) => (
               <button className="user-btn" onClick={open}>
                 <span className="avatar" style={{ width: 26, height: 26, fontSize: 10.5 }}>{me?.principal.name.split(' ').map((p) => p[0]).slice(0, 2).join('')}</span>
