@@ -1,0 +1,25 @@
+# Hält npm-Abhängigkeiten, GitHub-Actions und die Docker-Basis-Images aktuell.
+# Kleinere Updates gebündelt, damit der Posteingang ruhig bleibt.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      npm-minor-patch:
+        update-types: [minor, patch]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: monthly
+  # Gepinnte Images in docker-compose.yml (Gotenberg, Caddy)
+  - package-ecosystem: docker-compose
+    directory: /
+    schedule:
+      interval: monthly

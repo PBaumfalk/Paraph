@@ -1,0 +1,181 @@
+# Dateiname bewusst stabil: README.md verlinkt das Badge auf .../actions/workflows/ci.yml/badge.svg.
+name: Tests, Image & Release
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# Parallel-Builds desselben Branches abbrechen – Tag-Builds (Releases) nie.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+      # pdftoppm rastert PDFs für die Geometrietests (Lage der Unterschrift unabhängig gemessen)
+      - name: Poppler installieren
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends poppler-utils
+      - run: npm ci --no-audit --no-fund
+      - name: Typprüfung
+        run: npm run typecheck
+      - name: Shell-Skripte (Syntax)
+        run: for f in scripts/*.sh; do bash -n "$f"; done
+      # MinIO-, authentik- und Live-Zeitstempel-Tests überspringen sich ohne ihre Dienste selbst
+      - name: Vitest
+        env:
+          TZ: Europe/Berlin
+        run: npm test
+
+  e2e:
+    needs: tests
+    runs-on: ubuntu-latest
+    services:
+      mailpit:
+        image: axllent/mailpit:v1.27
+        ports:
+          - 1025:1025
+          - 8025:8025
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends poppler-utils
+      - run: npm ci --no-audit --no-fund
+      - name: Browser installieren (Chromium für Desktop/Pixel, WebKit für das iPhone)
+        run: npx playwright install --with-deps chromium webkit
+      - run: npm run build
+      - name: Playwright
+        run: npx playwright test
+      - name: Bericht bei Fehlschlag
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14
+
+  image:
+    needs: tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v7
+      - name: Version aus package.json
+        id: v
+        run: echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-qemu-action@v4
+      - uses: docker/setup-buildx-action@v4
+      - name: Image für den Rauchtest bauen
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          load: true
+          tags: paraph:smoke
+          build-args: PARAPH_VERSION=${{ steps.v.outputs.version }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Rauchtest (so gehärtet, wie docker-compose.yml den Container startet)
+        run: |
+          docker volume create paraph-smoke >/dev/null
+          docker run -d --name smoke -p 8080:8080 \
+            --read-only --tmpfs /tmp:size=256m --cap-drop ALL --security-opt no-new-privileges:true \
+            -v paraph-smoke:/data \
+            -e APP_URL=http://localhost:8080 -e MASTER_KEY="$(openssl rand -base64 32)" \
+            paraph:smoke
+          for i in $(seq 1 30); do
+            curl -fsS http://localhost:8080/api/health/ready >/dev/null 2>&1 && break
+            sleep 2
+          done
+          curl -fsS http://localhost:8080/api/health/ready >/dev/null \
+            || { echo "::error::Paraph wird nicht bereit"; docker logs smoke 2>&1 | tail -40; exit 1; }
+          # Version im Image = Version in package.json
+          v=$(curl -fsS http://localhost:8080/api/health | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>process.stdout.write(JSON.parse(s).version))")
+          test "$v" = "${{ steps.v.outputs.version }}" \
+            || { echo "::error::Image meldet Version $v statt ${{ steps.v.outputs.version }}"; exit 1; }
+          # Oberfläche wird ausgeliefert, Einrichtung ist erreichbar
+          curl -fsS http://localhost:8080/ | grep -q '<div id="root"' \
+            || { echo "::error::Die Oberfläche wird nicht ausgeliefert"; exit 1; }
+          curl -fsS http://localhost:8080/api/v1/openapi.json | grep -q '"openapi"' \
+            || { echo "::error::OpenAPI-Dokument fehlt"; exit 1; }
+          # Kein root im Container, CLI und Healthcheck funktionieren
+          test "$(docker exec smoke id -u)" = "1000" || { echo "::error::Container läuft nicht als UID 1000"; exit 1; }
+          docker exec smoke paraph health
+          # npm gehört nicht ins Laufzeit-Image
+          if docker exec smoke sh -c 'command -v npm'; then echo "::error::npm im Laufzeit-Image"; exit 1; fi
+          docker rm -f smoke >/dev/null
+      - name: Bei GHCR anmelden
+        if: github.event_name == 'push'
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Tags & Labels ermitteln
+        if: github.event_name == 'push'
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/pbaumfalk/paraph
+          # „latest“ ist die letzte Freigabe (Tag), „main“ der aktuelle Entwicklungsstand
+          tags: |
+            type=ref,event=branch
+            type=sha,format=short
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
+      - name: Image bauen und pushen
+        if: github.event_name == 'push'
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          # arm64 nur für Freigaben: better-sqlite3 wird unter QEMU nativ übersetzt und braucht lange
+          platforms: ${{ startsWith(github.ref, 'refs/tags/v') && 'linux/amd64,linux/arm64' || 'linux/amd64' }}
+          push: true
+          build-args: PARAPH_VERSION=${{ steps.v.outputs.version }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  release:
+    needs: [e2e, image]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - name: Tag passt zu package.json
+        run: test "${GITHUB_REF_NAME#v}" = "$(node -p "require('./package.json').version")"
+      - name: Abschnitt aus dem Änderungsprotokoll
+        run: |
+          awk -v v="${GITHUB_REF_NAME#v}" '
+            $0 ~ "^## \\[" v "\\]" {on=1; next}
+            on && /^## \[/ {exit}
+            on && /^\[[^]]+\]: / {exit}
+            on {print}' CHANGELOG.md > release-notes.md
+          test -s release-notes.md || { echo "::error::CHANGELOG.md hat keinen Abschnitt für ${GITHUB_REF_NAME}"; exit 1; }
+      - name: GitHub-Release anlegen
+        uses: softprops/action-gh-release@v3
+        with:
+          body_path: release-notes.md
+          prerelease: ${{ startsWith(github.ref_name, 'v0.') }}

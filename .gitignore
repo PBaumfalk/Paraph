@@ -10,3 +10,4 @@ playwright-report/
 secrets/
 backups/
 .claude/worktrees/
+.DS_Store
