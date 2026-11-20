@@ -192,7 +192,7 @@ export function loadConfig(overrides: Partial<Config> = {}): Config {
     devMode: bool('DEV_MODE', false),
     // Probebetrieb (install.sh --probe): ohne Mailserver ist das gewollt – Diagnose warnt statt Fehler
     probeMode: bool('PARAPH_PROBE', false),
-    version: process.env.PARAPH_BUILD_VERSION ?? '0.2.0-dev',
+    version: process.env.PARAPH_BUILD_VERSION ?? '0.3.0-dev',
     ...overrides,
   };
   cfg.masterKey = masterKey;

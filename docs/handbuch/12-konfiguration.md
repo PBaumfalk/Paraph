@@ -262,7 +262,7 @@ Für einfache Verfügbarkeitsprüfungen genügen `GET /api/health` (Status und V
 | `DEV_MODE` | aus | Nur Entwicklung. Schreibt ohne SMTP die Links aus E-Mails ins Protokoll und erlaubt `http://` für `OIDC_ISSUER`. **Nie produktiv verwenden**, da die Links Zugang zu Vorgängen gewähren. Die Diagnose meldet einen Fehler. |
 | `PARAPH_PROBE` | aus | Kennzeichnet den Probebetrieb. Setzt `install.sh --probe` in `.env` ([Kapitel 18](18-installation-mit-claude-code.md#was-claude-code-ausführt)). Ein fehlender Mailserver gilt in der Diagnose dann als Warnung statt als Fehler. Unabhängig davon wählt der Versanddialog ohne Mailserver „Links selbst weitergeben“ vor. Sonst ändert sich nichts; die Variable macht eine Installation nicht zum Testsystem. |
 | `PARAPH_DEBUG_PDF` | – | Gibt Fehler beim Analysieren hochgeladener PDFs zusätzlich auf der Konsole aus. Direkt gelesen. |
-| `PARAPH_BUILD_VERSION` | `0.2.0-dev` (im Image die Build-Version, z. B. `0.2.0`) | Angezeigte Versionsnummer. Setzt das Image; nicht selbst ändern. Direkt gelesen. |
+| `PARAPH_BUILD_VERSION` | `0.3.0-dev` (im Image die Build-Version, z. B. `0.3.0`) | Angezeigte Versionsnummer. Setzt das Image; nicht selbst ändern. Direkt gelesen. |
 
 Variablen nur für die automatisierten Tests (z. B. `PARAPH_LIVE_TSA=1`) beschreibt [Kapitel 16](16-tests-und-nachweise.md).
 
@@ -300,7 +300,7 @@ Diese Variablen wertet Docker Compose aus, nicht Paraph. Sie stehen ebenfalls in
 |---|---|---|
 | `PARAPH_ENV_FILE` | `.env` | Pfad der Umgebungsdatei für den Paraph-Container (Pflicht). |
 | `PARAPH_IMAGE` | `paraph:local` | Image-Name. `install.sh` trägt `paraph:<Version>` ein, `update.sh` das jeweils neue Image. Für das fertige Image z. B. `ghcr.io/pbaumfalk/paraph:0.2.0`. |
-| `PARAPH_VERSION` | `0.2.0` | Build-Argument; wird im Image zu `PARAPH_BUILD_VERSION`. Die Skripte setzen es aus `package.json`. |
+| `PARAPH_VERSION` | `0.3.0` | Build-Argument; wird im Image zu `PARAPH_BUILD_VERSION`. Die Skripte setzen es aus `package.json`. |
 | `PARAPH_MEM_LIMIT` | `1g` | Speichergrenze des Paraph-Containers. |
 | `COMPOSE_PROJECT_NAME` | `paraph` | Projektname (Präfix für Container, Netze, Volumes). |
 | `COMPOSE_PROFILES` | – | `caddy` startet den mitgelieferten Reverse Proxy. Setzt `install.sh`. |

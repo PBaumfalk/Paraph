@@ -58,7 +58,7 @@ git clone https://github.com/PBaumfalk/Paraph.git ~/paraph
 sudo git clone https://github.com/PBaumfalk/Paraph.git /opt/paraph
 ```
 
-Für eine bestimmte Version hängen Sie `--branch v0.2.0` an (Versionen: [Releases](https://github.com/PBaumfalk/Paraph/releases)). Spätere Updates holt `scripts/update.sh` per `git pull` ([Kapitel 13](13-sicherung-und-updates.md#paraph-aktualisieren)).
+Für eine bestimmte Version hängen Sie `--branch v0.3.0` an (Versionen: [Releases](https://github.com/PBaumfalk/Paraph/releases)). Spätere Updates holt `scripts/update.sh` per `git pull` ([Kapitel 13](13-sicherung-und-updates.md#paraph-aktualisieren)).
 
 ## Claude Code im richtigen Ordner öffnen
 

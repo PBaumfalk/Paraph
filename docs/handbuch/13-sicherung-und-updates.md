@@ -1,6 +1,6 @@
 # 13. Sicherung und Updates
 
-Dieses Kapitel richtet sich an die IT. Es beschreibt, was Paraph sichert und wie die Sicherung verschlüsselt ist, wie Sie Hauptschlüssel und Wiederherstellungs-Passphrase aufbewahren, wie Sie Sicherungen prüfen und wiederherstellen – auch auf einem neuen Server – und wie Sie Paraph mit `update.sh` aktualisieren und bei Bedarf zurückkehren. Stand: Version 0.2.0, Sicherungsformat `paraph-backup/2` (`src/server/domain/backup.ts`).
+Dieses Kapitel richtet sich an die IT. Es beschreibt, was Paraph sichert und wie die Sicherung verschlüsselt ist, wie Sie Hauptschlüssel und Wiederherstellungs-Passphrase aufbewahren, wie Sie Sicherungen prüfen und wiederherstellen – auch auf einem neuen Server – und wie Sie Paraph mit `update.sh` aktualisieren und bei Bedarf zurückkehren. Stand: Version 0.3.0, Sicherungsformat `paraph-backup/2` (`src/server/domain/backup.ts`).
 
 ## Was eine Sicherung enthält
 

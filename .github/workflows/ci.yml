@@ -135,7 +135,7 @@ jobs:
         uses: docker/metadata-action@v6
         with:
           images: ghcr.io/pbaumfalk/paraph
-          # Freigabe (Tag v*): 0.2.0, 0.2 und latest. Jeder Stand auf main: main und main-<Commit>.
+          # Freigabe (Tag v*): z. B. 0.3.0, 0.3 und latest. Jeder Stand auf main: main und main-<Commit>.
           # Pull Requests werden nur gebaut und im Rauchtest geprüft, nicht veröffentlicht.
           tags: |
             type=semver,pattern={{version}}

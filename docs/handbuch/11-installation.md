@@ -1,6 +1,6 @@
 # 11. Installation
 
-Dieses Kapitel richtet sich an die IT, die Paraph auf einem eigenen Server in Betrieb nimmt. Es beschreibt die Voraussetzungen, das Installationsskript `scripts/install.sh` Schritt für Schritt, den Reverse Proxy, die Freigaben in der Firewall und die Ersteinrichtung im Browser. Stand: Version 0.2.0 und der unveröffentlichte Stand laut `CHANGELOG.md`.
+Dieses Kapitel richtet sich an die IT, die Paraph auf einem eigenen Server in Betrieb nimmt. Es beschreibt die Voraussetzungen, das Installationsskript `scripts/install.sh` Schritt für Schritt, den Reverse Proxy, die Freigaben in der Firewall und die Ersteinrichtung im Browser. Stand: Version 0.3.0.
 
 > **Schneller ans Ziel:** Zum Ausprobieren auf einem Mac oder Linux-Rechner genügt `./scripts/install.sh --probe`. Paraph läuft dann unter `http://localhost:8080`, ohne Domain, HTTPS und E-Mail. Wer die Installation von Claude Code ausführen lassen möchte, findet fertige Aufträge für beide Wege in [Kapitel 18](18-installation-mit-claude-code.md).
 
@@ -127,7 +127,7 @@ Der GitHub-Workflow (`.github/workflows/ci.yml`) baut nach erfolgreichen Tests u
 
 | Tag | Inhalt | Wofür |
 |---|---|---|
-| `0.2.0`, `0.2` | Freigabe aus einem Git-Tag `v0.2.0` | Betrieb |
+| `0.3.0`, `0.3` | Freigabe aus einem Git-Tag `v0.3.0` | Betrieb |
 | `latest` | die letzte Freigabe | Ausprobieren |
 | `main` | der aktuelle Stand von `main`, nach jeder Änderung neu | Testen neuer Funktionen vor der nächsten Freigabe |
 | `main-<Commit>` | ein bestimmter Stand von `main`, z. B. `main-424bd3f` | Zurückverfolgen eines Testbetriebs |
@@ -137,9 +137,9 @@ Verwenden Sie für den Betrieb einen Versions-Tag. `main` kann Änderungen entha
 Erstinstallation mit dem fertigen Image:
 
 ```sh
-sudo docker pull ghcr.io/pbaumfalk/paraph:0.2.0
+sudo docker pull ghcr.io/pbaumfalk/paraph:0.3.0
 sudo PARAPH_SKIP_BUILD=1 \
-     PARAPH_EXTRA_ENV='PARAPH_IMAGE=ghcr.io/pbaumfalk/paraph:0.2.0' \
+     PARAPH_EXTRA_ENV='PARAPH_IMAGE=ghcr.io/pbaumfalk/paraph:0.3.0' \
      ./scripts/install.sh
 ```
 

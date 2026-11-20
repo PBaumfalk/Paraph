@@ -15,7 +15,7 @@ Paraph ist eine selbst gehostete Plattform für elektronische Unterschriften, ge
 ![Abgeschlossener Vorgang in Paraph: Siegel, „Alle haben unterschrieben.“, PDF herunterladen und die vier Ergebnis-Dateien](docs/screenshots/vorgang.png)
 
 > [!IMPORTANT]
-> **Version 0.2.0 ist eine Vorabversion.** Die Technik ist geprüft (Tests, Docker-Gesamttest, Fremdprüfung der Siegel). Offen sind zwei Punkte. Erstens sind die mitgelieferten Erklärungs- und Formhinweistexte nicht anwaltlich freigegeben. Zweitens ist der Betrieb mit echtem Mailserver und Let's Encrypt noch nicht abgenommen. Prüfen Sie beides vor dem Einsatz mit echten Mandaten: [Recht](docs/handbuch/07-recht.md), [Grenzen](docs/handbuch/17-grenzen.md).
+> **Version 0.3.0 ist eine Vorabversion.** Die Technik ist geprüft (Tests, Docker-Gesamttest, Fremdprüfung der Siegel). Offen sind zwei Punkte. Erstens sind die mitgelieferten Erklärungs- und Formhinweistexte nicht anwaltlich freigegeben. Zweitens ist der Betrieb mit echtem Mailserver und Let's Encrypt noch nicht abgenommen. Prüfen Sie beides vor dem Einsatz mit echten Mandaten: [Recht](docs/handbuch/07-recht.md), [Grenzen](docs/handbuch/17-grenzen.md).
 
 > **English abstract** – Self-hosted e-signature platform for German law firms, an alternative to DocuSign and DocuSeal. Simple electronic signatures (SES) with a hash-chained audit trail, PAdES platform seal with verified RFC 3161 timestamps, external Merkle anchoring, an evidence package and a public verification page. Node 24, Fastify, SQLite, React; ships as a hardened Docker image. UI in German and English, documentation in German.
 
