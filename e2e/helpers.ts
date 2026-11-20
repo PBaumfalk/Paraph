@@ -31,14 +31,14 @@ export async function pdfFile(name: string, opts: Parameters<typeof makePdf>[0] 
   return p;
 }
 
-export const ADMIN = { email: 'anna@kanzlei.test', password: 'sehr-sicheres-passwort-1', name: 'Anna Anwältin' };
+export const ADMIN = { email: 'anna@nordlicht.test', password: 'sehr-sicheres-passwort-1', name: 'Anna Albers' };
 
 export async function setupOrLogin(page: Page) {
   await page.goto('/');
   await page.locator('h1').first().waitFor();
   if (page.url().endsWith('/setup')) {
     await page.getByLabel('Einrichtungscode').fill('e2e-setup-code');
-    await page.getByLabel('Name der Kanzlei oder Organisation').fill('Kanzlei Baumgarten');
+    await page.getByLabel('Name der Kanzlei oder Organisation').fill('Nordlicht Software GmbH');
     await page.getByLabel('Ihr Name').fill(ADMIN.name);
     await page.getByLabel('E-Mail-Adresse').fill(ADMIN.email);
     await page.getByLabel('Passwort').fill(ADMIN.password);

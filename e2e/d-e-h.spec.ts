@@ -31,7 +31,7 @@ test('D: Ablehnung mit Begründung – Status und kein Abschluss möglich', asyn
   await expect(page.getByText('Abgelehnt von Xenia')).toBeVisible();
   await expect(page.getByText('„Die Vergleichssumme ist zu niedrig.“')).toBeVisible();
   await expect(page.getByRole('button', { name: 'PDF herunterladen' })).toHaveCount(0);
-  await waitMail('anna@kanzlei.test', 'Abgelehnt');
+  await waitMail('anna@nordlicht.test', 'Abgelehnt');
   // Alter Link zeigt nur noch den Hinweis
   const s2 = await (await browser.newContext()).newPage();
   await s2.goto(mail.link!);
@@ -53,7 +53,7 @@ test('D2: Vertretung bei Linkübergabe – „Weitergegeben“ statt „Abgelehn
   await expect(s.getByRole('heading', { name: 'Weitergegeben' })).toBeVisible();
   await expect(s.getByText('Vera Vertretung unterschreibt an Ihrer Stelle')).toBeVisible();
   await expect(s.getByRole('heading', { name: 'Abgelehnt' })).toHaveCount(0);
-  await waitMail('anna@kanzlei.test', 'Link übergeben');
+  await waitMail('anna@nordlicht.test', 'Link übergeben');
   await page.goto(`/envelopes/${env}`);
   await expect(page.getByText('Ohne E-Mail-Einladung: wartet auf Ihren Link.')).toBeVisible();
   await page.getByText('Ohne E-Mail-Einladung').getByRole('button', { name: 'Link selbst weitergeben' }).click();

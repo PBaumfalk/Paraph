@@ -12,8 +12,8 @@ const OUT = process.env.PARAPH_SCREENSHOTS_OUT ?? 'docs/screenshots';
 const GALLERY = !!process.env.PARAPH_SCREENSHOTS_OUT;
 test.skip(process.env.PARAPH_SCREENSHOTS !== '1', 'nur mit PARAPH_SCREENSHOTS=1');
 
-/** Mandatsvereinbarung im A4-Format; liefert die Bytes und die Lage der Unterschriftszeilen (0..1, von oben). */
-async function mandatsvereinbarung(mandant: string, heading = 'Mandatsvereinbarung') {
+/** Vertrag im A4-Format (erfundene Firma); liefert die Bytes und die Lage der Unterschriftszeilen (0..1, von oben). */
+async function vertrag(partner: string, heading = 'Arbeitsvertrag') {
   const doc = await PDFDocument.create();
   doc.setTitle(heading);
   const font = await doc.embedFont(StandardFonts.Helvetica);
@@ -21,8 +21,8 @@ async function mandatsvereinbarung(mandant: string, heading = 'Mandatsvereinbaru
   const p = doc.addPage([595, 842]);
   const grey = rgb(0.35, 0.37, 0.42);
   let y = 790;
-  p.drawText('Kanzlei Baumgarten', { x: 60, y, size: 13, font: bold });
-  p.drawText('Rechtsanwältin Anna Anwältin · Musterallee 12 · 50667 Köln', { x: 60, y: y - 16, size: 8.5, font, color: grey });
+  p.drawText('Nordlicht Software GmbH', { x: 60, y, size: 13, font: bold });
+  p.drawText('Hafenstraße 8 · 20457 Hamburg · Geschäftsführung: Anna Albers', { x: 60, y: y - 16, size: 8.5, font, color: grey });
   p.drawLine({ start: { x: 60, y: y - 26 }, end: { x: 535, y: y - 26 }, thickness: 0.6, color: rgb(0.8, 0.82, 0.86) });
   y -= 70;
   p.drawText(heading, { x: 60, y, size: 20, font: bold });
@@ -32,18 +32,18 @@ async function mandatsvereinbarung(mandant: string, heading = 'Mandatsvereinbaru
     y -= size + 5;
   };
   line('zwischen');
-  line(`${mandant}, Lindenstraße 4, 50674 Köln`, bold);
-  line('– Mandantin –');
+  line('Nordlicht Software GmbH, Hafenstraße 8, 20457 Hamburg', bold);
+  line('– Unternehmen –');
   y -= 6;
   line('und');
-  line('Kanzlei Baumgarten, Musterallee 12, 50667 Köln', bold);
-  line('– Kanzlei –');
+  line(`${partner}, Lindenstraße 4, 22767 Hamburg`, bold);
+  line('– Vertragspartnerin –');
   y -= 14;
   const paras: [string, string[]][] = [
-    ['§ 1 Gegenstand', ['Die Mandantin beauftragt die Kanzlei mit der Prüfung und Durchsetzung ihrer Ansprüche', 'aus dem Arbeitsverhältnis mit der Nordwerk GmbH, insbesondere im Zusammenhang mit', 'der Kündigung vom 30.09.2026.']],
-    ['§ 2 Vergütung', ['Die Vergütung richtet sich nach dem Rechtsanwaltsvergütungsgesetz (RVG). Die Kanzlei', 'weist darauf hin, dass sich die Gebühren nach dem Gegenstandswert berechnen', '(§ 49b Abs. 5 BRAO). Im arbeitsgerichtlichen Verfahren erster Instanz trägt jede Partei', 'ihre Kosten selbst (§ 12a ArbGG).']],
-    ['§ 3 Kommunikation', ['Die Mandantin ist einverstanden, dass die Kanzlei mit ihr unverschlüsselt per E-Mail', 'kommuniziert. Sie kann diese Einwilligung jederzeit widerrufen.']],
-    ['§ 4 Haftung', ['Die Haftung der Kanzlei für fahrlässig verursachte Schäden wird auf 1.000.000 Euro', 'begrenzt (§ 52 Abs. 1 Nr. 2 BRAO). Die Kanzlei unterhält eine entsprechende', 'Berufshaftpflichtversicherung.']],
+    ['§ 1 Gegenstand', ['Die Vertragspartnerin wird ab dem 01.01.2027 als Softwareentwicklerin tätig. Ort der', 'Tätigkeit ist Hamburg; mobiles Arbeiten ist nach Absprache möglich.']],
+    ['§ 2 Vergütung', ['Die Vergütung beträgt 5.200 Euro brutto monatlich, zahlbar jeweils zum Monatsende.', 'Überstunden werden durch Freizeit ausgeglichen.']],
+    ['§ 3 Arbeitszeit und Urlaub', ['Die regelmäßige Arbeitszeit beträgt 38 Stunden pro Woche. Der Urlaubsanspruch', 'beträgt 30 Arbeitstage im Kalenderjahr.']],
+    ['§ 4 Vertraulichkeit', ['Über Geschäftsgeheimnisse ist auch nach dem Ende der Zusammenarbeit Stillschweigen', 'zu bewahren. Einzelheiten regelt die beigefügte Vertraulichkeitsvereinbarung.']],
   ];
   for (const [h, ls] of paras) {
     line(h, bold, 11);
@@ -52,7 +52,7 @@ async function mandatsvereinbarung(mandant: string, heading = 'Mandatsvereinbaru
     y -= 10;
   }
   const sigY = 150;
-  for (const [x, label] of [[60, 'Ort, Datum, Unterschrift Mandantin'], [320, 'Kanzlei Baumgarten']] as const) {
+  for (const [x, label] of [[60, 'Ort, Datum, Unterschrift Vertragspartnerin'], [320, 'Nordlicht Software GmbH']] as const) {
     p.drawLine({ start: { x, y: sigY }, end: { x: x + 215, y: sigY }, thickness: 0.6, color: grey });
     p.drawText(label, { x, y: sigY - 13, size: 8.5, font, color: grey });
   }
@@ -69,7 +69,7 @@ async function csrf(page: Page) {
 }
 
 async function envelope(page: Page, title: string, mandant: string, email: string, send: boolean) {
-  const pdf = await mandatsvereinbarung(mandant, title.split(' ')[0]);
+  const pdf = await vertrag(mandant, title.split(' ')[0]);
   const r = await page.request.post('/api/v1/envelopes', {
     headers: { 'x-csrf-token': await csrf(page) },
     data: {
@@ -95,12 +95,12 @@ test('Screenshots', async ({ page, browser }) => {
   await setupOrLogin(page);
 
   // Bestand: abgeschlossen, unterwegs, Entwurf
-  const done = await envelope(page, 'Mandatsvereinbarung Schneider', 'Lena Schneider', 'lena.schneider@example.org', true);
-  const weber = await envelope(page, 'Mandatsvereinbarung Weber', 'Jonas Weber', 'jonas.weber@example.org', true);
-  await envelope(page, 'Vergütungsvereinbarung Klein GmbH', 'Sabine Klein', 'sabine.klein@example.org', true);
-  await envelope(page, 'Vollmacht Yilmaz ./. Nordwerk GmbH', 'Deniz Yilmaz', 'deniz.yilmaz@example.org', true);
+  const done = await envelope(page, 'Arbeitsvertrag Schneider', 'Lena Schneider', 'lena.schneider@example.org', true);
+  const weber = await envelope(page, 'Arbeitsvertrag Weber', 'Jonas Weber', 'jonas.weber@example.org', true);
+  await envelope(page, 'Auftragsbestätigung Klein GmbH', 'Sabine Klein', 'sabine.klein@example.org', true);
+  await envelope(page, 'Vollmacht Yilmaz', 'Deniz Yilmaz', 'deniz.yilmaz@example.org', true);
   await envelope(page, 'Datenschutzeinwilligung Hoffmann', 'Mia Hoffmann', 'mia.hoffmann@example.org', true);
-  const draft = await envelope(page, 'Mandatsvereinbarung Krüger', 'Petra Krüger', 'petra.krueger@example.org', false);
+  const draft = await envelope(page, 'Dienstleistungsvertrag Krüger', 'Petra Krüger', 'petra.krueger@example.org', false);
 
   // Unterzeichnerin auf dem iPhone
   const mail = await waitMail('lena.schneider@example.org', 'bittet Sie um Ihre Unterschrift');
@@ -137,7 +137,7 @@ test('Screenshots', async ({ page, browser }) => {
 
   // Prüfstelle (Desktop)
   await page.goto('/verify');
-  await page.locator('input[type=file]').setInputFiles({ name: 'Mandatsvereinbarung Schneider.pdf', mimeType: 'application/pdf', buffer: signed });
+  await page.locator('input[type=file]').setInputFiles({ name: 'Arbeitsvertrag Schneider.pdf', mimeType: 'application/pdf', buffer: signed });
   await expect(page.getByRole('heading', { name: 'Echt und unverändert' })).toBeVisible();
   await page.getByRole('button', { name: /eingebettete Siegel prüfen/ }).click();
   await expect(page.getByText(/Siegel dieser Instanz gültig/)).toBeVisible();
@@ -146,7 +146,7 @@ test('Screenshots', async ({ page, browser }) => {
 
   // Übersicht, abgeschlossener Vorgang, Editor
   await page.goto('/');
-  await expect(page.getByText('Mandatsvereinbarung Weber').first()).toBeVisible();
+  await expect(page.getByText('Arbeitsvertrag Weber').first()).toBeVisible();
   await page.waitForTimeout(800);
   await page.screenshot({ path: `${OUT}/uebersicht.png` });
   await page.goto(`/envelopes/${done}`);
@@ -174,7 +174,7 @@ test('Screenshots', async ({ page, browser }) => {
   await page.goto(`/envelopes/${weber}`);
   await shot(page, 'vorgang-unterwegs');
   // Versandschritt mit Formhinweis (Vollmacht)
-  const vollmacht = await envelope(page, 'Vollmacht Becker ./. Stadtwerke', 'Tom Becker', 'tom.becker@example.org', false);
+  const vollmacht = await envelope(page, 'Vollmacht Becker', 'Tom Becker', 'tom.becker@example.org', false);
   await page.goto(`/envelopes/${vollmacht}/edit`);
   await expect(page.locator('.fbox')).toHaveCount(2);
   await page.getByRole('button', { name: 'Weiter zum Versand' }).click();
@@ -195,7 +195,7 @@ test('Screenshots', async ({ page, browser }) => {
   await anon.goto('/login');
   await shot(anon, 'anmeldung');
   await phone.goto('/verify');
-  await phone.locator('input[type=file]').setInputFiles({ name: 'Mandatsvereinbarung Schneider.pdf', mimeType: 'application/pdf', buffer: signed });
+  await phone.locator('input[type=file]').setInputFiles({ name: 'Arbeitsvertrag Schneider.pdf', mimeType: 'application/pdf', buffer: signed });
   await expect(phone.getByRole('heading', { name: 'Echt und unverändert' })).toBeVisible();
   await phone.waitForTimeout(1500);
   await phone.screenshot({ path: `${OUT}/pruefstelle-iphone.png`, fullPage: true });

@@ -1,17 +1,17 @@
 # Paraph – Handbuch
 
-Paraph ist eine selbst gehostete Plattform für elektronische Unterschriften für Kanzleien. Dieses Handbuch erklärt jede Funktion an der Stelle, an der Sie sie im Kanzleialltag brauchen. Stand: 20.11.2026, Version 0.3.0 ([Änderungsprotokoll](../../CHANGELOG.md)).
+Paraph ist eine selbst gehostete Plattform für elektronische Unterschriften, etwa für Unternehmen, Kanzleien, Steuerbüros, Vereine und Verwaltungen. Dieses Handbuch erklärt jede Funktion an der Stelle, an der Sie sie im Alltag brauchen. Die Beispiele stammen oft aus einer Kanzlei (Mandatsvereinbarung, Mandantin); sie gelten für Arbeitsverträge, Aufträge oder Mitgliedsanträge genauso. Stand: 20.11.2026, Version 0.3.0 ([Änderungsprotokoll](../../CHANGELOG.md)).
 
 ## Wo fange ich an?
 
 | Sie sind … | und wollen … | Lesen Sie |
 |---|---|---|
 | **neu bei Paraph** | verstehen, was Paraph tut, und einmal alles durchspielen | [1. Paraph in fünf Minuten](01-paraph-in-fuenf-minuten.md), dann [Ihr erster Vorgang Schritt für Schritt](01-paraph-in-fuenf-minuten.md#ihr-erster-vorgang-schritt-für-schritt) mit dem [Beispieldokument](beispiele/Mandatsvereinbarung-Beispiel.pdf) |
-| **ReFa, Sekretariat** | Dokumente zur Unterschrift vorbereiten, versenden und nachfassen | [2. Unterschreiben lassen](02-dokument-unterschreiben-lassen.md) → [3. Vorgänge verfolgen](03-vorgaenge-verfolgen.md) → [4. Vorlagen und Serien](04-vorlagen-serien-formulare.md) |
-| **Rechtsanwältin, Rechtsanwalt** | das Ergebnis kontrollieren, zur Akte nehmen, die Rechtslage einordnen | [Ergebnis abholen](03-vorgaenge-verfolgen.md#das-ergebnis-abholen) → [6. Dokumente prüfen](06-dokumente-pruefen.md) → [7. Recht](07-recht.md) |
-| **Kanzleileitung** | Team, Rollen, Erscheinungsbild und Aufbewahrung festlegen | [8. Kanzlei, Team und Erscheinungsbild](08-kanzlei-team-erscheinungsbild.md), [9. Anmeldung](09-anmeldung-und-sso.md) |
+| **Sachbearbeitung, Sekretariat, ReFa** | Dokumente zur Unterschrift vorbereiten, versenden und nachfassen | [2. Unterschreiben lassen](02-dokument-unterschreiben-lassen.md) → [3. Vorgänge verfolgen](03-vorgaenge-verfolgen.md) → [4. Vorlagen und Serien](04-vorlagen-serien-formulare.md) |
+| **Verantwortliche** (Geschäftsführung, Anwältin, Personalabteilung) | das Ergebnis kontrollieren, ablegen, die Rechtslage einordnen | [Ergebnis abholen](03-vorgaenge-verfolgen.md#das-ergebnis-abholen) → [6. Dokumente prüfen](06-dokumente-pruefen.md) → [7. Recht](07-recht.md) |
+| **Leitung, Administration** | Team, Rollen, Erscheinungsbild und Aufbewahrung festlegen | [8. Organisation, Team und Erscheinungsbild](08-kanzlei-team-erscheinungsbild.md), [9. Anmeldung](09-anmeldung-und-sso.md) |
 | **IT, Admin** | Paraph installieren, betreiben, sichern | [18. Installation mit Claude Code](18-installation-mit-claude-code.md) oder [11. Installation](11-installation.md) → [13. Sicherung und Updates](13-sicherung-und-updates.md) → [15. Diagnose](15-diagnose-und-fehlersuche.md) |
-| **Entwicklung, Anbindung** | Kanzleisoftware, n8n oder Make anbinden | [10. API und Webhooks](10-anbindung-api-webhooks.md) |
+| **Entwicklung, Anbindung** | eigene Software, Kanzlei- oder Personalsoftware, n8n oder Make anbinden | [10. API und Webhooks](10-anbindung-api-webhooks.md) |
 
 Welche Funktion wo erklärt ist, zeigt die [Funktionsliste](funktionsliste.md). Begriffe erklärt das [Glossar](glossar.md).
 
@@ -31,13 +31,13 @@ Für Anwältinnen, Anwälte und Mitarbeitende. Kein technisches Vorwissen nötig
 
 ## Teil B – Einrichten und verwalten
 
-Für Inhaber und Administration der Kanzlei.
+Für Inhaber und Administration der Organisation.
 
 | Kapitel | Worum es geht |
 |---|---|
 | [8. Kanzlei, Team und Erscheinungsbild einrichten](08-kanzlei-team-erscheinungsbild.md) | Ersteinrichtung, Rollen, Einladungen, Logo und Farbe, E-Mail-Texte, Aufbewahrung |
 | [9. Anmeldung und SSO](09-anmeldung-und-sso.md) | Passwort, Zwei-Faktor, Sitzungen, Anmeldung über authentik |
-| [10. Anbindung: API und Webhooks](10-anbindung-api-webhooks.md) | REST-API, Webhooks, Einbettung, Linkübergabe aus der Kanzleisoftware |
+| [10. Anbindung: API und Webhooks](10-anbindung-api-webhooks.md) | REST-API, Webhooks, Einbettung, Linkübergabe aus eigener Software |
 
 ## Teil C – Betrieb
 

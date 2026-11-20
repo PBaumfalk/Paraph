@@ -7,7 +7,7 @@ test('C: Signieren auf dem Smartphone mit Finger, Pflichtfeldern, Checkbox und D
   // Admin-Zugang und Vorgang per API vorbereiten (Ersteinrichtung, falls noch nicht geschehen)
   const api = await request.newContext({ baseURL, extraHTTPHeaders: { origin: baseURL! } });
   const state = await (await api.get('/api/auth/state')).json();
-  if (state.setup_required) await api.post('/api/auth/setup', { data: { code: 'e2e-setup-code', orgName: 'Kanzlei Baumgarten', name: ADMIN.name, email: ADMIN.email, password: ADMIN.password } });
+  if (state.setup_required) await api.post('/api/auth/setup', { data: { code: 'e2e-setup-code', orgName: 'Nordlicht Software GmbH', name: ADMIN.name, email: ADMIN.email, password: ADMIN.password } });
   else await api.post('/api/auth/login', { data: { email: ADMIN.email, password: ADMIN.password } });
   const csrf = (await (await api.get('/api/auth/state')).json()).session.csrf;
   const file = await pdfFile('mobil.pdf', { pages: 2, title: 'Vollmacht' });
