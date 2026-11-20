@@ -220,7 +220,7 @@ mc admin policy attach local paraph-rw --user paraph
 | `QES_CSC_CLIENT_SECRET` | leer | Client-Secret. |
 | `QES_CSC_TOKEN_URL` | – | Token-Endpunkt. |
 
-Diese Werte werden nur gelesen und unter Einstellungen → System angezeigt („Anbieter konfiguriert, nicht verifiziert“). Es gibt keine Anbieter-Implementierung. Vorgänge mit der Stufe QES lassen sich nicht versenden, auch wenn diese Variablen gesetzt sind. Siehe [Kapitel 17](17-grenzen.md).
+Diese Werte werden nur gelesen. Einstellungen → „Siegel und Signaturstufen“ zeigt dann „Anbieter konfiguriert, nicht verifiziert“; unter Einstellungen → System meldet die Diagnosezeile „Qualifizierte Signatur (QES)“, die Anbindung sei vorbereitet, aber nicht produktiv freigegeben. Es gibt keine Anbieter-Implementierung. Vorgänge mit der Stufe QES lassen sich nicht versenden, auch wenn diese Variablen gesetzt sind. Siehe [Kapitel 17](17-grenzen.md).
 
 ## Sicherung
 
@@ -260,6 +260,7 @@ Für einfache Verfügbarkeitsprüfungen genügen `GET /api/health` (Status und V
 | Variable | Standard | Zweck |
 |---|---|---|
 | `DEV_MODE` | aus | Nur Entwicklung. Schreibt ohne SMTP die Links aus E-Mails ins Protokoll und erlaubt `http://` für `OIDC_ISSUER`. **Nie produktiv verwenden**, da die Links Zugang zu Vorgängen gewähren. Die Diagnose meldet einen Fehler. |
+| `PARAPH_PROBE` | aus | Kennzeichnet den Probebetrieb. Setzt `install.sh --probe` in `.env` ([Kapitel 18](18-installation-mit-claude-code.md#was-claude-code-ausführt)). Ein fehlender Mailserver gilt in der Diagnose dann als Warnung statt als Fehler. Unabhängig davon wählt der Versanddialog ohne Mailserver „Links selbst weitergeben“ vor. Sonst ändert sich nichts; die Variable macht eine Installation nicht zum Testsystem. |
 | `PARAPH_DEBUG_PDF` | – | Gibt Fehler beim Analysieren hochgeladener PDFs zusätzlich auf der Konsole aus. Direkt gelesen. |
 | `PARAPH_BUILD_VERSION` | `0.2.0-dev` (im Image die Build-Version, z. B. `0.2.0`) | Angezeigte Versionsnummer. Setzt das Image; nicht selbst ändern. Direkt gelesen. |
 
@@ -326,6 +327,8 @@ Diese Variablen wertet Docker Compose aus, nicht Paraph. Sie stehen ebenfalls in
 | `PARAPH_DOMAIN`, `PARAPH_USE_CADDY`, `PARAPH_ACME_EMAIL`, `PARAPH_SMTP_URL`, `PARAPH_MAIL_FROM`, `PARAPH_TSA_URL`, `PARAPH_TSA_CA_FILE`, `PARAPH_APP_URL`, `PARAPH_EXTRA_ENV` | `install.sh` | Antworten und Zusätze, siehe [Kapitel 11](11-installation.md#ohne-rückfragen-installieren) |
 | `PARAPH_SKIP_BUILD=1` | `install.sh`, `update.sh` | vorhandenes Image verwenden statt bauen |
 | `PARAPH_ALLOW_NONROOT=1` | `install.sh` | ohne root ausführen (nur Tests) |
+| `--probe` (Option), `PARAPH_PORT` | `install.sh` | Probebetrieb auf `http://localhost:<PARAPH_PORT>` (Vorgabe 8080), siehe [Kapitel 18](18-installation-mit-claude-code.md#was-claude-code-ausführt) |
+| `PARAPH_QUIET_SECRETS=1` | `install.sh` | Wiederherstellungs-Passphrase nicht ausgeben, nur ihren Ablageort nennen |
 | `PARAPH_TAKE_KEY=1` | `restore.sh` | Hauptschlüssel ohne Rückfrage aus der Sicherung übernehmen |
 
 ---

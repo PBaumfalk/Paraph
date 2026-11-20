@@ -46,13 +46,14 @@ const fmtD = (iso: string, f?: string) => {
   return f === 'YYYY-MM-DD' ? iso : f === 'MM/DD/YYYY' ? `${m}/${d}/${y}` : `${d}.${m}.${y}`;
 };
 
-type Phase = 'loading' | 'error' | 'auth' | 'waiting' | 'sign' | 'done' | 'declined' | 'completed_before';
+type Phase = 'loading' | 'error' | 'auth' | 'waiting' | 'sign' | 'done' | 'declined' | 'delegated' | 'completed_before';
 
 export default function Sign({ embedded = false }: { embedded?: boolean }) {
   useLang();
   const { token } = useParams();
   const nav = useNavigate();
   const [phase, setPhase] = useState<Phase>('loading');
+  const [delegatedTo, setDelegatedTo] = useState('');
   const [error, setError] = useState<{ title: string; text: string } | null>(null);
   const [view, setView] = useState<any>(null);
   const [origin, setOrigin] = useState<string | null>(null);
@@ -125,6 +126,7 @@ export default function Sign({ embedded = false }: { embedded?: boolean }) {
       {phase === 'auth' && view && <AuthStep view={view} onDone={apply} onError={fail} />}
       {phase === 'completed_before' && view && <DoneStep view={view} again />}
       {phase === 'declined' && <Notice title={t('Abgelehnt')} text={t('Sie haben die Unterzeichnung abgelehnt. Der Absender wurde informiert.')} />}
+      {phase === 'delegated' && <Notice title={t('Weitergegeben')} text={t('{name} unterschreibt an Ihrer Stelle und erhält dafür einen eigenen Link. Ihr Link ist nicht mehr gültig.', { name: delegatedTo })} />}
       {phase === 'done' && view && (
         <DoneStep
           view={view}
@@ -150,6 +152,12 @@ export default function Sign({ embedded = false }: { embedded?: boolean }) {
           onDeclined={() => {
             notifyParent('paraph:declined');
             setPhase('declined');
+          }}
+          onDelegated={(name) => {
+            // Der Vorgang läuft mit der Vertretung weiter – für einbettende Portale kein „abgelehnt“
+            notifyParent('paraph:delegated');
+            setDelegatedTo(name);
+            setPhase('delegated');
           }}
           onError={fail}
         />
@@ -280,7 +288,7 @@ function DoneStep({ view, again, onReturn }: { view: any; again?: boolean; onRet
   );
 }
 
-function SignStep({ view, onDone, onDeclined, onError }: { view: any; onDone: () => void; onDeclined: () => void; onError: (e: any) => void }) {
+function SignStep({ view, onDone, onDeclined, onDelegated, onError }: { view: any; onDone: () => void; onDeclined: () => void; onDelegated: (name: string) => void; onError: (e: any) => void }) {
   const coarse = useCoarse();
   const [pdfs, setPdfs] = useState<Record<string, PdfDoc>>({});
   const [width, setWidth] = useState(Math.min(window.innerWidth - 16, 900));
@@ -625,7 +633,7 @@ function SignStep({ view, onDone, onDeclined, onError }: { view: any; onDone: ()
         />
       )}
       {decline && <DeclineDialog onClose={() => setDecline(false)} onDone={onDeclined} />}
-      {delegate && <DelegateDialog onClose={() => setDelegate(false)} onDone={() => { setDelegate(false); onDeclined(); }} />}
+      {delegate && <DelegateDialog onClose={() => setDelegate(false)} onDone={(name) => { setDelegate(false); onDelegated(name); }} />}
     </div>
   );
 }
@@ -761,7 +769,7 @@ function DeclineDialog({ onClose, onDone }: { onClose: () => void; onDone: () =>
   );
 }
 
-function DelegateDialog({ onClose, onDone }: { onClose: () => void; onDone: () => void }) {
+function DelegateDialog({ onClose, onDone }: { onClose: () => void; onDone: (name: string) => void }) {
   const [f, setF] = useState({ name: '', email: '', reason: '' });
   const [err, setErr] = useState('');
   return (
@@ -771,15 +779,15 @@ function DelegateDialog({ onClose, onDone }: { onClose: () => void; onDone: () =
       footer={
         <>
           <button className="btn" onClick={onClose}>{t('Zurück')}</button>
-          <button className="btn btn-primary" onClick={async () => { try { await sreq('POST', '/api/sign/delegate', f); onDone(); } catch (e: any) { setErr(e.message); } }}>{t('Weitergeben')}</button>
+          <button className="btn btn-primary" onClick={async () => { try { await sreq('POST', '/api/sign/delegate', f); onDone(f.name.trim()); } catch (e: any) { setErr(e.message); } }}>{t('Weitergeben')}</button>
         </>
       }
     >
       <div className="stack">
         <p className="muted">{t('Die Vertretung erhält einen eigenen Link und unterschreibt an Ihrer Stelle. Das wird protokolliert; Ihr Link wird ungültig.')}</p>
-        <div className="field"><label className="label">{t('Name')}</label><input className="input" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></div>
-        <div className="field"><label className="label">{t('E-Mail-Adresse')}</label><input className="input" type="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} /></div>
-        <div className="field"><label className="label">{t('Grund (optional)')}</label><input className="input" value={f.reason} onChange={(e) => setF({ ...f, reason: e.target.value })} /></div>
+        <div className="field"><label className="label" htmlFor="dg-name">{t('Name')}</label><input id="dg-name" className="input" autoComplete="name" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></div>
+        <div className="field"><label className="label" htmlFor="dg-email">{t('E-Mail-Adresse')}</label><input id="dg-email" className="input" type="email" autoComplete="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} /></div>
+        <div className="field"><label className="label" htmlFor="dg-reason">{t('Grund (optional)')}</label><input id="dg-reason" className="input" value={f.reason} onChange={(e) => setF({ ...f, reason: e.target.value })} /></div>
         {err && <p className="error-text">{err}</p>}
       </div>
     </Dialog>

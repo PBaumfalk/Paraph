@@ -1,82 +1,98 @@
-<img src="docs/assets/paraph-icon-256.png" width="72" alt="Paraph">
+<img src="docs/assets/paraph-icon-256.png" width="72" alt="Paraph-Logo">
 
 # Paraph
 
-[![Tests, Image & Release](https://github.com/PBaumfalk/Paraph/actions/workflows/ci.yml/badge.svg)](https://github.com/PBaumfalk/Paraph/actions/workflows/ci.yml)
+[![Tests](https://github.com/PBaumfalk/Paraph/actions/workflows/ci.yml/badge.svg)](https://github.com/PBaumfalk/Paraph/actions/workflows/ci.yml)
 [![Lizenz: MIT](https://img.shields.io/badge/Lizenz-MIT-blue.svg)](LICENSE)
-[![Docker-Image](https://img.shields.io/badge/ghcr.io-pbaumfalk%2Fparaph-blue?logo=docker)](https://github.com/PBaumfalk/Paraph/pkgs/container/paraph)
-[![Version](https://img.shields.io/badge/Version-0.2.0-lightgrey.svg)](CHANGELOG.md)
 
-**Dokumente unterschreiben lassen, auf dem eigenen Server.**
+**Mandatsvereinbarungen, Vollmachten und Erklärungen elektronisch unterschreiben lassen, auf dem eigenen Server der Kanzlei.**
 
-Paraph ist eine selbst gehostete Plattform für elektronische Signaturen, gebaut für Kanzleien. Sie laden die Mandatsvereinbarung hoch, setzen die Felder und versenden. Die Mandantin unterschreibt am Smartphone, ohne Konto und ohne App. Am Ende steht ein versiegeltes PDF mit Abschlussbestätigung und einem Protokoll, das sich nicht unbemerkt ändern lässt. Ohne Lizenzgrenzen, ohne Preis pro Umschlag, mit REST-API für Kanzleisoftware, n8n und Make.
+Paraph ist eine selbst gehostete Plattform für elektronische Unterschriften, gebaut für Anwaltskanzleien. Die ReFa lädt das Dokument hoch, setzt das Unterschriftsfeld und versendet. Die Mandantin unterschreibt am Smartphone, ohne Konto und ohne App. Die Anwältin erhält ein versiegeltes PDF mit Abschlussbestätigung und Nachweispaket, das sich jederzeit prüfen lässt. Es gibt keine Lizenzgrenzen und keinen Preis pro Umschlag. Für Kanzleisoftware, n8n und Make steht eine REST-API bereit.
 
-Der Name kommt von der Paraphe, dem Kürzel am Rand jeder Vertragsseite.
+**[▶ Schnellstart](#schnellstart)** · **[📖 Handbuch](docs/handbuch/README.md)** · **[Ersten Vorgang ausprobieren](docs/handbuch/01-paraph-in-fuenf-minuten.md#ihr-erster-vorgang-schritt-für-schritt)** · **[Installation mit Claude Code](docs/handbuch/18-installation-mit-claude-code.md)**
+
+![Abgeschlossener Vorgang in Paraph: Siegel, „Alle haben unterschrieben.“, PDF herunterladen und die vier Ergebnis-Dateien](docs/screenshots/vorgang.png)
+
+> [!IMPORTANT]
+> **Version 0.2.0 ist eine Vorabversion.** Die Technik ist geprüft (Tests, Docker-Gesamttest, Fremdprüfung der Siegel). Offen sind zwei Punkte. Erstens sind die mitgelieferten Erklärungs- und Formhinweistexte nicht anwaltlich freigegeben. Zweitens ist der Betrieb mit echtem Mailserver und Let's Encrypt noch nicht abgenommen. Prüfen Sie beides vor dem Einsatz mit echten Mandaten: [Recht](docs/handbuch/07-recht.md), [Grenzen](docs/handbuch/17-grenzen.md).
 
 > **English abstract** – Self-hosted e-signature platform for German law firms, an alternative to DocuSign and DocuSeal. Simple electronic signatures (SES) with a hash-chained audit trail, PAdES platform seal with verified RFC 3161 timestamps, external Merkle anchoring, an evidence package and a public verification page. Node 24, Fastify, SQLite, React; ships as a hardened Docker image. UI in German and English, documentation in German.
 
-![Abgeschlossener Vorgang: Siegel, Download und Ergebnis-Dateien](docs/screenshots/vorgang.png)
+## Für wen?
 
-> [!IMPORTANT]
-> **Stand 0.2.0: noch nicht für den Produktivbetrieb freigegeben.** Technisch ist Paraph abnahmefähig. Offen sind die anwaltliche Freigabe der Erklärungs- und Hinweistexte und der Abnahmelauf gegen echte Gegenstellen (Mailserver, Let's Encrypt). Details: [`docs/STATUS-0.2.0.md`](docs/STATUS-0.2.0.md).
+| ReFa und Sekretariat | Rechtsanwältin und Rechtsanwalt | IT und Administration |
+|---|---|---|
+| Dokument hochladen, Mandantin eintragen, Feld setzen, versenden, nachfassen | Ergebnis kontrollieren, unverändert zur Akte nehmen, Echtheit belegen | installieren, Team einrichten, sichern, aktualisieren |
+| [Ihr erster Vorgang](docs/handbuch/01-paraph-in-fuenf-minuten.md#ihr-erster-vorgang-schritt-für-schritt) · [Unterschreiben lassen](docs/handbuch/02-dokument-unterschreiben-lassen.md) · [Vorgänge verfolgen](docs/handbuch/03-vorgaenge-verfolgen.md) | [Ergebnis abholen](docs/handbuch/03-vorgaenge-verfolgen.md#das-ergebnis-abholen) · [Dokumente prüfen](docs/handbuch/06-dokumente-pruefen.md) · [Recht und Form](docs/handbuch/07-recht.md) | [Installation](docs/handbuch/11-installation.md) · [mit Claude Code](docs/handbuch/18-installation-mit-claude-code.md) · [Sicherung und Updates](docs/handbuch/13-sicherung-und-updates.md) |
 
-## Was Paraph ausmacht
+## Schnellstart
 
-**Unterschreiben, wo die Mandantin gerade ist.** Ein Link per E-Mail oder aus der Kanzleisoftware genügt. Die Signaturseite führt Feld für Feld durch das Dokument, die Unterschrift wird mit dem Finger gezeichnet, getippt oder als Bild übernommen. Auf Wunsch schützt ein Einmalcode per E-Mail oder SMS oder ein Zugangscode.
+Sie brauchen [Docker](https://docs.docker.com/get-started/get-docker/) mit Compose v2, `git` und `openssl`.
 
-| Einladung | Unterschrift | Erklärung | Fertig |
-| --- | --- | --- | --- |
-| ![Signaturseite mit Dokument](docs/screenshots/signieren-start-iphone.png) | ![Unterschrift zeichnen](docs/screenshots/signieren-zeichnen-iphone.png) | ![Abschließende Erklärung](docs/handbuch/bilder/signieren-erklaerung-iphone.png) | ![Unterschrieben, mit Siegel](docs/screenshots/signieren-fertig-iphone.png) |
-
-**Ein Nachweis, den man prüfen kann.** Jedes abgeschlossene PDF trägt ein Plattformsiegel nach PAdES, auf Wunsch mit geprüftem RFC-3161-Zeitstempel (FreeTSA ist voreingestellt). Jedes Ereignis steht in einer Hash-Kette, die regelmäßig extern verankert wird. Wer vollen Zugriff auf den Server hat, kann die Historie deshalb nicht unbemerkt neu schreiben. Die Prüfstelle unter `/verify` bestätigt, ob eine Datei Bit für Bit dem entspricht, was unterschrieben wurde. Den Fingerabdruck berechnet der Browser, die Datei verlässt den Rechner nicht.
-
-![Prüfstelle: Echt und unverändert](docs/screenshots/pruefstelle.png)
-
-**Ehrlich über die Form.** Paraph erzeugt einfache elektronische Signaturen und sagt das auch so. Vor dem Versand prüft ein Katalog deutscher Formvorschriften, ob das Dokument eine strengere Form braucht, etwa bei Kündigung, Bürgschaft oder Vollmacht. Wer trotzdem versendet, bestätigt den Hinweis, und die Bestätigung steht im Protokoll.
-
-**Auf Ihrem Server.** Dokumente, Unterschriften und Protokolle bleiben bei Ihnen, verschlüsselt abgelegt. Nach außen geht nur, was Sie einrichten: E-Mail, auf Wunsch SMS und S3, und an den Zeitstempeldienst ein Hashwert.
-
-| Übersicht | Editor |
-| --- | --- |
-| ![Übersicht mit Vorgängen nach Status](docs/screenshots/uebersicht.png) | ![Editor mit gesetzten Feldern](docs/screenshots/editor.png) |
-
-## Funktionen
-
-- **Vorgänge** mit mehreren PDF-, Word- oder ODT-Dokumenten; Beteiligte als Unterzeichner, Freigebende, Ausfüllende, Lesende oder Zeugen, gleichzeitig oder nacheinander
-- **12 Feldtypen** von Unterschrift und Paraphe über Datum, Auswahl und Anhang bis zu berechneten Feldern, mit Bedingungen und Prüfmustern
-- **Vorlagen** mit unveränderlichen Versionen, **Massenversand** per CSV oder Excel, **öffentliche Formulare**, **Vor-Ort-Signatur** am Kanzleitablet
-- **Erinnerungen, Ablauf, Widerruf, Ablehnung, Vertretung**, alles im Protokoll
-- **Ergebnis:** versiegeltes PDF, Abschlussbestätigung, Nachweispaket mit unabhängigem Prüfskript, Audit-Trail als JSON
-- **Team** mit Rollen, mehrere Organisationen, Zwei-Faktor, Anmeldung über authentik (OIDC), eigenes Logo, eigene Farbe und eigene Domain
-- **Anbindung:** REST-API mit Testmodus und Idempotenz, Webhooks nach „Standard Webhooks“, Linkübergabe an j-lawyer, Beispiele für n8n und Make, einbettbare Signaturseite
-- **Betrieb:** gehärteter Container, verschlüsselte automatische Sicherung, Update mit Rückweg, Systemdiagnose, Metriken für Prometheus
-
-## Installation
-
-Auf einem Linux-Server mit Docker und Compose v2, einer Domain und einem SMTP-Zugang:
+<details open>
+<summary><strong>Ausprobieren auf dem eigenen Rechner</strong> (Mac oder Linux, etwa 10 Minuten)</summary>
 
 ```sh
-git clone https://github.com/PBaumfalk/Paraph.git /opt/paraph
+git clone https://github.com/PBaumfalk/Paraph.git paraph
+cd paraph
+./scripts/install.sh --probe
+```
+
+Das Skript baut Paraph, startet es unter **http://localhost:8080** und zeigt am Ende einen Einrichtungscode. Öffnen Sie `http://localhost:8080/setup`, legen Sie Ihr Konto an und spielen Sie den [ersten Vorgang](docs/handbuch/01-paraph-in-fuenf-minuten.md#ihr-erster-vorgang-schritt-für-schritt) mit dem [Beispieldokument](docs/handbuch/beispiele/Mandatsvereinbarung-Beispiel.pdf) durch. Der Probebetrieb versendet keine E-Mails, die Links geben Sie selbst weiter. Verwenden Sie dabei keine echten Mandantendaten.
+
+Beenden mit `docker compose down`, wieder starten mit `docker compose up -d`.
+</details>
+
+<details>
+<summary><strong>Auf dem Server der Kanzlei</strong> (Linux, Domain, SMTP-Konto)</summary>
+
+```sh
+sudo git clone https://github.com/PBaumfalk/Paraph.git /opt/paraph
 cd /opt/paraph
 sudo ./scripts/install.sh
 ```
 
-Das Skript fragt Domain, HTTPS, SMTP und den Zeitstempeldienst ab, erzeugt die Schlüssel als Docker-Secrets, baut das Image und startet. Am Ende zeigt es den Einrichtungscode für `https://IHRE-DOMAIN/setup` und die Wiederherstellungs-Passphrase. **Übernehmen Sie die Passphrase sofort in einen Passwortmanager.**
+Das Skript fragt Domain, HTTPS, SMTP und Zeitstempeldienst ab. Es erzeugt die Schlüssel als Docker-Secrets und startet Paraph mit automatischem HTTPS. Am Ende zeigt es den Einrichtungscode für `https://IHRE-DOMAIN/setup` und die Wiederherstellungs-Passphrase. **Übernehmen Sie die Passphrase sofort in einen Passwortmanager.** Einen erneuten Aufruf übersteht das Skript ohne Schaden: Schlüssel und Konfiguration bleiben unverändert.
 
-```sh
-sudo ./scripts/update.sh              # Update mit Sicherung vorab
-sudo ./scripts/update.sh --rollback   # zurück auf den Stand davor
-```
+Prüfen: `sudo docker compose exec paraph paraph doctor`. Updates: `sudo ./scripts/update.sh` (mit `--rollback` zurück). Alles Weitere, auch hinter nginx oder Traefik: [Kapitel 11](docs/handbuch/11-installation.md).
+</details>
 
-Zu jeder Freigabe liegt ein fertiges Image unter `ghcr.io/pbaumfalk/paraph` (`latest` und die Versionsnummer, amd64 und arm64). Alles Weitere, auch hinter nginx oder Traefik und ohne Rückfragen: [Handbuch, Kapitel 11](docs/handbuch/11-installation.md).
+<details>
+<summary><strong>Mit Claude Code installieren lassen</strong></summary>
 
-## Handbuch
+Öffnen Sie [Claude Code](https://code.claude.com/docs/en/setup) im Paraph-Ordner und fügen Sie den fertigen Auftrag aus [Kapitel 18](docs/handbuch/18-installation-mit-claude-code.md) ein. Claude prüft die Voraussetzungen und führt `install.sh` aus. Danach weist es den Start nach (Container, Health-Check, Diagnose) und nennt Adresse und Einrichtungscode. Zugangsdaten und die Passphrase bleiben dabei aus dem Gespräch heraus.
+</details>
 
-Das **[Handbuch](docs/handbuch/README.md)** hat drei Teile:
+## So unterschreibt die Mandantin
 
-- **Teil A – Arbeiten mit Paraph:** [Paraph in fünf Minuten](docs/handbuch/01-paraph-in-fuenf-minuten.md), Dokumente unterschreiben lassen, Vorgänge verfolgen, Vorlagen, die Signaturseite aus Sicht der Mandanten, Prüfen, [Recht](docs/handbuch/07-recht.md)
-- **Teil B – Einrichten und verwalten:** Team und Erscheinungsbild, Anmeldung und SSO, [Anbindung an j-lawyer, n8n, Make und die API](docs/handbuch/10-anbindung-api-webhooks.md)
-- **Teil C – Betrieb:** Installation, Konfiguration, Sicherung, [Sicherheit und Nachweis](docs/handbuch/14-sicherheit-und-nachweis.md), Diagnose, Tests, [Grenzen](docs/handbuch/17-grenzen.md)
+Ein Link per E-Mail oder aus der Kanzleisoftware genügt. Die Signaturseite führt Feld für Feld durch das Dokument ([Kapitel 5](docs/handbuch/05-so-unterschreiben-mandanten.md)).
+
+| Einladung öffnen | Unterschreiben | Bestätigen | Fertig |
+| --- | --- | --- | --- |
+| ![Signaturseite auf dem iPhone mit dem Dokument und „Los geht’s“](docs/screenshots/signieren-start-iphone.png) | ![Unterschrift mit dem Finger zeichnen](docs/screenshots/signieren-zeichnen-iphone.png) | ![Abschließende Erklärung mit Zustimmung](docs/handbuch/bilder/signieren-erklaerung-iphone.png) | ![„Unterschrieben“ mit Siegel und Download](docs/screenshots/signieren-fertig-iphone.png) |
+
+## Funktionen im Überblick
+
+- **Unterschreiben lassen:** PDF, Word oder ODT hochladen. Beteiligte unterschreiben, geben frei, füllen aus oder erhalten eine Kopie, gleichzeitig oder nacheinander. 12 Feldtypen mit Bedingungen, Formeln und Eingabeprüfung. [Kapitel 2](docs/handbuch/02-dokument-unterschreiben-lassen.md)
+- **Zugang schützen:** nur Link, Einmalcode per E-Mail, Zugangscode oder, optional, Code per SMS. [Kapitel 2](docs/handbuch/02-dokument-unterschreiben-lassen.md#identitätsprüfung)
+- **Nachfassen:** Erinnerungen, Ablauf, Widerruf, neuer Link, Vertretung, Unterschrift vor Ort am Kanzlei-Tablet. [Kapitel 3](docs/handbuch/03-vorgaenge-verfolgen.md)
+- **Wiederkehrendes:** Vorlagen mit festen Versionen, Massenversand aus CSV oder Excel, öffentliche Formulare für die Website. [Kapitel 4](docs/handbuch/04-vorlagen-serien-formulare.md)
+- **Ergebnis:** versiegeltes PDF, Abschlussbestätigung, Nachweispaket mit unabhängigem Prüfskript, Audit-Trail als JSON. [Kapitel 3](docs/handbuch/03-vorgaenge-verfolgen.md#das-ergebnis-abholen)
+- **Prüfen:** öffentliche Prüfstelle unter `/verify`. Der Fingerabdruck wird im Browser berechnet, die Datei verlässt den Rechner nicht. [Kapitel 6](docs/handbuch/06-dokumente-pruefen.md)
+- **Ehrlich über die Form:** einfache elektronische Signatur, Hinweise auf strengere Formvorschriften vor dem Versand, Bestätigung im Protokoll. [Kapitel 7](docs/handbuch/07-recht.md)
+- **Kanzlei:** Team mit Rollen, mehrere Organisationen, Zwei-Faktor, optional SSO (OIDC), eigenes Logo, eigene Farbe, eigene Domain. [Kapitel 8](docs/handbuch/08-kanzlei-team-erscheinungsbild.md), [9](docs/handbuch/09-anmeldung-und-sso.md)
+- **Anbindung:** REST-API mit Testmodus, Webhooks, Linkübergabe aus der Kanzleisoftware, Beispiele für n8n und Make, einbettbare Signaturseite. [Kapitel 10](docs/handbuch/10-anbindung-api-webhooks.md)
+- **Betrieb:** gehärteter Container, verschlüsselte automatische Sicherung, Update mit Rückweg, Systemdiagnose, Prometheus-Metriken. [Kapitel 11 bis 15](docs/handbuch/README.md#teil-c--betrieb)
+
+Jede Funktion mit Rolle, Fundstelle und Kapitel: **[Funktionsliste](docs/handbuch/funktionsliste.md)**.
+
+| Übersicht | Editor | Prüfstelle |
+| --- | --- | --- |
+| ![Übersicht mit Vorgängen nach Status](docs/screenshots/uebersicht.png) | ![Editor mit gesetzten Feldern](docs/screenshots/editor.png) | ![Prüfstelle: Echt und unverändert](docs/screenshots/pruefstelle.png) |
+
+## Wo die Daten liegen
+
+Dokumente, Unterschriften und Protokolle bleiben auf Ihrem Server, verschlüsselt abgelegt. Nach außen geht nur, was Sie selbst einrichten: E-Mail über Ihren Mailserver, auf Wunsch SMS und S3-Speicher, und an den Zeitstempeldienst nur ein Hashwert. Paraph enthält keine KI-Funktionen und sendet keine Nutzungsdaten. Einzelheiten: [Kapitel 7](docs/handbuch/07-recht.md#wissen-welche-daten-paraph-speichert) und [Kapitel 14](docs/handbuch/14-sicherheit-und-nachweis.md).
 
 ## Für Entwickler
 
@@ -90,14 +106,14 @@ npm run build && npx playwright test     # Browser-Tests: Desktop, Pixel 7, iPho
 node scripts/docker-e2e.mjs              # Docker-Gesamtprüfung: Update, Rückweg, HTTPS, Katastrophenfall
 ```
 
-Jeder Push auf `main` läuft durch Typprüfung, Vitest, Playwright und einen Rauchtest des Images. Was welche Prüfung belegt: [Handbuch, Kapitel 16](docs/handbuch/16-tests-und-nachweise.md). Die Bilder in README und Handbuch erzeugt `e2e/screenshots.spec.ts` mit erfundenen Demodaten. Änderungen von Version zu Version: [Änderungsprotokoll](CHANGELOG.md).
+Jeder Push auf `main` läuft durch Typprüfung, Vitest, Playwright und einen Rauchtest des Images. Was welche Prüfung belegt, steht in [Kapitel 16](docs/handbuch/16-tests-und-nachweise.md). Die Bilder in README und Handbuch erzeugt `e2e/screenshots.spec.ts` mit erfundenen Demodaten. Änderungen stehen im [Änderungsprotokoll](CHANGELOG.md).
 
 ## Lizenz
 
 [MIT](LICENSE) — © 2026 Patrick Baumfalk.
 
-Mitgeliefert: das Wurzelzertifikat von [FreeTSA](https://freetsa.org) (`docker/tsa/freetsa-root-ca.pem`) sowie die Schriften Literata, IBM Plex und Geist Mono (SIL Open Font License 1.1, über Fontsource).
+Mitgeliefert sind das Wurzelzertifikat von [FreeTSA](https://freetsa.org) (`docker/tsa/freetsa-root-ca.pem`) und die Schriften Literata, IBM Plex und Geist Mono (SIL Open Font License 1.1, über Fontsource).
 
 ## Haftungsausschluss
 
-Paraph ist ein technisches Werkzeug und ersetzt keine Rechtsberatung. Ob die elektronische Form im Einzelfall genügt, ist selbst zu prüfen; Vorlagen, Mustertexte und Formhinweise sind ohne Gewähr. Das Plattformsiegel belegt die Unversehrtheit eines Dokuments seit dem Abschluss. Es ist weder ein qualifiziertes Siegel noch eine persönliche Signatur der Unterzeichner.
+Paraph ist ein technisches Werkzeug und ersetzt keine Rechtsberatung. Ob die elektronische Form im Einzelfall genügt, prüfen Sie selbst. Vorlagen, Mustertexte und Formhinweise sind ohne Gewähr. Das Plattformsiegel belegt, dass ein Dokument seit dem Abschluss unverändert ist. Es ist weder ein qualifiziertes Siegel noch eine persönliche Signatur der Unterzeichner.

@@ -126,7 +126,16 @@ export const useToast = () => useContext(ToastCtx);
 
 export function Menu({ trigger, children, align = 'right', block = false }: { trigger: (open: () => void) => ReactNode; children: (close: () => void) => ReactNode; align?: 'left' | 'right'; block?: boolean }) {
   const [open, setOpen] = useState(false);
+  const [up, setUp] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const pop = useRef<HTMLDivElement>(null);
+  // Nach oben aufklappen, wenn unten kein Platz ist (Leiste der Signaturseite, Benutzermenü am Fuß der Seitenleiste)
+  useLayoutEffect(() => {
+    if (!open || !pop.current || !ref.current) return setUp(false);
+    const m = pop.current.getBoundingClientRect();
+    const anchor = ref.current.getBoundingClientRect();
+    setUp(m.bottom > window.innerHeight - 8 && anchor.top - m.height - 6 >= 8);
+  }, [open]);
   useEffect(() => {
     if (!open) return;
     const h = (e: MouseEvent) => !ref.current?.contains(e.target as Node) && setOpen(false);
@@ -142,7 +151,7 @@ export function Menu({ trigger, children, align = 'right', block = false }: { tr
     <div ref={ref} style={{ position: 'relative', display: block ? 'block' : 'inline-block' }}>
       {trigger(() => setOpen((o) => !o))}
       {open && (
-        <div className="menu" role="menu" style={{ [align]: 0, top: 'calc(100% + 6px)' }} onClick={() => setOpen(false)}>
+        <div ref={pop} className="menu" role="menu" style={{ [align]: 0, ...(up ? { bottom: 'calc(100% + 6px)' } : { top: 'calc(100% + 6px)' }) }} onClick={() => setOpen(false)}>
           {children(() => setOpen(false))}
         </div>
       )}

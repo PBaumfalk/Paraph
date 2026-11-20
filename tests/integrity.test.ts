@@ -251,7 +251,11 @@ describe('Zweite Abnahme: Vertrauen in Zertifikate und Zeitstempel', () => {
     const evil = await importSealKey(mat.pkcs8, mat.certChainDer);
     // Angreifer signiert mit eigenem Schlüssel …
     const sealed = await sealPdf(await makePdf(), { privateKey: evil.privateKey, certs: evil.certs }, { reason: 'x', name: 'x' });
-    const ci = pkijs.ContentInfo.fromBER(new Uint8Array(Buffer.from(/\/Contents <([0-9a-f]+)/i.exec(sealed.pdf.toString('latin1'))![1].replace(/0+$/, ''), 'hex')));
+    // Platzhalter ist mit Nullen aufgefüllt: Länge aus dem DER-Kopf lesen (nicht Nullen abschneiden – die Signatur kann selbst auf 0 enden)
+    const raw = Buffer.from(/\/Contents <([0-9a-f]+)/i.exec(sealed.pdf.toString('latin1'))![1], 'hex');
+    const lenBytes = raw[1] & 0x80 ? raw[1] & 0x7f : 0;
+    const derLen = 2 + lenBytes + (lenBytes ? raw.subarray(2, 2 + lenBytes).reduce((a, b) => a * 256 + b, 0) : raw[1]);
+    const ci = pkijs.ContentInfo.fromBER(new Uint8Array(raw.subarray(0, derLen)));
     // … und stellt das öffentliche Instanzzertifikat in der Zertifikatsliste voran (PoC der zweiten Abnahme)
     const sd = new pkijs.SignedData({ schema: ci.content });
     sd.certificates = [own.key.certs[0], ...(sd.certificates as any[])];

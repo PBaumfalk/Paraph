@@ -276,6 +276,9 @@ function Team() {
   const [link, setLink] = useState('');
   const { confirm, node } = useConfirm();
   const manage = me?.permissions.includes('members.manage');
+  // Inhaberrechte vergeben oder ändern dürfen nur Inhaber (Server: users.ts) – sonst gar nicht erst anbieten
+  const isOwner = me?.principal.role === 'owner';
+  const roles = (list: string[]) => (isOwner ? list : list.filter((r) => r !== 'owner'));
   if (q.isLoading) return <Spinner />;
   return (
     <>
@@ -284,7 +287,7 @@ function Team() {
           <div className="row row-wrap">
             <input className="input" type="email" placeholder={t('E-Mail-Adresse')} value={inv.email} onChange={(e) => setInv({ ...inv, email: e.target.value })} style={{ maxWidth: 300 }} />
             <select className="select" value={inv.role} onChange={(e) => setInv({ ...inv, role: e.target.value })} style={{ width: 200 }}>
-              {['member', 'admin', 'viewer', 'owner'].map((r) => <option key={r} value={r}>{t(roleLabel(r))}</option>)}
+              {roles(['member', 'admin', 'viewer', 'owner']).map((r) => <option key={r} value={r}>{t(roleLabel(r))}</option>)}
             </select>
             <button className="btn btn-primary" onClick={() => save(() => post('/api/v1/members/invite', inv), t('Einladung versendet')).then((r: any) => { setInv({ email: '', role: 'member' }); if (r?.link) setLink(r.link); })}>{t('Einladen')}</button>
           </div>
@@ -301,9 +304,9 @@ function Team() {
                 <tr key={m.id}>
                   <td><strong>{m.name}</strong><div className="hint">{m.email}</div></td>
                   <td>
-                    {manage && m.id !== me?.principal.id ? (
+                    {manage && m.id !== me?.principal.id && (isOwner || m.role !== 'owner') ? (
                       <select className="select" value={m.role} onChange={(e) => save(() => patch(`/api/v1/members/${m.id}`, { role: e.target.value }))} style={{ height: 32 }}>
-                        {['owner', 'admin', 'member', 'viewer'].map((r) => <option key={r} value={r}>{t(roleLabel(r))}</option>)}
+                        {roles(['owner', 'admin', 'member', 'viewer']).map((r) => <option key={r} value={r}>{t(roleLabel(r))}</option>)}
                       </select>
                     ) : t(roleLabel(m.role))}
                   </td>

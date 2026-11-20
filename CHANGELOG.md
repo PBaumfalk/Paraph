@@ -10,6 +10,21 @@ Konfiguration zwischen Versionen ändern; `update.sh` migriert die Daten.
 
 ### Neu
 
+- **Probebetrieb:** `./scripts/install.sh --probe` startet Paraph ohne Domain,
+  HTTPS, E-Mail und root unter `http://localhost:8080` (anderer Port mit
+  `PARAPH_PORT`). Gedacht zum Ausprobieren und für Schulungen, nicht für
+  echte Mandantendaten. `.env` erhält `PARAPH_PROBE=1`; die Diagnose meldet
+  einen fehlenden Mailserver dann als Hinweis statt als Fehler.
+- **Handbuch, Kapitel 18 „Installation mit Claude Code“** mit fertigen
+  Aufträgen für Probebetrieb und Server; der Probebetrieb-Auftrag ist in
+  einem frischen Klon mit Claude Code nachgespielt.
+- Handbuch: Abschnitt „Ihr erster Vorgang Schritt für Schritt“ (Kapitel 1)
+  mit Beispieldokument `docs/handbuch/beispiele/Mandatsvereinbarung-Beispiel.pdf`,
+  Wegweiser nach Zielgruppe und eine Funktionsliste
+  (`docs/handbuch/funktionsliste.md`).
+- `install.sh`: `PARAPH_QUIET_SECRETS=1` zeigt die Wiederherstellungs-Passphrase
+  nicht an, sondern nennt nur ihren Ablageort; `--help`.
+
 - **FreeTSA als voreingestellter Zeitstempeldienst.** `install.sh` fragt
   mit der Vorgabe „freetsa“ und trägt `TSA_URL=https://freetsa.org/tsr`
   sowie das mitgelieferte Wurzelzertifikat (`docker/tsa/freetsa-root-ca.pem`)
@@ -26,6 +41,20 @@ Konfiguration zwischen Versionen ändern; `update.sh` migriert die Daten.
   Veröffentlichung unter `ghcr.io/pbaumfalk/paraph`, Release bei Tags.
 
 ### Geändert
+
+- README für die Veröffentlichung neu geschrieben: Schnellstart für
+  Probebetrieb, Server und Claude Code, Wegweiser nach Zielgruppe,
+  Funktionsübersicht mit Kapitellinks.
+- Versanddialog: Ist kein Mailserver eingerichtet, ist „Einladungen per
+  E-Mail senden“ nicht mehr vorgewählt, und ein Hinweis erklärt, dass die
+  Links selbst weitergegeben werden. Vorher wurden solche Einladungen
+  versendet, kamen aber nie an.
+- `install.sh` nennt am Ende die tatsächliche `APP_URL` statt immer
+  `https://<Domain>`, meldet bei einer bereits eingerichteten Instanz die
+  Anmeldeadresse statt des Einrichtungscodes, prüft vorab, ob Docker läuft
+  und der Port frei ist, und bricht unter Linux ohne root mit UID ≠ 1000
+  mit verständlicher Meldung ab (vorher scheiterte der Start ohne klare
+  Ursache).
 
 - **Handbuch neu geschrieben**, nach Aufgaben statt nach Technik: Teil A
   für die Arbeit mit Paraph (Kapitel 1–7), Teil B für die Einrichtung
@@ -46,6 +75,22 @@ Konfiguration zwischen Versionen ändern; `update.sh` migriert die Daten.
 
 ### Behoben
 
+- **Siegelprüfung:** Endete der Signaturwert eines Siegels zufällig auf ein
+  Null-Byte (etwa jedes 256. Siegel), schnitt „Zusätzlich das eingebettete
+  Siegel prüfen“ dieses Byte ab und meldete ein unverändertes Dokument als
+  ungültig. Die Länge wird jetzt aus dem DER-Kopf gelesen
+  (`tests/verify-contents.test.ts`). Derselbe Fehler machte einen Test in
+  `tests/integrity.test.ts` gelegentlich rot.
+- „Verwenden“ und „Massenversand“ erschienen auch mit der Rolle „Nur lesen“
+  und endeten in einer Fehlermeldung; sie sind dort jetzt ausgeblendet.
+- Team: Die Administration bekam „Inhaber“ zur Auswahl und konnte die Rolle
+  von Inhabern scheinbar ändern, was der Server ablehnte. Beides wird nur
+  noch Inhabern angeboten.
+- `paraph` ohne Befehl nennt jetzt auch `version`.
+- Handbuch: QES-Anzeige steht unter „Siegel und Signaturstufen“, nicht unter
+  „System“; Rollentabelle („einsehen und ändern“); veralteter Hinweis
+  „Abgelehnt“ nach Weitergabe an eine Vertretung entfernt.
+
 - `install.sh`: Ein erneuter Aufruf ersetzte `secrets/tsa_ca.pem` durch die
   Antwort auf die Zeitstempel-Frage (Vorgabe FreeTSA), ließ `TSA_URL` in
   `.env` aber stehen. Bei vorhandener `.env` bleiben Dienst und Zertifikat
@@ -56,6 +101,27 @@ Konfiguration zwischen Versionen ändern; `update.sh` migriert die Daten.
   auf höchstens zwei Zeilen um.
 - Übersicht am Telefon: Reiter und Suchfeld teilten sich eine Zeile, die
   Reiter waren nicht lesbar.
+- Öffentliche Formulare: Feste Kanzlei-Rollen (etwa die gegenzeichnende
+  Anwältin) bekamen keine Einladungs-E-Mail, wenn sie an der Reihe waren.
+  Sie werden jetzt eingeladen und erinnert; die Besucherin bekommt weder
+  Einladung noch Erinnerung.
+- Linkübergabe (ohne E-Mail-Einladungen): Kam bei „Nacheinander“ oder nach
+  einer Vertretung jemand neu an die Reihe, erfuhr es niemand. Der Absender
+  erhält jetzt eine E-Mail „Link übergeben: … ist an der Reihe“, die
+  Vorgangsseite zeigt „wartet auf Ihren Link“ mit direktem Knopf, und der
+  Webhook `recipient.notified` trägt das Feld `channel`.
+- Signaturseite: Wer an eine Vertretung weitergab, sah „Abgelehnt“, und
+  eingebettete Portale erhielten `paraph:declined`. Jetzt erscheint
+  „Weitergegeben“, die Nachricht heißt `paraph:delegated`.
+- Menüs klappten immer nach unten auf. Am unteren Bildrand (Leiste der
+  Signaturseite) lagen „An Vertretung weitergeben“ und „Nachricht anzeigen“
+  dadurch außerhalb des Bildschirms. Menüs öffnen jetzt nach oben, wenn
+  unten kein Platz ist.
+- Vertretungsdialog: Beschriftungen sind mit den Eingabefeldern verknüpft
+  (Screenreader, Autovervollständigung).
+- Docker-Gesamttest J5 prüft jetzt das Ergebnis von `paraph verify-audit`
+  (keine beschädigte Kette, keine Abweichung, Exit-Code 0) statt nur dessen
+  Ausgabe.
 
 ## [0.2.0] – 2026-10-22
 

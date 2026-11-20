@@ -7,6 +7,19 @@ import { sha256, verifyTimestampToken, findSignerCert, essCertBound } from './ti
 
 pkijs.setEngine('node', new pkijs.CryptoEngine({ name: 'node', crypto: webcrypto as any }) as any);
 
+/**
+ * Signaturwert aus dem /Contents-Platzhalter (Hex, mit Nullen aufgefüllt). Die Länge kommt aus dem DER-Kopf –
+ * abschließende Nullen abzuschneiden wäre falsch, weil die Signatur selbst auf 0x00 enden kann.
+ */
+export function derFromContents(hex: string): Buffer {
+  const raw = Buffer.from(hex.length % 2 ? hex + '0' : hex, 'hex');
+  if (raw.length < 2) return raw;
+  const n = raw[1] & 0x80 ? raw[1] & 0x7f : 0;
+  if (n > 4 || raw.length < 2 + n) return raw;
+  const len = n ? raw.subarray(2, 2 + n).reduce((acc, x) => acc * 256 + x, 0) : raw[1];
+  return raw.subarray(0, Math.min(raw.length, 2 + n + len));
+}
+
 export interface SigCheck {
   index: number;
   subfilter: string;
@@ -42,8 +55,7 @@ export async function verifyPdfSignatures(pdf: Buffer): Promise<SigCheck[]> {
       // Nicht abgedeckter Bereich darf nur den Signaturwert enthalten (sonst ließen sich dort Daten verstecken)
       const gap = pdf.subarray(b, c).toString('latin1');
       check.contentsOk = /^<[0-9A-Fa-f]*>$/.test(gap);
-      const hex = pdf.subarray(b + 1, c - 1).toString('latin1').replace(/0+$/, '');
-      const der = Buffer.from(hex.length % 2 ? hex + '0' : hex, 'hex');
+      const der = derFromContents(pdf.subarray(b + 1, c - 1).toString('latin1'));
       const sf = /\/SubFilter\s*\/([A-Za-z.]+)/.exec(text.slice(Math.max(0, m.index - 2000), m.index + 2000));
       check.subfilter = sf?.[1] ?? '';
       const signedData = Buffer.concat([pdf.subarray(a, a + b), pdf.subarray(c, c + d)]);

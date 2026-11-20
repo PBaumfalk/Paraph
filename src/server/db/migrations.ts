@@ -530,4 +530,13 @@ ALTER TABLE emails ADD COLUMN kind TEXT;
 CREATE INDEX emails_recipient ON emails(recipient_id, created_at);
 `,
   },
+  {
+    id: 6,
+    name: 'einladungsweg',
+    sql: `
+-- Wie die Person zuletzt aktiviert wurde: email, link_handover, test_mode, public_form.
+-- Automatische Erinnerungen gehen nur an per E-Mail Eingeladene (nicht an Besucher öffentlicher Formulare).
+ALTER TABLE recipients ADD COLUMN invite_channel TEXT;
+`,
+  },
 ];

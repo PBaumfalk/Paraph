@@ -79,4 +79,4 @@ Die vollständige Einordnung steht in [Kapitel 14](14-sicherheit-und-nachweis.md
 
 ---
 
-← [16. Tests und Nachweise](16-tests-und-nachweise.md) · [Inhalt](README.md)
+← [16. Tests und Nachweise](16-tests-und-nachweise.md) · [Inhalt](README.md) · [18. Installation mit Claude Code](18-installation-mit-claude-code.md) →

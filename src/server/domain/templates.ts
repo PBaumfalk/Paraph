@@ -375,7 +375,9 @@ export function useTemplate(ctx: Ctx, p: Principal, templateId: string, raw: unk
     })),
   );
   if (!input.send) return { envelope: envRow(ctx, env.id)!, links: [] };
-  return sendEnvelope(ctx, p, env.id, { notify: input.notify, acknowledgeFormRisk: input.acknowledge_form_risk });
+  // Öffentliches Formular: die Besucherin ist schon auf der Signaturseite und bekommt keine Einladung; feste Kanzlei-Rollen schon
+  const silentRecipients = extra.publicFormId ? c.roles.filter((r) => r.public).map((r) => refs[r.key]) : [];
+  return sendEnvelope(ctx, p, env.id, { notify: input.notify, acknowledgeFormRisk: input.acknowledge_form_risk, silentRecipients });
 }
 
 // ───────────────────────────── Massenversand ─────────────────────────────

@@ -143,9 +143,9 @@ Diese Möglichkeit erscheint nur, wenn die Kanzlei beim Versand Vertretung erlau
 - Die Vertretung erhält einen eigenen Link und übernimmt die Felder der Mandantin; eine bereits gesetzte Unterschrift wird nicht übernommen.
 - Der Link der Mandantin wird ungültig. Die Weitergabe steht im Audit-Trail und in der Abschlussbestätigung („Vertretung für …“).
 - War ein SMS-Code oder Zugangscode verlangt, bestätigt die Vertretung ihren Zugang mit einem E-Mail-Code.
-- Hat die Kanzlei die Links selbst übergeben statt per E-Mail einzuladen, erhält auch die Vertretung keine E-Mail. Die Kanzlei stellt ihr dann auf der Vorgangsseite über „Link selbst weitergeben“ einen Link aus.
+- Die Mandantin sieht danach „Weitergegeben“ mit dem Namen der Vertretung. Der Vorgang läuft weiter, er ist nicht abgelehnt.
+- Hat die Kanzlei die Links selbst übergeben statt per E-Mail einzuladen, erhält auch die Vertretung keine E-Mail. Die Kanzlei bekommt dann eine E-Mail „Link übergeben: … ist an der Reihe“ und stellt der Vertretung auf der Vorgangsseite über „Link selbst weitergeben“ einen Link aus.
 
-> **Gut zu wissen:** Nach dem Weitergeben zeigt die Signaturseite der Mandantin derzeit die Meldung „Abgelehnt – Sie haben die Unterzeichnung abgelehnt“. Der Vorgang läuft trotzdem weiter; abgelehnt ist nichts. Darauf sollten Sie bei Rückfragen hinweisen.
 
 ## Wenn etwas nicht klappt
 

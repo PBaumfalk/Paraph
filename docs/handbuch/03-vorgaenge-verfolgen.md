@@ -91,6 +91,8 @@ Automatische Erinnerungen verschickt Paraph im Abstand, den Sie beim Versand gew
 
 „Link selbst weitergeben“ stellt einen neuen Link aus, den Sie selbst übergeben, etwa per Kanzleisoftware oder am Telefon.
 
+Bei Vorgängen ohne E-Mail-Einladung steht bei jeder Person, die an der Reihe ist und noch auf Ihren Link wartet, der Hinweis „Ohne E-Mail-Einladung: wartet auf Ihren Link.“ mit „Link selbst weitergeben“ direkt daneben. Kommt jemand später an die Reihe (bei „Nacheinander“ oder nach einer Vertretung), erhalten Sie dazu eine E-Mail.
+
 1. Klicken Sie auf „Link selbst weitergeben“ und bestätigen Sie mit „Link ausstellen“.
 2. Kopieren Sie den Link aus dem Fenster „Link für …“. Er wird nicht erneut angezeigt.
 

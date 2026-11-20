@@ -1,17 +1,18 @@
-// TEST D (Ablehnung), E (Widerruf: alter Link wirkungslos), H (Vorlage über die Oberfläche verwenden)
+// TEST D (Ablehnung, Vertretung bei Linkübergabe), E (Widerruf: alter Link wirkungslos), H (Vorlage über die Oberfläche verwenden)
 import { test, expect } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import { clearMail, waitMail, pdfFile, setupOrLogin } from './helpers';
 
-async function apiEnvelope(page: any, title: string, email: string) {
+async function apiEnvelope(page: any, title: string, email: string, extra: Record<string, unknown> = {}) {
   const csrf = (await (await page.request.get('/api/auth/state')).json()).session.csrf;
   const file = await pdfFile(`${title}.pdf`, { title });
   const r = await page.request.post('/api/v1/envelopes', {
     headers: { 'x-csrf-token': csrf },
-    data: { title, documents: [{ name: `${title}.pdf`, file_base64: readFileSync(file).toString('base64') }], recipients: [{ ref: 'x', name: 'Xenia', email }], fields: [{ type: 'signature', document: 0, recipient: 'x', page: 0, x: 0.1, y: 0.8, w: 0.3, h: 0.06 }], send: true },
+    data: { title, documents: [{ name: `${title}.pdf`, file_base64: readFileSync(file).toString('base64') }], recipients: [{ ref: 'x', name: 'Xenia', email }], fields: [{ type: 'signature', document: 0, recipient: 'x', page: 0, x: 0.1, y: 0.8, w: 0.3, h: 0.06 }], send: true, ...extra },
   });
   expect(r.status()).toBe(201);
-  return (await r.json()).id as string;
+  const j = await r.json();
+  return Object.assign(j.id as string, { links: (j.signing_links ?? []) as { url: string }[] });
 }
 
 test('D: Ablehnung mit Begründung – Status und kein Abschluss möglich', async ({ page, browser }) => {
@@ -35,6 +36,29 @@ test('D: Ablehnung mit Begründung – Status und kein Abschluss möglich', asyn
   const s2 = await (await browser.newContext()).newPage();
   await s2.goto(mail.link!);
   await expect(s2.getByRole('heading', { name: /Link ungültig|Beendet/ })).toBeVisible();
+});
+
+test('D2: Vertretung bei Linkübergabe – „Weitergegeben“ statt „Abgelehnt“, Kanzlei stellt den Link aus', async ({ page, browser }) => {
+  await clearMail();
+  await setupOrLogin(page);
+  const env = await apiEnvelope(page, 'Vollmacht Vertretung', 'xenia.d2@example.org', { notify: false, allow_delegation: true });
+  const s = await (await browser.newContext({ locale: 'de-DE' })).newPage();
+  await s.goto(env.links[0].url);
+  await s.getByRole('button', { name: 'Weitere Optionen' }).click();
+  await s.getByRole('button', { name: 'An Vertretung weitergeben' }).click();
+  const d = s.getByRole('dialog');
+  await d.getByLabel('Name').fill('Vera Vertretung');
+  await d.getByLabel('E-Mail-Adresse').fill('vera.d2@example.org');
+  await d.getByRole('button', { name: 'Weitergeben' }).click();
+  await expect(s.getByRole('heading', { name: 'Weitergegeben' })).toBeVisible();
+  await expect(s.getByText('Vera Vertretung unterschreibt an Ihrer Stelle')).toBeVisible();
+  await expect(s.getByRole('heading', { name: 'Abgelehnt' })).toHaveCount(0);
+  await waitMail('anna@kanzlei.test', 'Link übergeben');
+  await page.goto(`/envelopes/${env}`);
+  await expect(page.getByText('Ohne E-Mail-Einladung: wartet auf Ihren Link.')).toBeVisible();
+  await page.getByText('Ohne E-Mail-Einladung').getByRole('button', { name: 'Link selbst weitergeben' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Link ausstellen' }).click();
+  await expect(page.getByRole('dialog', { name: 'Link für Vera Vertretung' })).toBeVisible();
 });
 
 test('E: Widerruf – geöffnete Sitzung und alter Link sind wirkungslos', async ({ page, browser }) => {

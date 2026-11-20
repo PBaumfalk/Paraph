@@ -1,4 +1,5 @@
 // Kommandozeile: paraph <befehl>
+//   version                    Version und Datenbankschema anzeigen
 //   health                     Healthcheck (für Docker)
 //   backup [--out DIR]         Sicherung erstellen
 //   verify-backup DATEI        Sicherung prüfen (Entschlüsselung, Hashes, Schema, Schlüssel)
@@ -174,7 +175,7 @@ async function main() {
       process.exit(r.status === 'fail' ? 1 : 0);
     }
     default:
-      console.log('Befehle: health | doctor | backup [--out DIR] | verify-backup DATEI | restore-key DATEI --out PFAD | restore DATEI [--force] | setup-code | reset-link E-MAIL | verify-audit');
+      console.log('Befehle: version | health | doctor | backup [--out DIR] | verify-backup DATEI | restore-key DATEI --out PFAD | restore DATEI [--force] | setup-code | reset-link E-MAIL | verify-audit');
       process.exit(cmd ? 1 : 0);
   }
 }

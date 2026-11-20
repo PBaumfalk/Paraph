@@ -5,11 +5,13 @@
 
 | | |
 |---|---|
-| Prüfer | Patrick Baumfalk, Rechtsanwalt |
+| Prüfer | _(Rechtsanwältin oder Rechtsanwalt der Kanzlei, die Paraph einsetzt – hier eintragen)_ |
 | Vorbereitet | 22.10.2026 (technische Vorprüfung, keine Rechtsberatung) |
 | Code-Stand | `6934010` |
 | Begründungen | [formhinweise-analyse.md](formhinweise-analyse.md) (Abschnittsverweise A1 ff., T1 ff., C1 ff.) |
 | Kennzeichnung | **[GII]** Wortlaut am 22.10.2026 auf gesetze-im-internet.de abgerufen · **unverifiziert** = nicht an Primärquelle geprüft |
+
+**Für wen:** Paraph liefert die Texte als Vorschlag. Jede Kanzlei, die Paraph produktiv einsetzt, arbeitet diese Liste selbst ab und trägt ihre Entscheidungen hier oder in einer eigenen Kopie ein.
 
 **So wird die Liste benutzt:** Je Punkt genau ein Kästchen ankreuzen, Datum und Kürzel eintragen. „geändert“ heißt: Text oder Regel wird nach Ihrer Vorgabe angepasst (Vorgabe bitte in die Zeile „Vermerk“). Ein Punkt der Gruppe A, der weder „freigegeben“ noch „geändert“ ist, blockiert den Produktivstart.
 

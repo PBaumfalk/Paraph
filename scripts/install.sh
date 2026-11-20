@@ -2,6 +2,8 @@
 # Paraph – Erstinstallation auf einem Linux-Server mit Docker Compose.
 #
 #   sudo ./scripts/install.sh            interaktiv
+#   ./scripts/install.sh --probe         Probebetrieb auf dem eigenen Rechner: http://localhost:8080, ohne Domain,
+#                                        ohne HTTPS, ohne E-Mail-Versand (Links werden selbst weitergegeben)
 #   sudo PARAPH_NONINTERACTIVE=1 PARAPH_DOMAIN=sign.kanzlei.de PARAPH_ACME_EMAIL=it@kanzlei.de \
 #        PARAPH_SMTP_URL='smtps://…' PARAPH_MAIL_FROM='Kanzlei <signatur@kanzlei.de>' ./scripts/install.sh
 #
@@ -10,6 +12,7 @@
 #   - legt .env (0600) und den Sicherungsordner (0700) an, baut das Image und startet die Dienste
 #   - ändert nichts außerhalb dieses Verzeichnisses, öffnet keine Firewall-Ports und versendet nichts
 #   - überschreibt keine vorhandenen Schlüssel oder .env (erneuter Aufruf = Prüfung + Start)
+#   - PARAPH_QUIET_SECRETS=1: Passphrase nicht ausgeben, nur ihren Ablageort nennen (z. B. bei Installation mit Claude Code)
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -25,14 +28,42 @@ ask() { # ask VAR "Frage" "Vorgabe"
 }
 
 UID_APP=1000
+PROBE=0
+for arg in "$@"; do
+  case "$arg" in
+    --probe) PROBE=1 ;;
+    -h|--help) awk 'NR>1 && /^#/ { sub(/^# ?/, ""); print; next } NR>1 { exit }' "$0"; exit 0 ;;
+    *) die "Unbekannte Option: $arg (erlaubt: --probe, --help)" ;;
+  esac
+done
+if [ "$PROBE" = 1 ]; then
+  # Probebetrieb: nur auf diesem Rechner erreichbar, ohne Domain, HTTPS und E-Mail. Nicht für echte Mandantendaten.
+  PROBE_PORT=${PARAPH_PORT:-8080}
+  [[ "$PROBE_PORT" =~ ^[0-9]+$ ]] || die "PARAPH_PORT muss eine Portnummer sein: $PROBE_PORT"
+  PARAPH_NONINTERACTIVE=${PARAPH_NONINTERACTIVE:-1}
+  PARAPH_DOMAIN=${PARAPH_DOMAIN:-localhost}
+  PARAPH_USE_CADDY=${PARAPH_USE_CADDY:-nein}
+  PARAPH_APP_URL=${PARAPH_APP_URL:-http://localhost:$PROBE_PORT}
+  [ -f .env ] || PARAPH_TSA_URL=${PARAPH_TSA_URL:-keiner}   # bei vorhandener .env bleibt der Dienst ohnehin unverändert
+  PARAPH_ALLOW_NONROOT=1
+fi
+
 # ── Voraussetzungen ──────────────────────────────────────────────────────────
 if [ "$(id -u)" != 0 ] && [ "${PARAPH_ALLOW_NONROOT:-0}" != 1 ]; then
-  die "Bitte mit sudo ausführen: Die Schlüsseldateien werden dem Container-Benutzer (UID $UID_APP) zugeordnet und sind für niemanden sonst lesbar."
+  die "Bitte mit sudo ausführen: Die Schlüsseldateien werden dem Container-Benutzer (UID $UID_APP) zugeordnet und sind für niemanden sonst lesbar. Zum Ausprobieren auf dem eigenen Rechner: ./scripts/install.sh --probe"
 fi
-command -v docker >/dev/null || die "Docker fehlt. Installation: https://docs.docker.com/engine/install/"
+command -v docker >/dev/null || die "Docker fehlt. Installation: https://docs.docker.com/engine/install/ (Mac/Windows: Docker Desktop)"
+docker info >/dev/null 2>&1 || die "Docker läuft nicht oder ist für dieses Konto nicht freigegeben (docker info schlägt fehl). Docker Desktop starten bzw. das Konto der Gruppe „docker“ hinzufügen oder sudo verwenden."
 docker compose version >/dev/null 2>&1 || die "Docker Compose v2 fehlt (Befehl „docker compose“)."
 command -v openssl >/dev/null || die "openssl fehlt."
-[ "$(uname -s)" = Linux ] || warn "Kein Linux erkannt – Paraph ist für Linux-Server gedacht; fahre fort."
+if [ "$(uname -s)" = Linux ]; then
+  # Ohne root gehören die Schlüssel dem aufrufenden Konto (Rechte 0400) – der Container (UID 1000) könnte sie nicht lesen
+  if [ "$(id -u)" != 0 ] && [ "$(id -u)" != "$UID_APP" ]; then
+    die "Ohne root funktioniert das unter Linux nur mit UID $UID_APP (Ihre UID: $(id -u)), sonst kann der Container die Schlüssel nicht lesen. Bitte mit sudo ausführen."
+  fi
+elif [ "$PROBE" != 1 ]; then
+  warn "Kein Linux erkannt – Paraph ist für Linux-Server gedacht; fahre fort."
+fi
 
 say "Paraph – Installation"
 # ── Angaben ──────────────────────────────────────────────────────────────────
@@ -123,7 +154,14 @@ if [ ! -f .env ]; then
   setv SMTP_URL "$SMTP_URL"
   setv MAIL_FROM "$MAIL_FROM"
   setv TSA_URL "$TSA_URL"
-  setv TRUST_PROXY "true"
+  if [ "$PROBE" = 1 ]; then
+    setv TRUST_PROXY "false"         # kein Proxy davor
+    setv HOST_PORT "$PROBE_PORT"
+    setv BACKUP_INTERVAL_HOURS "0"   # keine automatischen Sicherungen im Probebetrieb
+    setv PARAPH_PROBE "1"
+  else
+    setv TRUST_PROXY "true"
+  fi
   [ -n "${PARAPH_EXTRA_ENV:-}" ] && printf '%s\n' "$PARAPH_EXTRA_ENV" >> .env
   chmod 600 .env
   say "✓ .env angelegt (nur für root lesbar)."
@@ -148,6 +186,11 @@ else
   say "Baue Paraph $VERSION … (einige Minuten)"
   docker compose build --pull paraph
 fi
+HOST_PORT_ENV=$(grep -E '^HOST_PORT=' .env | cut -d= -f2- | tr -d '"')
+HOST_PORT_ENV=${HOST_PORT_ENV:-8080}
+if [ -z "$(docker compose ps -q paraph 2>/dev/null)" ] && (exec 3<>"/dev/tcp/127.0.0.1/$HOST_PORT_ENV") 2>/dev/null; then
+  die "Port $HOST_PORT_ENV ist schon belegt. Anderen Port wählen: HOST_PORT in .env ändern (Probebetrieb: PARAPH_PORT=8081 ./scripts/install.sh --probe bei neuer Installation)."
+fi
 say "Starte Dienste …"
 docker compose up -d
 printf 'Warte auf Bereitschaft'
@@ -156,7 +199,8 @@ for _ in $(seq 1 90); do
   printf '.'; sleep 2
 done
 docker compose exec -T paraph paraph health >/dev/null 2>&1 || { echo; docker compose logs --tail 50 paraph; die "Paraph wurde nicht bereit – Protokoll oben."; }
-printf 'INSTALLED=%s\nVERSION=%s\n' "$(date -Iseconds)" "$VERSION" > .paraph-install
+printf 'INSTALLED=%s\nVERSION=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$VERSION" > .paraph-install
+APP_URL_ENV=$(grep -E '^APP_URL=' .env | cut -d= -f2- | tr -d '"')
 
 say ""
 say "Betriebsdiagnose:"
@@ -164,15 +208,35 @@ docker compose exec -T paraph paraph doctor --quick || true
 
 say ""
 say "Fertig. Nächste Schritte:"
-echo "  1. https://$DOMAIN/setup öffnen und mit dem Einrichtungscode $SETUP_CODE das erste Konto anlegen."
-echo "  2. Einstellungen → System → „Tiefenprüfung“ und „Test-E-Mail senden“."
+# Schon eingerichtet (erneuter Aufruf)? Dann gibt es keinen Einrichtungscode mehr, nur die Anmeldung.
+if docker compose exec -T paraph paraph setup-code 2>/dev/null | grep -q 'bereits eingerichtet'; then
+  echo "  Paraph ist bereits eingerichtet – anmelden unter $APP_URL_ENV/login"
+  if grep -q '^PARAPH_PROBE="1"' .env; then echo "  Beenden: docker compose down   ·   Wieder starten: docker compose up -d"; fi
+elif grep -q '^PARAPH_PROBE="1"' .env; then
+  echo "  Probebetrieb – nur auf diesem Rechner erreichbar, ohne E-Mail-Versand. Nicht für echte Mandantendaten."
+  echo "  1. $APP_URL_ENV/setup im Browser öffnen (genau diese Adresse, nicht 127.0.0.1) und mit dem"
+  echo "     Einrichtungscode $SETUP_CODE das erste Konto anlegen."
+  echo "  2. Ohne Mailserver geben Sie die Links selbst weiter; der Versanddialog wählt das vor (Handbuch, Kapitel 1)."
+  echo "  Beenden: docker compose down   ·   Wieder starten: docker compose up -d   ·   Alles löschen: docker compose down -v"
+else
+  echo "  1. $APP_URL_ENV/setup öffnen und mit dem Einrichtungscode $SETUP_CODE das erste Konto anlegen."
+  echo "  2. Einstellungen → System → „Tiefenprüfung“ und „Test-E-Mail senden“."
+fi
 if [ "$NEW_KEYS" = 1 ]; then
   echo
   say "WICHTIG – jetzt sichern (Passwortmanager/Tresor, NICHT auf diesem Server allein):"
-  echo "  Wiederherstellungs-Passphrase: $(cat secrets/backup_passphrase)"
+  if [ "${PARAPH_QUIET_SECRETS:-0}" = 1 ]; then
+    # Etwa bei einer Installation durch einen Assistenten: die Passphrase nicht in die Terminalausgabe schreiben
+    echo "  Wiederherstellungs-Passphrase: liegt in $(pwd)/secrets/backup_passphrase – selbst anzeigen mit"
+    echo "    sudo cat $(pwd)/secrets/backup_passphrase"
+  else
+    echo "  Wiederherstellungs-Passphrase: $(cat secrets/backup_passphrase)"
+  fi
   echo "  Mit ihr lässt sich jede Sicherung samt Hauptschlüssel auf einem neuen Server wiederherstellen."
   echo "  Ohne sie und ohne secrets/master.key sind Sicherungen nicht lesbar."
 fi
 echo
-echo "  Sicherungen: $(pwd)/backups (verschlüsselt) – zusätzlich auf ein anderes System kopieren (z. B. restic, rsync)."
-echo "  Aktualisieren: sudo ./scripts/update.sh"
+if ! grep -q '^PARAPH_PROBE="1"' .env; then
+  echo "  Sicherungen: $(pwd)/backups (verschlüsselt) – zusätzlich auf ein anderes System kopieren (z. B. restic, rsync)."
+  echo "  Aktualisieren: sudo ./scripts/update.sh"
+fi

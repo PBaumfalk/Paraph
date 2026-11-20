@@ -127,6 +127,15 @@ export default function EnvelopePage() {
       toast(errorText(e), 'error');
     }
   };
+  const handOver = async (r: any) => {
+    if (!(await confirm({ title: t('Neuen Link ausstellen?'), text: t('Der bisherige Link von {name} wird ungültig. Sie geben den neuen Link selbst weiter.', { name: r.name }), action: t('Link ausstellen') }))) return;
+    try {
+      const x = await post(`/api/v1/envelopes/${id}/recipients/${r.id}/link`);
+      setLink({ name: r.name, url: x.url });
+    } catch (e) {
+      toast(errorText(e), 'error');
+    }
+  };
   const actors = env.recipients.filter((r: any) => r.kind !== 'viewer');
   const done = actors.filter((r: any) => r.status === 'completed').length;
 
@@ -199,6 +208,12 @@ export default function EnvelopePage() {
                       {t('E-Mail nicht zugestellt')}: {r.delivery.error ?? t('unbekannter Fehler')}
                     </div>
                   )}
+                  {env.status === 'sent' && canWrite && r.invite_channel === 'link_handover' && ['sent', 'opened'].includes(r.status) && (
+                    <div className="recipient-sub" style={{ color: 'var(--wait)', whiteSpace: 'normal' }}>
+                      {t('Ohne E-Mail-Einladung: wartet auf Ihren Link.')}{' '}
+                      <button className="link-btn" onClick={() => handOver(r)}>{t('Link selbst weitergeben')}</button>
+                    </div>
+                  )}
                   {r.delivery?.status === 'queued' && r.delivery.attempts > 0 && (
                     <div className="recipient-sub" style={{ color: 'var(--wait)', whiteSpace: 'normal' }}>
                       {t('Versand wird wiederholt')} ({r.delivery.attempts}×){r.delivery.error ? `: ${r.delivery.error}` : ''}
@@ -210,17 +225,7 @@ export default function EnvelopePage() {
                     {() => (
                       <>
                         <button onClick={() => act(() => post(`/api/v1/envelopes/${id}/recipients/${r.id}/remind`), t('Erinnerung versendet'))}><Bell /> {t('Erinnern')}</button>
-                        <button
-                          onClick={async () => {
-                            if (!(await confirm({ title: t('Neuen Link ausstellen?'), text: t('Der bisherige Link von {name} wird ungültig. Sie geben den neuen Link selbst weiter.', { name: r.name }), action: t('Link ausstellen') }))) return;
-                            try {
-                              const x = await post(`/api/v1/envelopes/${id}/recipients/${r.id}/link`);
-                              setLink({ name: r.name, url: x.url });
-                            } catch (e) {
-                              toast(errorText(e), 'error');
-                            }
-                          }}
-                        >
+                        <button onClick={() => handOver(r)}>
                           <Link2 /> {t('Link selbst weitergeben')}
                         </button>
                         {me?.principal.kind === 'user' && (

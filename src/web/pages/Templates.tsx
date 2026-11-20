@@ -24,6 +24,8 @@ export default function Templates() {
   const [create, setCreate] = useState(false);
   const [folderDlg, setFolderDlg] = useState<string | null>(null);
   const canWrite = me?.permissions.includes('template.write');
+  // Verwenden und Massenversand legen Vorgänge an – das braucht envelope.write (nicht „Nur lesen“)
+  const canSend = me?.permissions.includes('envelope.write');
   useEffect(() => setUse(sp.get('use')), [sp]);
 
   const refresh = () => qc.invalidateQueries({ queryKey: ['templates'] });
@@ -70,12 +72,12 @@ export default function Templates() {
                 <p className="hint">{x.usage_count ? t('{n}× verwendet, zuletzt {when}', { n: x.usage_count, when: fmtRelative(x.last_used_at) }) : t('noch nicht verwendet')}</p>
               </div>
               <div className="tpl-actions">
-                <button className="btn btn-primary btn-sm" disabled={!x.current_version} onClick={() => setUse(x.id)}><Send /> {t('Verwenden')}</button>
+                {canSend && <button className="btn btn-primary btn-sm" disabled={!x.current_version} onClick={() => setUse(x.id)}><Send /> {t('Verwenden')}</button>}
                 <Menu trigger={(open) => <button className="icon-btn" onClick={open} aria-label={t('Aktionen')}><MoreHorizontal /></button>}>
                   {() => (
                     <>
                       {canWrite && <button onClick={() => nav(`/templates/${x.id}/edit`)}><Pencil /> {t('Bearbeiten')}</button>}
-                      {x.current_version > 0 && <button onClick={() => setBulk(x)}><Users /> {t('Massenversand')}</button>}
+                      {canSend && x.current_version > 0 && <button onClick={() => setBulk(x)}><Users /> {t('Massenversand')}</button>}
                       {canWrite && <button onClick={async () => { const r = await post(`/api/v1/templates/${x.id}/duplicate`); nav(`/templates/${r.id}/edit`); }}><Copy /> {t('Duplizieren')}</button>}
                       {canWrite && (folders.data?.data ?? []).length > 0 && (folders.data.data as any[]).map((f) => (
                         <button key={f.id} onClick={async () => { await patch(`/api/v1/templates/${x.id}`, { folder_id: f.id }); refresh(); }}>→ {f.name}</button>
@@ -170,7 +172,8 @@ export function UseTemplateDialog({ id, onClose }: { id: string; onClose: () => 
   const q = useQuery({ queryKey: ['template', id], queryFn: () => get(`/api/v1/templates/${id}`) });
   const [rec, setRec] = useState<Record<string, { name: string; email: string }>>({});
   const [prefill, setPrefill] = useState<Record<string, string>>({});
-  const [notify, setNotify] = useState(true);
+  const smtp = useSession().me?.features.smtp ?? true;
+  const [notify, setNotify] = useState(smtp);
   const [ack, setAck] = useState<any[] | null>(null);
   const [acked, setAcked] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -241,6 +244,7 @@ export function UseTemplateDialog({ id, onClose }: { id: string; onClose: () => 
           </div>
         )}
         <label className="check"><input type="checkbox" checked={notify} onChange={(e) => setNotify(e.target.checked)} /> {t('Einladungen per E-Mail senden')}</label>
+        {!smtp && <p className="hint">{t('Auf diesem Server ist kein E-Mail-Versand eingerichtet. Geben Sie die Links selbst weiter.')}</p>}
         {ack && (
           <>
             {ack.map((r: any) => <Callout key={r.id} kind={r.min_level === 'PAPER' || r.min_level === 'NOTARY' ? 'stop' : 'warn'}><strong>{r.label} – {r.norm}</strong><div>{r.hint}</div></Callout>)}

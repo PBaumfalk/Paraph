@@ -137,10 +137,10 @@ export function publicRoutes(app: FastifyInstance, ctx: Ctx) {
     const principal: Principal = { kind: 'apikey', keyId: `public_form:${f.id}`, orgId: f.org_id, scopes: ['envelopes:write', 'templates:read'], mode: 'live', name: `Öffentliches Formular „${f.title}“`, createdBy: f.created_by };
     const v = versionContent(ctx, f.template_id);
     const role = v.content.roles.find((r) => r.public)!;
-    const r = useTemplate(ctx, principal, f.template_id, { recipients: { [role.key]: { name, email } }, send: true, notify: false }, { publicFormId: f.id });
+    const r = useTemplate(ctx, principal, f.template_id, { recipients: { [role.key]: { name, email } }, send: true }, { publicFormId: f.id });
     ctx.db.prepare('UPDATE public_forms SET submissions = submissions + 1 WHERE id = ?').run(f.id);
     const rec = ctx.db.prepare('SELECT * FROM recipients WHERE envelope_id = ? AND email = ? ORDER BY routing_order LIMIT 1').get(r.envelope.id, email.toLowerCase()) as any;
-    // Andere, bereits aktive Rollen bekommen ihre E-Mail; die öffentliche Rolle signiert sofort
+    // Feste Kanzlei-Rollen bekommen ihre Einladung per E-Mail, sobald sie an der Reihe sind; die öffentliche Rolle signiert sofort
     const env = envRow(ctx, r.envelope.id)!;
     if (rec.status === 'waiting') throw new AppError(409, 'not_first', 'Die öffentliche Rolle ist nicht als Erste an der Reihe. Bitte Vorlage prüfen.');
     const s = createSession(ctx, rec, env, 'session', meta(req));

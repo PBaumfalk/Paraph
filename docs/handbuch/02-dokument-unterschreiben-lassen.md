@@ -209,7 +209,7 @@ Klicken Sie auf „Weiter zum Versand“. Paraph speichert zuerst und öffnet da
 3. **Gültigkeit wählen.** „Gültig für“ 3, 7, 14, 30, 60 oder 90 Tage; vorgewählt sind 30. Die Frist läuft ab dem Versand. Danach endet der Vorgang als „Abgelaufen“.
 4. **Erinnerung wählen.** „Automatisch erinnern“: „Nie“ oder alle 1, 2, 3, 5 oder 7 Tage. Vorgewählt ist der Standard Ihrer Organisation (ab Werk 3 Tage).
 5. **Vertretung erlauben.** Mit „Beteiligte dürfen an eine Vertretung weitergeben (wird protokolliert)“ kann eine Person den Vorgang an jemand anderen weitergeben. Mehr dazu in [Kapitel 5](05-so-unterschreiben-mandanten.md).
-6. **Zustellweg wählen.** „Einladungen per E-Mail senden“ ist angehakt. Nehmen Sie den Haken heraus, wenn Sie die Links selbst übergeben wollen (siehe unten).
+6. **Zustellweg wählen.** „Einladungen per E-Mail senden“ ist angehakt, wenn ein Mailserver eingerichtet ist. Nehmen Sie den Haken heraus, wenn Sie die Links selbst übergeben wollen (siehe unten). Ohne Mailserver ist der Haken nicht gesetzt, und darunter steht „Auf diesem Server ist kein E-Mail-Versand eingerichtet. Geben Sie die Links selbst weiter.“
 7. **Dokumentart prüfen** (siehe nächster Abschnitt).
 8. Klicken Sie auf „Jetzt versenden“ bzw. „Starten und Links anzeigen“.
 
@@ -236,7 +236,7 @@ Nehmen Sie den Haken bei „Einladungen per E-Mail senden“ heraus, wenn die Ei
 
 Ohne E-Mail-Einladung verschickt Paraph auch keine automatischen Erinnerungen.
 
-Bei „Nacheinander“ zeigt Paraph nur die Links der Personen, die gerade an der Reihe sind. Die Späteren erhalten keine E-Mail, wenn sie dran sind. Stellen Sie ihnen dann auf der Vorgangsseite über „Link selbst weitergeben“ einen Link aus ([Kapitel 3](03-vorgaenge-verfolgen.md#einen-neuen-link-ausstellen)).
+Bei „Nacheinander“ zeigt Paraph nur die Links der Personen, die gerade an der Reihe sind. Die Späteren erhalten keine E-Mail, wenn sie dran sind. Stattdessen bekommen Sie eine E-Mail „Link übergeben: … ist an der Reihe“, und auf der Vorgangsseite steht bei der Person „Ohne E-Mail-Einladung: wartet auf Ihren Link.“ Stellen Sie ihr dort über „Link selbst weitergeben“ einen Link aus ([Kapitel 3](03-vorgaenge-verfolgen.md#einen-neuen-link-ausstellen)). Dasselbe gilt, wenn jemand an eine Vertretung weitergibt.
 
 ---
 

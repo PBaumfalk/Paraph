@@ -11,3 +11,5 @@ secrets/
 backups/
 .claude/worktrees/
 .DS_Store
+CLAUDE.local.md
+HANDOVER.md
