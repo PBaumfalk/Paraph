@@ -13,7 +13,7 @@ RUN npm run build && npm prune --omit=dev --no-audit --no-fund \
   && node -e "new (require('better-sqlite3'))(':memory:').prepare('select 1').get()"
 
 FROM node:24-bookworm-slim
-ARG PARAPH_VERSION=0.2.0
+ARG PARAPH_VERSION=0.3.0
 LABEL org.opencontainers.image.title="Paraph" \
       org.opencontainers.image.description="Selbst gehostete Plattform für elektronische Signaturen" \
       org.opencontainers.image.version="${PARAPH_VERSION}" \

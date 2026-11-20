@@ -5,7 +5,7 @@
 //   I  Neustart ohne Datenverlust
 //   J  Katastrophenfall: neue Umgebung ohne Hauptschlüssel, nur mit Passphrase → restore.sh → alles lesbar
 //   H  Container-Härtung
-// Aufruf: node scripts/docker-e2e.mjs   (Docker; Images paraph:0.1.0-e2e und paraph:0.2.0-e2e müssen gebaut sein)
+// Aufruf: node scripts/docker-e2e.mjs   (Docker; Images paraph:0.1.0-e2e und paraph:<Version aus package.json>-e2e müssen gebaut sein)
 import { execSync } from 'node:child_process';
 import { writeFileSync, mkdirSync, readdirSync, existsSync, rmSync, readFileSync, cpSync, copyFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
@@ -34,7 +34,8 @@ const check = (name, cond, detail) => {
   if (!cond) throw new Error(`Prüfung fehlgeschlagen: ${name}`);
 };
 
-for (const img of ['paraph:0.1.0-e2e', 'paraph:0.2.0-e2e']) {
+const CUR = JSON.parse(readFileSync('package.json', 'utf8')).version;
+for (const img of ['paraph:0.1.0-e2e', `paraph:${CUR}-e2e`]) {
   try {
     sh(`docker image inspect ${img}`);
   } catch {
@@ -190,14 +191,14 @@ try {
   check('H1 Schlüsseldatei nicht für andere lesbar', !/[4-7]$/.test(keyPerm), keyPerm);
   check('H2 .env nur für Eigentümer', sh('stat -f %Lp .env 2>/dev/null || stat -c %a .env', { cwd: dirA }).trim() === '600');
 
-  // ───────── U: Update auf 0.2.0 ─────────
-  log('U: update.sh --no-pull (baut nicht, nutzt paraph:0.2.0-e2e) …');
+  // ───────── U: Update auf die aktuelle Version ─────────
+  log(`U: update.sh --no-pull (baut nicht, nutzt paraph:${CUR}-e2e) …`);
   // Der Build im Test entspricht dem vorgebauten Image: Tag vorab setzen, damit update.sh nicht neu baut
-  sh('docker tag paraph:0.2.0-e2e paraph:0.2.0');
+  sh(`docker tag paraph:${CUR}-e2e paraph:${CUR}`);
   const upd = sh('./scripts/update.sh --no-pull', { cwd: dirA, env: { PARAPH_SKIP_BUILD: '1' } });
   console.log(upd.split('\n').filter((l) => /^\S|✓|✕/.test(l)).slice(0, 30).join('\n'));
   const health = await waitReady();
-  check('U4 Update auf 0.2.0 bereit, Schema migriert', health.version.startsWith('0.2.0') && health.schema >= 5, { version: health.version, schema: health.schema });
+  check(`U4 Update auf ${CUR} bereit, Schema migriert`, health.version.startsWith(CUR) && health.schema >= 5, { version: health.version, schema: health.schema });
   const after = new Http();
   await after.login('dora@kanzlei.test', 'docker-passwort-123');
   const oldPdf = (await after.req('GET', `/api/v1/envelopes/${old.id}/files/final`)).buf;
@@ -259,14 +260,14 @@ try {
   log('U: update.sh --rollback …');
   sh('./scripts/update.sh --rollback', { cwd: dirA, env: { PARAPH_NONINTERACTIVE: '1' } });
   const rb = await waitReady();
-  check('U8 Rückweg: Altversion läuft wieder', !rb.version.startsWith('0.2.0'), rb.version);
+  check('U8 Rückweg: Altversion läuft wieder', !rb.version.startsWith(CUR), rb.version);
   const rbc = new Http();
   await rbc.login('dora@kanzlei.test', 'docker-passwort-123');
   check('U9 Rückweg: Altdaten vollständig', sha((await rbc.req('GET', `/api/v1/envelopes/${old.id}/files/final`)).buf) === old.pdfSha);
   check('U10 Rückweg: Daten nach dem Update sind (erwartungsgemäß) nicht enthalten', (await rbc.req('GET', `/api/v1/envelopes/${fresh.id}`)).status === 404);
   sh('./scripts/update.sh --no-pull', { cwd: dirA, env: { PARAPH_SKIP_BUILD: '1' } });
   const again = await waitReady();
-  check('U11 Erneutes Update erfolgreich', again.version.startsWith('0.2.0'), again.version);
+  check('U11 Erneutes Update erfolgreich', again.version.startsWith(CUR), again.version);
 
   // ───────── I: Neustart ─────────
   dcA('down');
@@ -285,7 +286,7 @@ try {
   check('J2 Sicherung ist verschlüsselt (kein SQLite-Klartext)', !readFileSync(join(dirA, 'backups', file)).includes(Buffer.from('SQLite format')));
   dcA('--profile caddy down');
   // Neuer Server: Installation erzeugt eigene Schlüssel; die Passphrase kommt „aus dem Passwortmanager“
-  sh('./scripts/install.sh', { cwd: dirB, env: installEnv('paraph-e2e-b', { PARAPH_IMAGE: 'paraph:0.2.0' }) });
+  sh('./scripts/install.sh', { cwd: dirB, env: installEnv('paraph-e2e-b', { PARAPH_IMAGE: `paraph:${CUR}` }) });
   await waitReady();
   const passA = readFileSync(join(dirA, 'secrets', 'backup_passphrase'));
   rmSync(join(dirB, 'secrets', 'backup_passphrase'), { force: true });

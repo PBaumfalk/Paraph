@@ -1,6 +1,6 @@
 # 14. Sicherheit und Nachweis
 
-Dieses Kapitel erklärt, wovor Paraph schützt, mit welchen Mitteln, und wo die Grenzen liegen. Es richtet sich an IT und Betrieb, aber auch an die Kanzleileitung, die wissen will, was ein versiegeltes PDF und ein Nachweispaket im Streitfall belegen. Alle Angaben beziehen sich auf Version 0.2.0 mit den unveröffentlichten Änderungen aus dem Änderungsprotokoll.
+Dieses Kapitel erklärt, wovor Paraph schützt, mit welchen Mitteln, und wo die Grenzen liegen. Es richtet sich an IT und Betrieb, aber auch an die Kanzleileitung, die wissen will, was ein versiegeltes PDF und ein Nachweispaket im Streitfall belegen. Alle Angaben beziehen sich auf Version 0.3.0.
 
 Kurz gesagt: Paraph verschlüsselt alle Dokumente, führt je Vorgang einen fälschungserkennenden Audit-Trail, verankert diesen regelmäßig bei einem unabhängigen Zeitstempeldienst und versiegelt jedes fertige PDF. Gegen jemanden mit Root-Zugriff auf den Server kann Paraph Änderungen nicht verhindern, aber weitgehend sichtbar machen – vorausgesetzt, ein Zeitstempeldienst mit Vertrauensanker ist eingerichtet.
 

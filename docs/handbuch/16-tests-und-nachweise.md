@@ -164,17 +164,17 @@ Der authentik-Test legt Provider, Application, Gruppe, Scope-Mapping, Policy und
 
 ### Docker-Gesamttest
 
-Das Skript braucht zwei vorher gebaute Images: `paraph:0.1.0-e2e` aus Commit `b309198` (Version 0.1.0) und `paraph:0.2.0-e2e` aus dem aktuellen Stand.
+Das Skript braucht zwei vorher gebaute Images: `paraph:0.1.0-e2e` aus Commit `b309198` (Version 0.1.0) und `paraph:<Version>-e2e` aus dem aktuellen Stand (Version aus `package.json`, derzeit `0.3.0`).
 
 ```sh
 mkdir -p .tmp/v010 && git archive b309198 | tar -x -C .tmp/v010
 docker build -t paraph:0.1.0-e2e .tmp/v010
-docker build -t paraph:0.2.0-e2e .
+docker build -t paraph:0.3.0-e2e .
 node scripts/docker-e2e.mjs
 ```
 
 - Benötigt freie Ports 18088, 18090, 18443 und 18025.
-- Setzt den lokalen Tag `paraph:0.2.0` auf das Test-Image.
+- Setzt den lokalen Tag `paraph:<Version>` auf das Test-Image.
 - Arbeitsdaten und `result.json` liegen unter `.tmp/docker-e2e/run-<Zeitpunkt>`. Mit `KEEP=1` bleiben die Container nach dem Lauf bestehen.
 
 ### Prüfwerkzeuge

@@ -1,6 +1,6 @@
 {
   "name": "paraph",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Paraph – selbst gehostete Plattform für elektronische Signaturen",
   "private": true,
   "license": "MIT",
