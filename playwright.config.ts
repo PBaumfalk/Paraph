@@ -2,7 +2,7 @@ import { defineConfig, devices } from '@playwright/test';
 
 // Browser-Tests gegen den gebauten Server mit frischem Datenverzeichnis.
 // Voraussetzung: Mailpit auf 127.0.0.1:1025/8025, z. B.:
-// docker run -d --name paraph-mailpit -p 127.0.0.1:1025:1025 -p 127.0.0.1:8025:8025 axllent/mailpit:v1.27
+// docker run -d --name paraph-mailpit -p 127.0.0.1:1025:1025 -p 127.0.0.1:8025:8025 axllent/mailpit:v1.34
 const PORT = Number(process.env.E2E_PORT ?? 8091);
 export default defineConfig({
   testDir: 'e2e',

@@ -56,7 +56,7 @@ services:
 
   # Umwandlung von Word/ODT in PDF – isoliert, ohne Internetzugang, ohne Zugriff auf Paraph-Daten
   gotenberg:
-    image: gotenberg/gotenberg:8.38.1
+    image: gotenberg/gotenberg:9.6.0
     restart: unless-stopped
     command:
       - gotenberg
@@ -75,7 +75,7 @@ services:
   # Optional: automatisches HTTPS. Start mit: docker compose --profile caddy up -d
   caddy:
     profiles: [caddy]
-    image: caddy:2.10.2-alpine
+    image: caddy:2.11.9-alpine
     restart: unless-stopped
     environment:
       DOMAIN: ${DOMAIN:-}

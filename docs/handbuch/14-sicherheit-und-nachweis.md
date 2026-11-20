@@ -181,7 +181,7 @@ Unterzeichner setzen ausschließlich die Felder, die ihnen zugeordnet sind. Feld
 - npm, npx und corepack aus dem Laufzeit-Image entfernt;
 - Port standardmäßig nur an `127.0.0.1` gebunden;
 - Hauptschlüssel, Wiederherstellungs-Passphrase und Vertrauensanker des Zeitstempeldienstes als Docker-Secrets, nicht als Umgebungsvariablen; `install.sh` setzt die Schlüsseldateien auf 0400 mit Eigentümer UID 1000 und `.env` auf 0600;
-- Gotenberg (`8.38.1`) und Caddy (`2.10.2-alpine`) mit fester Version;
+- Gotenberg (`9.6.0`) und Caddy (`2.11.9-alpine`) mit fester Version;
 - Caddy (Profil `caddy`): schreibgeschützt, nur `NET_BIND_SERVICE`, `no-new-privileges`.
 
 Die Container-Härtung prüfen der Docker-Gesamttest (H1–H5) und der Rauchtest in der CI ([Kapitel 16](16-tests-und-nachweise.md)).

@@ -139,7 +139,7 @@ npm test
 Mailpit muss SMTP auf `127.0.0.1:1025` und die Oberfläche auf `127.0.0.1:8025` anbieten:
 
 ```sh
-docker run -d --name paraph-mailpit -p 127.0.0.1:1025:1025 -p 127.0.0.1:8025:8025 axllent/mailpit:v1.27
+docker run -d --name paraph-mailpit -p 127.0.0.1:1025:1025 -p 127.0.0.1:8025:8025 axllent/mailpit:v1.34
 npm run build
 npx playwright install chromium webkit
 npx playwright test

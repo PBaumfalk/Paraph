@@ -3,7 +3,7 @@
 # Zertifikate erzeugt scripts/docker-e2e.mjs unter TEST_CERTS (ca.pem, mail.pem, mail.key, auth).
 services:
   mailpit:
-    image: axllent/mailpit:v1.27
+    image: axllent/mailpit:v1.34
     command: ["--smtp-tls-cert", "/certs/mail.pem", "--smtp-tls-key", "/certs/mail.key", "--smtp-require-starttls", "--smtp-auth-file", "/certs/auth"]
     volumes: ["${TEST_CERTS:?TEST_CERTS setzen}:/certs:ro"]
     ports: ["127.0.0.1:${MAILPIT_PORT:-8025}:8025"]
