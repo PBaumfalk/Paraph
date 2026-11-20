@@ -58,6 +58,71 @@ Das Beispiel: Eine Mandantin soll eine Vollmacht unterschreiben.
 
 Die Beteiligten erhalten eine Abschluss-E-Mail mit Downloadlink und dem Prüfwert des Dokuments. Sie als Absender werden ebenfalls benachrichtigt.
 
+## Ihr erster Vorgang Schritt für Schritt
+
+Spielen Sie einen Vorgang einmal selbst durch, am besten im Probebetrieb ([Kapitel 18](18-installation-mit-claude-code.md#probebetrieb-auf-dem-eigenen-rechner)) oder in einer Testorganisation. Sie brauchen dafür nur das Beispieldokument [`Mandatsvereinbarung-Beispiel.pdf`](beispiele/Mandatsvereinbarung-Beispiel.pdf). Alle Namen darin sind erfunden. Sie spielen nacheinander drei Personen:
+
+| Wer | Schritte | Rolle in Paraph |
+|---|---|---|
+| ReFa oder Sekretariat | 1 bis 4: Dokument vorbereiten und versenden | „Mitglied“, „Administration“ oder „Inhaber“ |
+| Mandantin (hier: Lena Schneider) | 5: unterschreiben | kein Konto, nur der persönliche Link |
+| Anwältin oder Anwalt | 6 und 7: Ergebnis kontrollieren und zur Akte nehmen | jede Rolle, auch „Nur lesen“ |
+
+**0. Erstmals anmelden.** Auf einer neuen Installation öffnen Sie `<Adresse>/setup` und füllen „Einrichtungscode“, „Name der Kanzlei oder Organisation“, „Ihr Name“, „E-Mail-Adresse“ und „Passwort“ (mindestens 10 Zeichen) aus. „Einrichten und anmelden“ legt die Organisation an. Sie sind dann Inhaber. Später melden sich alle unter `<Adresse>/login` an.
+
+![Seite „Paraph einrichten“ mit Einrichtungscode, Kanzleiname, Name, E-Mail-Adresse und Passwort](bilder/erster-vorgang-1-einrichtung.png)
+
+*Schritt 0: Einrichtung mit erfundenen Daten.*
+
+**1. Dokument hochladen.** Klicken Sie auf der Übersicht auf „Dokument unterschreiben lassen“ und wählen Sie `Mandatsvereinbarung-Beispiel.pdf`. Der Editor öffnet sich, der Titel lautet „Mandatsvereinbarung Beispiel“.
+
+![Leere Übersicht mit „Dokument unterschreiben lassen“](bilder/erster-vorgang-2-leere-uebersicht.png)
+
+*Schritt 1: So sieht die Übersicht vor dem ersten Vorgang aus.*
+
+**2. Mandantin eintragen.** Rechts unten unter „Beteiligte“ steht schon ein leerer Eintrag. Tragen Sie „Lena Schneider“ und `lena.schneider@example.org` ein. Rolle „Unterschreibt“ und Identitätsprüfung „Nur Link“ bleiben, wie sie sind. Oben erscheint der Haken bei „Beteiligte“.
+
+**3. Unterschriftsfeld setzen.** Unter „Wer füllt aus?“ ist Lena Schneider gewählt. Tippen Sie unter „Felder“ auf „Unterschrift“ und dann auf die Linie über „Ort, Datum, Unterschrift Mandantin“. Das Feld erscheint in der Farbe der Mandantin, rechts stehen seine Eigenschaften mit „Pflichtfeld“. Oben stehen jetzt drei Haken und „Gespeichert“.
+
+![Editor mit gesetztem Unterschriftsfeld auf der Unterschriftslinie der Mandantin](bilder/erster-vorgang-3-unterschriftsfeld.png)
+
+*Schritt 3: Das Unterschriftsfeld liegt auf der Linie; rechts die Eigenschaften.*
+
+**4. Versenden.** Klicken Sie auf „Weiter zum Versand“. Im Dialog „Versenden“ steht unter „Dokumentart und Formvorschriften“ „Mandatsvertrag, Auftrag, Schweigepflichtentbindung“ mit „erkannt“ und der Hinweis, dass eine einfache elektronische Signatur genügt.
+
+- Ist ein Mailserver eingerichtet, lassen Sie „Einladungen per E-Mail senden“ angehakt und klicken auf „Jetzt versenden“. Die Mandantin erhält die Einladung per E-Mail.
+- Ohne Mailserver (etwa im Probebetrieb) ist der Haken nicht gesetzt, und darunter steht „Auf diesem Server ist kein E-Mail-Versand eingerichtet.“ Klicken Sie auf „Starten und Links anzeigen“. Unter „Persönliche Links“ erscheint der Link für Lena Schneider. Kopieren Sie ihn mit dem Symbol daneben und schließen Sie mit „Fertig“. Der Link wird nur dieses eine Mal angezeigt.
+
+![Fenster „Persönliche Links“ mit dem Link für Lena Schneider](bilder/erster-vorgang-4-persoenliche-links.png)
+
+*Schritt 4: Ohne E-Mail-Versand übergeben Sie den Link selbst.*
+
+Der Vorgang steht jetzt in der Übersicht unter „Unterwegs“.
+
+**5. Als Mandantin unterschreiben.** Öffnen Sie den Link, am besten auf dem Smartphone oder in einem privaten Browserfenster. Tippen Sie auf „Los geht’s“, zeichnen Sie die Unterschrift mit Finger oder Maus und tippen Sie auf „Übernehmen“. Zum Schluss erscheint „Abschließend bestätigen“: Setzen Sie den Haken bei „Ich stimme der obigen Erklärung zu.“ und tippen Sie auf „Verbindlich unterschreiben“. Die Seite zeigt „Unterschrieben“ und bietet das „Unterschriebene Dokument“ zum Herunterladen an. Was Mandanten dabei genau sehen, steht in [Kapitel 5](05-so-unterschreiben-mandanten.md).
+
+![Bestätigung „Unterschrieben“ auf dem iPhone](bilder/erster-vorgang-5-unterschrieben-iphone.png)
+
+*Schritt 5: Ansicht der Mandantin nach dem Unterschreiben.*
+
+**6. Ergebnis kontrollieren.** Öffnen Sie den Vorgang aus der Übersicht (Reiter „Erledigt“). Er trägt den Status „Abgeschlossen“, das Siegel und „Alle haben unterschrieben.“ Prüfen Sie:
+
+- unter „Beteiligte“: Lena Schneider mit „Erledigt“,
+- im Dokument: die Unterschrift sitzt auf der richtigen Linie,
+- unter „Ergebnis“: „Unterschriebenes PDF“, „Abschlussbestätigung“, „Nachweispaket (ZIP)“ und „Audit-Trail (JSON)“.
+
+![Abgeschlossener Vorgang mit Siegel, „PDF herunterladen“ und den vier Ergebnis-Dateien](bilder/erster-vorgang-6-ergebnis.png)
+
+*Schritt 6: Der abgeschlossene Vorgang aus Sicht der Kanzlei.*
+
+**7. Zur Akte nehmen und prüfen.** Klicken Sie auf „PDF herunterladen“. Die Datei heißt „Mandatsvereinbarung Beispiel – unterschrieben.pdf“. Sie enthält das Dokument mit eingesetzter Unterschrift und, ab Werk, die Abschlussbestätigung als weitere Seiten. Legen Sie die Datei **unverändert** in die Akte; jedes erneute Speichern ändert den Fingerabdruck. Zur Kontrolle ziehen Sie sie in die Prüfstelle („Dokument prüfen“ unter `<Adresse>/verify`). Das Ergebnis lautet „Echt und unverändert“ ([Kapitel 6](06-dokumente-pruefen.md)).
+
+![Unterschrift der Mandantin im versiegelten PDF, mit Prüfvermerk unter der Unterschrift](bilder/erster-vorgang-7-unterschrift-im-pdf.png)
+
+*Schritt 7: Ausschnitt aus dem unterschriebenen PDF. Unter der Unterschrift stehen Kennung, Name und Zeitpunkt.*
+
+Damit haben Sie den ganzen Weg einmal gesehen. Für echte Vorgänge geht es in [Kapitel 2](02-dokument-unterschreiben-lassen.md) weiter: mehrere Beteiligte, weitere Feldtypen, Zugangsschutz per Code.
+
 ## Wo Sie was finden
 
 Die Seitenleiste links ist immer gleich aufgebaut:
@@ -72,7 +137,7 @@ Die Seitenleiste links ist immer gleich aufgebaut:
 | „Aktivität“ | Protokoll der Organisation (nur Inhaber und Administration) |
 | „Einstellungen“ | Profil, Organisation, Team, Erscheinungsbild und mehr |
 
-Unten in der Seitenleiste stehen Ihre Organisation mit Ihrer Rolle und Ihr Name. Über Ihren Namen erreichen Sie „Profil und Sicherheit“, wechseln die Sprache (Deutsch/English) und melden sich ab.
+Unten in der Seitenleiste stehen Ihre Organisation mit Ihrer Rolle und Ihr Name. Gehören Sie mehreren Organisationen an, wechseln Sie mit einem Klick auf den Organisationsnamen („Organisation wechseln“). Über Ihren Namen erreichen Sie „Profil und Sicherheit“, wechseln die Sprache (Deutsch/English) und melden sich ab.
 
 > **Gut zu wissen:** Wer die Rolle „Nur lesen“ hat, sieht Vorgänge und Vorlagen, kann aber nichts anlegen oder versenden. Die Schaltfläche „Neues Dokument“ fehlt dann.
 

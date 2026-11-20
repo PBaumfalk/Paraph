@@ -54,13 +54,14 @@ Paraph speichert den Entwurf laufend.
 
 Paraph lehnt die Veröffentlichung ab, wenn die Vorlage kein Dokument hat, eine unterschreibende Rolle kein Unterschriftsfeld hat oder sich seit der letzten Version nichts geändert hat.
 
-Neue Vorgänge verwenden ab sofort die neue Version. Über „Versionen“ in der oberen Leiste sehen Sie alle Versionen mit Datum und Änderungsnotiz. Auf der Vorlagenseite zeigt jede Karte die aktuelle Version, „Änderungen offen“, wenn der Entwurf neuer ist, und wie oft die Vorlage verwendet wurde.
+Neue Vorgänge verwenden ab sofort die neue Version. Über „Versionen“ in der oberen Leiste sehen Sie alle Versionen mit Datum und Änderungsnotiz. Das Globus-Symbol daneben („Als öffentliches Formular teilen“) führt zur Seite „Formulare“ ([unten](#ein-öffentliches-formular-einrichten)). Auf der Vorlagenseite zeigt jede Karte die aktuelle Version, „Änderungen offen“, wenn der Entwurf neuer ist, und wie oft die Vorlage verwendet wurde.
 
 ## Vorlagen ordnen
 
 Auf der Seite „Vorlagen“:
 
 - „Ordner“ legt einen neuen Ordner an. Die Ordner erscheinen als Reiter. Über das Menü „…“ einer Vorlage verschieben Sie sie in einen Ordner.
+- Ordner umbenennen oder löschen und eine Vorlage wieder aus allen Ordnern nehmen geht derzeit nur über die API (`PATCH` und `DELETE /api/v1/folders/{id}`, `PATCH /api/v1/templates/{id}` mit `"folder_id": null`), nicht in der Oberfläche.
 - „Duplizieren“ legt eine Kopie mit dem Zusatz „(Kopie)“ an. Die Kopie ist zunächst nur für Sie sichtbar und noch nicht veröffentlicht.
 - „Archivieren“ blendet eine Vorlage aus. Im Reiter „Archiv“ holen Sie sie mit „Wiederherstellen“ zurück.
 
@@ -68,11 +69,11 @@ Private Vorlagen (Schloss-Symbol) sieht nur ihre Erstellerin. Scheidet sie aus d
 
 ## Eine Vorlage verwenden
 
-Sie starten auf drei Wegen: „Verwenden“ auf der Vorlagenkarte, „Aus Vorlage“ auf der Übersicht oder über die Befehlspalette (⌘K) unter „Vorlage verwenden“.
+Dafür brauchen Sie eine Rolle, die Vorgänge anlegen darf; mit „Nur lesen“ fehlen „Verwenden“ und „Massenversand“. Sie starten auf drei Wegen: „Verwenden“ auf der Vorlagenkarte, „Aus Vorlage“ auf der Übersicht oder über die Befehlspalette (⌘K) unter „Vorlage verwenden“.
 
 1. Tragen Sie für jede Rolle ohne feste Person Name und E-Mail ein. Rollen mit fester Person nennt Paraph unter „Außerdem: …“.
 2. Unter „Vorbelegen“ bietet Paraph Felder an, die in der Vorlage eine Vorbelegung haben oder nach Aktenzeichen, Betrag, Honorar oder Stundensatz klingen. Tragen Sie die Werte ein. Vorbelegte Werte können die Beteiligten standardmäßig nicht ändern.
-3. Lassen Sie „Einladungen per E-Mail senden“ angehakt oder nehmen Sie den Haken heraus, um die Links selbst weiterzugeben ([Kapitel 2](02-dokument-unterschreiben-lassen.md#links-selbst-übergeben)).
+3. Lassen Sie „Einladungen per E-Mail senden“ angehakt oder nehmen Sie den Haken heraus, um die Links selbst weiterzugeben. Ohne Mailserver ist der Haken von vornherein nicht gesetzt ([Kapitel 2](02-dokument-unterschreiben-lassen.md#links-selbst-übergeben)).
 4. Klicken Sie auf „Versenden“ bzw. „Starten und Links anzeigen“.
 
 Verlangt eine Dokumentart der Vorlage eine Bestätigung, zeigt Paraph nach dem ersten Klick den Formhinweis. Setzen Sie das Häkchen „Ich habe den Formhinweis gelesen und versende trotzdem. Die Bestätigung wird protokolliert.“ und klicken Sie erneut.
@@ -138,7 +139,7 @@ Die Besucherin gibt Namen und E-Mail-Adresse an. Ist die Bestätigung eingeschal
 
 Ist die Höchstzahl erreicht oder das Formular deaktiviert, nimmt es keine Einsendungen mehr an.
 
-Vorgänge aus einem Formular laufen ohne Einladungs-E-Mails. Auch die gegenzeichnende Rolle der Kanzlei erhält keine Einladung, wenn sie an der Reihe ist. Behalten Sie diese Vorgänge deshalb unter „Unterwegs“ im Blick und unterschreiben Sie über „Link selbst weitergeben“ oder „Vor Ort unterschreiben“ ([Kapitel 3](03-vorgaenge-verfolgen.md#nachfassen-link-ausstellen-vor-ort-unterschreiben)). Die Abschluss-E-Mails verschickt Paraph wie gewohnt.
+Die Besucherin selbst bekommt keine Einladungs-E-Mail, denn sie ist schon auf der Signaturseite; automatische Erinnerungen erhält sie ebenfalls nicht. Die festen Rollen der Kanzlei werden dagegen per E-Mail eingeladen, sobald sie an der Reihe sind, also etwa die gegenzeichnende Anwältin nach der Besucherin. Erinnerungen und Abschluss-E-Mails verschickt Paraph wie gewohnt.
 
 ## Vor Ort unterschreiben lassen
 

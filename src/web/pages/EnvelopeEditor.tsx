@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useSession } from '../lib/session';
 import { useNavigate, useParams, Link } from 'react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Send, Plus, Trash2, ChevronUp, ChevronDown, FilePlus2, Check, AlertTriangle, Scale, Copy, Wand2 } from 'lucide-react';
@@ -389,7 +390,9 @@ function SendDialog({ env, recs, onClose, onSent }: { env: any; recs: RecDraft[]
   const [delegation, setDelegation] = useState(!!env.allow_delegation);
   const [classes, setClasses] = useState<string[]>(env.form_classes?.length ? env.form_classes : (env.form_suggestions ?? []).map((s: any) => s.ruleId));
   const [ack, setAck] = useState(false);
-  const [notify, setNotify] = useState(true);
+  // Ohne SMTP (z. B. Probebetrieb) kämen E-Mail-Einladungen nie an – dann Linkübergabe vorwählen
+  const smtp = useSession().me?.features.smtp ?? true;
+  const [notify, setNotify] = useState(smtp);
   const [busy, setBusy] = useState(false);
   const [links, setLinks] = useState<any[] | null>(null);
   const qc = useQueryClient();
@@ -492,6 +495,7 @@ function SendDialog({ env, recs, onClose, onSent }: { env: any; recs: RecDraft[]
         </div>
         <label className="check"><input type="checkbox" checked={delegation} onChange={(e) => setDelegation(e.target.checked)} /> {t('Beteiligte dürfen an eine Vertretung weitergeben (wird protokolliert)')}</label>
         <label className="check"><input type="checkbox" checked={notify} onChange={(e) => setNotify(e.target.checked)} /> {t('Einladungen per E-Mail senden')}</label>
+        {!smtp && <p className="hint">{t('Auf diesem Server ist kein E-Mail-Versand eingerichtet. Geben Sie die Links selbst weiter.')}</p>}
         {!notify && <p className="hint">{t('Sie erhalten die persönlichen Links einmalig und geben sie selbst weiter, etwa aus Ihrer Kanzleisoftware.')}</p>}
 
         <div className="form-check">

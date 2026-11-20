@@ -154,6 +154,7 @@ export function serializeEnvelope(ctx: Ctx, env: EnvelopeRow, opts: { withFields
       completed_at: r.completed_at,
       declined_at: r.declined_at,
       decline_reason: r.decline_reason,
+      invite_channel: r.invite_channel ?? null,
       delivery: lastDelivery(ctx, r.id),
     })),
     fields: opts.withFields !== false ? fieldsOf(ctx, env.id).map(serializeField) : undefined,
@@ -616,15 +617,20 @@ export function senderName(ctx: Ctx, env: EnvelopeRow) {
   return owner ? `${owner.name} (${org.name})` : org.name;
 }
 
-/** Aktiviert einen Empfänger: neuer Link-Token, Status „sent“, Benachrichtigung. Innerhalb einer Transaktion aufrufen. */
-export function activateRecipient(ctx: Ctx, env: EnvelopeRow, rec: any, opts: { notify: boolean; actor: any }) {
+/**
+ * Aktiviert einen Empfänger: neuer Link-Token, Status „sent“, Benachrichtigung. Innerhalb einer Transaktion aufrufen.
+ * `silent`: keine Einladung, weil die Person schon auf der Signaturseite ist (öffentliches Formular).
+ * `initial`: Aktivierung beim Versand – die Links gehen dort an den Absender zurück. Spätere Aktivierungen ohne E-Mail
+ * (Linkübergabe) meldet Paraph dem Absender, sonst erfährt niemand, dass jetzt ein Link übergeben werden muss.
+ */
+export function activateRecipient(ctx: Ctx, env: EnvelopeRow, rec: any, opts: { notify: boolean; actor: any; silent?: boolean; initial?: boolean }) {
   const token = secretToken();
   const now = ctx.now().toISOString();
-  ctx.db.prepare(`UPDATE recipients SET status = 'sent', token_hash = ?, prev_token_hash = NULL, token_issued_at = ?, sent_at = ? WHERE id = ?`).run(hashToken(token), now, now, rec.id);
+  const channel = opts.silent ? 'public_form' : env.test_mode ? 'test_mode' : opts.notify ? 'email' : 'link_handover';
+  ctx.db.prepare(`UPDATE recipients SET status = 'sent', token_hash = ?, prev_token_hash = NULL, token_issued_at = ?, sent_at = ?, invite_channel = ? WHERE id = ?`).run(hashToken(token), now, now, channel, rec.id);
   const url = signingUrl(ctx, env.org_id, token);
   const org = getOrg(ctx, env.org_id);
-  const willMail = opts.notify && !env.test_mode;
-  if (opts.notify) {
+  if (opts.notify && !opts.silent) {
     queueMail(ctx, {
       orgId: env.org_id,
       envelopeId: env.id,
@@ -637,12 +643,13 @@ export function activateRecipient(ctx: Ctx, env: EnvelopeRow, rec: any, opts: { 
       vars: { sender: senderName(ctx, env), title: env.title, recipient: rec.name, message: env.message, expires: fmtDate(env.expires_at, env.locale, org.settings.timezone) },
     });
   }
-  appendAudit(ctx.db, env.id, env.org_id, 'recipient.notified', opts.actor, {
-    recipient_id: rec.id,
-    email: rec.email,
-    channel: willMail ? 'email' : env.test_mode ? 'test_mode' : 'link_handover',
-  });
-  emit(ctx, env.org_id, 'recipient.notified', { envelope_id: env.id, recipient_id: rec.id, email: rec.email }, { testMode: !!env.test_mode });
+  if (channel === 'link_handover' && !opts.initial) {
+    const owner = env.owner_id ? (ctx.db.prepare('SELECT email FROM users WHERE id = ? AND disabled_at IS NULL').get(env.owner_id) as any) : null;
+    if (owner) queueMail(ctx, { orgId: env.org_id, envelopeId: env.id, to: owner.email, kind: 'owner_handover', link: `${ctx.cfg.appUrl}/envelopes/${env.id}`, vars: { title: env.title, recipient: rec.name, email: rec.email } });
+  }
+  appendAudit(ctx.db, env.id, env.org_id, 'recipient.notified', opts.actor, { recipient_id: rec.id, email: rec.email, channel });
+  // `channel: link_handover` heißt für angebundene Systeme: Link über POST …/recipients/{id}/link holen und übergeben
+  emit(ctx, env.org_id, 'recipient.notified', { envelope_id: env.id, recipient_id: rec.id, email: rec.email, channel }, { testMode: !!env.test_mode });
   return url;
 }
 
@@ -673,7 +680,7 @@ export function validateForSend(ctx: Ctx, env: EnvelopeRow) {
   return { problems, formWarnings: pending, docs, recs, fields };
 }
 
-export function sendEnvelope(ctx: Ctx, p: Principal, envelopeId: string, opts: { notify?: boolean; acknowledgeFormRisk?: boolean } = {}) {
+export function sendEnvelope(ctx: Ctx, p: Principal, envelopeId: string, opts: { notify?: boolean; acknowledgeFormRisk?: boolean; silentRecipients?: string[] } = {}) {
   const env0 = loadEnvelope(ctx, p, envelopeId, true);
   const notify = opts.notify !== false;
   const links: { recipient_id: string; email: string; url: string }[] = [];
@@ -717,7 +724,7 @@ export function sendEnvelope(ctx: Ctx, p: Principal, envelopeId: string, opts: {
     });
     const sentEnv = envRow(ctx, envelopeId)!;
     const { group } = nextRoutingGroup(recipientsOf(ctx, envelopeId));
-    for (const r of group) links.push({ recipient_id: r.id, email: r.email, url: activateRecipient(ctx, sentEnv, r, { notify, actor: actorOf(p) }) });
+    for (const r of group) links.push({ recipient_id: r.id, email: r.email, url: activateRecipient(ctx, sentEnv, r, { notify, actor: actorOf(p), initial: true, silent: opts.silentRecipients?.includes(r.id) }) });
     // Kontakte für die Schnellauswahl merken (nur Name/E-Mail)
     if (!env.test_mode) {
       for (const r of v.recs) {

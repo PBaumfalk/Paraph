@@ -89,6 +89,7 @@ export interface Config {
   anchorIntervalMinutes: number;
   metricsToken?: string;
   devMode: boolean;
+  probeMode?: boolean;
   version: string;
 }
 
@@ -189,6 +190,8 @@ export function loadConfig(overrides: Partial<Config> = {}): Config {
     anchorIntervalMinutes: Math.max(5, int('ANCHOR_INTERVAL_MINUTES', 60)),
     metricsToken: env('METRICS_TOKEN'),
     devMode: bool('DEV_MODE', false),
+    // Probebetrieb (install.sh --probe): ohne Mailserver ist das gewollt – Diagnose warnt statt Fehler
+    probeMode: bool('PARAPH_PROBE', false),
     version: process.env.PARAPH_BUILD_VERSION ?? '0.2.0-dev',
     ...overrides,
   };

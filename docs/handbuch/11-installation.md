@@ -2,6 +2,8 @@
 
 Dieses Kapitel richtet sich an die IT, die Paraph auf einem eigenen Server in Betrieb nimmt. Es beschreibt die Voraussetzungen, das Installationsskript `scripts/install.sh` Schritt für Schritt, den Reverse Proxy, die Freigaben in der Firewall und die Ersteinrichtung im Browser. Stand: Version 0.2.0 und der unveröffentlichte Stand laut `CHANGELOG.md`.
 
+> **Schneller ans Ziel:** Zum Ausprobieren auf einem Mac oder Linux-Rechner genügt `./scripts/install.sh --probe`. Paraph läuft dann unter `http://localhost:8080`, ohne Domain, HTTPS und E-Mail. Wer die Installation von Claude Code ausführen lassen möchte, findet fertige Aufträge für beide Wege in [Kapitel 18](18-installation-mit-claude-code.md).
+
 Alle Umgebungsvariablen erklärt [Kapitel 12](12-konfiguration.md). Sicherung, Wiederherstellung und Updates stehen in [Kapitel 13](13-sicherung-und-updates.md).
 
 ## Voraussetzungen prüfen
@@ -22,7 +24,7 @@ Ohne Docker braucht Paraph Node.js 24 (`package.json`: `"node": ">=24"`). Dieses
 
 ## Paraph auf den Server holen
 
-Der Quellcode liegt im Repository `github.com/PBaumfalk/Paraph`. Das Repository ist privat; Sie brauchen dafür einen Zugang.
+Der Quellcode liegt im Repository `github.com/PBaumfalk/Paraph`.
 
 ```sh
 git clone https://github.com/PBaumfalk/Paraph.git /opt/paraph
@@ -104,7 +106,8 @@ sudo PARAPH_NONINTERACTIVE=1 \
 | `PARAPH_APP_URL` | abweichende öffentliche Adresse (Vorgabe `https://<Domain>`) |
 | `PARAPH_EXTRA_ENV` | weitere Zeilen, die an eine **neu angelegte** `.env` angehängt werden |
 | `PARAPH_SKIP_BUILD=1` | nicht bauen, sondern das Image aus `PARAPH_IMAGE` verwenden. Es muss lokal vorhanden sein. |
-| `PARAPH_ALLOW_NONROOT=1` | ohne root ausführen. Die Schlüssel gehören dann nicht UID 1000. Nur für Tests. |
+| `PARAPH_ALLOW_NONROOT=1` | ohne root ausführen. Die Schlüssel gehören dann nicht UID 1000. Nur für Tests. Unter Linux bricht das Skript ab, wenn das Konto nicht UID 1000 hat, weil der Container die Schlüssel sonst nicht lesen kann. |
+| `PARAPH_QUIET_SECRETS=1` | die Wiederherstellungs-Passphrase am Ende nicht anzeigen, sondern nur ihren Ablageort nennen. Gedacht für Installationen durch einen Assistenten wie Claude Code ([Kapitel 18](18-installation-mit-claude-code.md)). |
 
 ### install.sh erneut aufrufen
 
@@ -127,7 +130,7 @@ Der GitHub-Workflow (`.github/workflows/ci.yml`) baut bei jeder Freigabe (Git-Ta
 | `0.2.0`, `0.2` | Freigabe aus einem Git-Tag `v0.2.0` |
 | `latest` | die letzte Freigabe |
 
-Verwenden Sie für den Betrieb einen Versions-Tag. Ist das Paket nicht öffentlich, melden Sie sich vorher an (`docker login ghcr.io` mit einem Token, das Pakete lesen darf).
+Verwenden Sie für den Betrieb einen Versions-Tag. Solange das Paket auf GitHub nicht öffentlich ist, melden Sie sich vorher an (`docker login ghcr.io` mit einem Token, das Pakete lesen darf).
 
 Erstinstallation mit dem fertigen Image:
 

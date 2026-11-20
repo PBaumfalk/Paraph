@@ -298,7 +298,14 @@ try {
   await jb.login('dora@kanzlei.test', 'docker-passwort-123');
   const ev = await jb.req('GET', `/api/v1/envelopes/${old.id}/files/evidence`);
   check('J4 Neue Umgebung: finales PDF identisch, Nachweispaket lesbar', sha((await jb.req('GET', `/api/v1/envelopes/${old.id}/files/final`)).buf) === old.pdfSha && ev.status === 200);
-  check('J5 Neue Umgebung: Audit-Prüfung (inkl. Verankerung)', /Abweichungen/.test(dcB('exec -T paraph paraph verify-audit')));
+  // Ausgabe samt stderr und Exit-Code auswerten: „läuft durch“ reicht nicht, die Ketten müssen heil und die Verankerung ohne Abweichung sein
+  const va = dcB(`exec -T paraph sh -c "paraph verify-audit 2>&1; echo exit=\\$?"`);
+  const vaChecked = Number(/(\d+) Vorgänge geprüft/.exec(va)?.[1] ?? 0);
+  check(
+    'J5 Neue Umgebung: Audit-Ketten heil, Verankerung ohne Abweichung',
+    /exit=0\s*$/.test(va) && vaChecked > 0 && /\b0 mit beschädigter Kette/.test(va) && /\b0 Abweichungen\./.test(va),
+    va.split('\n').filter((l) => /geprüft|Abweichungen|exit=|FEHLER|Verankerung:/.test(l)),
+  );
 
   // ───────── H: Härtung ─────────
   check('H3 Container läuft als UID 1000', dcB('exec -T paraph id -u').trim() === '1000');

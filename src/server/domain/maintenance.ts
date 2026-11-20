@@ -37,7 +37,7 @@ export function reminderScan(ctx: Ctx) {
     .prepare(
       `SELECT r.id AS rid, e.id AS eid, e.reminder_days, COALESCE(r.last_reminded_at, r.sent_at) AS since
        FROM recipients r JOIN envelopes e ON e.id = r.envelope_id
-       WHERE e.status = 'sent' AND e.reminder_days > 0 AND e.test_mode = 0 AND e.notify = 1 AND r.status IN ('sent','opened')`,
+       WHERE e.status = 'sent' AND e.reminder_days > 0 AND e.test_mode = 0 AND e.notify = 1 AND r.status IN ('sent','opened') AND COALESCE(r.invite_channel, 'email') = 'email'`,
     )
     .all() as any[];
   let n = 0;

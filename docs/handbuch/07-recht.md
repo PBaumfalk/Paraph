@@ -6,7 +6,7 @@ Dieses Kapitel ordnet ein, was eine Unterschrift mit Paraph rechtlich leistet un
 
 ## Stand der anwaltlichen Freigabe
 
-Die rechtlichen Prüfpunkte stehen in `docs/recht/FREIGABELISTE.md`, die Begründungen in `docs/recht/formhinweise-analyse.md`. Beide sind eine technische Vorbereitung vom 22.10.2026 und tragen den Status **„NICHT ANWALTLICH FREIGEGEBEN“**. Kein Punkt der Liste ist bisher abgehakt.
+Die rechtlichen Prüfpunkte stehen in `docs/recht/FREIGABELISTE.md`, die Begründungen in `docs/recht/formhinweise-analyse.md`. Beide sind eine technische Vorbereitung vom 22.10.2026 und tragen den Status **„NICHT ANWALTLICH FREIGEGEBEN“**. Kein Punkt der Liste ist bisher abgehakt. Die Liste ist als Prüfliste für Ihre Kanzlei gedacht: Wer Paraph produktiv einsetzt, lässt die Punkte von einer eigenen Anwältin oder einem eigenen Anwalt prüfen und trägt die Entscheidungen ein.
 
 | Gruppe | Inhalt | Bedeutung |
 |---|---|---|

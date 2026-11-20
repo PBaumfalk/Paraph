@@ -20,6 +20,7 @@ export type MailKind =
   | 'password_reset'
   | 'owner_completed'
   | 'owner_declined'
+  | 'owner_handover'
   | 'form_otp'
   | 'system_alert'
   | 'delivery_failed'
@@ -98,6 +99,11 @@ const T: Record<'de' | 'en', Record<MailKind, { subject: string; body: string; b
       body: '{{actor}} hat „{{title}}“ abgelehnt.\n\nBegründung: {{reason}}',
       button: 'Vorgang öffnen',
     },
+    owner_handover: {
+      subject: 'Link übergeben: {{recipient}} ist an der Reihe – {{title}}',
+      body: 'Bei „{{title}}“ ist jetzt {{recipient}} <{{email}}> an der Reihe.\n\nDer Vorgang wurde ohne E-Mail-Einladungen versendet, deshalb hat Paraph {{recipient}} nicht benachrichtigt. Stellen Sie auf der Vorgangsseite über „Link selbst weitergeben“ den Link aus und übergeben Sie ihn.',
+      button: 'Vorgang öffnen',
+    },
   },
   en: {
     signing_request: {
@@ -127,6 +133,7 @@ const T: Record<'de' | 'en', Record<MailKind, { subject: string; body: string; b
     delivery_failed: { subject: 'Delivery failed: {{title}}', body: 'The email to {{recipient}} <{{email}}> about “{{title}}” could not be delivered.\n\nReason: {{error}}\n\nPlease check the address and resend from the envelope, or hand over the link another way.', button: 'Open envelope' },
     test: { subject: 'Paraph: test email', body: 'This test email confirms that Paraph can send through the configured mail server.\n\nSender: {{from}}\nTime: {{at}}' },
     owner_declined: { subject: 'Declined: {{title}}', body: '{{actor}} declined “{{title}}”.\n\nReason: {{reason}}', button: 'Open' },
+    owner_handover: { subject: 'Hand over link: {{recipient}} is next – {{title}}', body: '{{recipient}} <{{email}}> is now next on “{{title}}”.\n\nThe envelope was sent without email invitations, so Paraph did not notify {{recipient}}. Issue the link on the envelope page via “Pass on link yourself” and hand it over.', button: 'Open' },
   },
 };
 
@@ -303,7 +310,7 @@ function fromOf(ctx: Ctx, name: string | null) {
   return { name: name ?? 'Paraph', address: fromAddr };
 }
 
-const SYSTEM_KINDS = new Set(['system_alert', 'delivery_failed', 'test', 'owner_completed', 'owner_declined']);
+const SYSTEM_KINDS = new Set(['system_alert', 'delivery_failed', 'test', 'owner_completed', 'owner_declined', 'owner_handover']);
 
 /** Sendet sofort (ohne Warteschlange) – für die Test-E-Mail der Administration. */
 export async function sendTestMail(ctx: Ctx, orgId: string, to: string) {

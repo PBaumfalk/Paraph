@@ -101,7 +101,8 @@ export async function runDiagnostics(ctx: Ctx, opts: { deep?: boolean } = {}): P
   add('mail_queue', 'E-Mail', 'Zustellung (7 Tage)', failedMails ? 'warn' : queuedMails ? 'warn' : 'ok', `${failedMails} nicht zugestellt, ${queuedMails} warten länger als 15 Minuten`);
 
   // ── Externe Dienste
-  if (!cfg.smtp) add('smtp', 'E-Mail', 'Mailserver', 'fail', 'SMTP_URL fehlt – Einladungen, Codes und Abschlussmitteilungen werden nicht versendet.');
+  if (!cfg.smtp && cfg.probeMode) add('smtp', 'E-Mail', 'Mailserver', 'warn', 'Probebetrieb ohne Mailserver – Einladungen gehen nicht per E-Mail hinaus, die Links werden selbst weitergegeben.');
+  else if (!cfg.smtp) add('smtp', 'E-Mail', 'Mailserver', 'fail', 'SMTP_URL fehlt – Einladungen, Codes und Abschlussmitteilungen werden nicht versendet.');
   else if (opts.deep) {
     const r = await verifySmtp(ctx);
     add('smtp', 'E-Mail', 'Mailserver', r.ok ? 'ok' : 'fail', r.ok ? `erreichbar, Anmeldung erfolgreich, ${r.secure}` : r.error!.message);

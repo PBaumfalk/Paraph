@@ -135,7 +135,7 @@ Jede Person hat je Organisation genau eine Rolle. Grundlage ist `src/server/doma
 | Vorlagen ansehen | ja | ja | ja | ja |
 | Vorlagen anlegen und bearbeiten | ja | ja | ja, nur eigene | nein |
 | Kontakte nutzen | ja | ja | ja | nein |
-| Organisation, Erscheinungsbild, Aufbewahrung, Siegel einsehen | ja | ja | nein | nein |
+| Organisation, Erscheinungsbild, E-Mail-Texte, Aufbewahrung, Siegel einsehen und ändern | ja | ja | nein | nein |
 | Team verwalten | ja | ja | nein | nein |
 | API-Schlüssel und Webhooks | ja | ja | nein | nein |
 | Aktivität ansehen | ja | ja | nein | nein |
@@ -146,7 +146,7 @@ Die Oberfläche fasst das so zusammen: „Mitglied: eigene Vorgänge und Vorlage
 
 Regeln für Inhaber:
 
-- Nur Inhaber laden weitere Inhaber ein, ernennen sie oder ändern Inhaberrechte.
+- Nur Inhaber laden weitere Inhaber ein, ernennen sie oder ändern Inhaberrechte. Wer „Administration“ hat, sieht die Rolle „Inhaber“ deshalb nicht zur Auswahl, und die Rolle eines Inhabers ist für ihn nicht änderbar.
 - Eine Organisation braucht mindestens einen Inhaber. Den letzten kann niemand herabstufen oder entfernen.
 
 ### Eine Rolle ändern

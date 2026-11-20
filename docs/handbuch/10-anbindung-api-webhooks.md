@@ -206,7 +206,7 @@ Ein typischer Ablauf:
 
 1. Vorgang mit `"send": true`, `"notify": false` und dem Aktenzeichen in `external_ref` anlegen.
 2. Die Links aus `signing_links` in der Kanzleisoftware an die Mandantin übergeben (E-Mail aus der Akte, beA, Portal).
-3. Einen Webhook auf `recipient.notified` und `envelope.completed` einrichten. Ist bei Reihenfolge `sequential` die nächste Person an der Reihe, meldet `recipient.notified` das; den Link holt Ihr System mit `POST /api/v1/envelopes/{id}/recipients/{rid}/link`.
+3. Einen Webhook auf `recipient.notified` und `envelope.completed` einrichten. Ist bei Reihenfolge `sequential` die nächste Person oder nach einer Weitergabe die Vertretung an der Reihe, meldet `recipient.notified` das mit `"channel": "link_handover"`; den Link holt Ihr System mit `POST /api/v1/envelopes/{id}/recipients/{rid}/link`. Den Link selbst enthält der Webhook nicht, damit keine gültigen Links in Zustellprotokollen liegen.
 4. Bei `envelope.completed` das unterschriebene PDF laden und zur Akte legen.
 5. Vorgänge zu einer Akte finden Sie über `GET /api/v1/envelopes?external_ref=123/26`.
 
@@ -214,7 +214,7 @@ Der Audit-Trail vermerkt bei der Benachrichtigung den Kanal `link_handover`.
 
 Was Sie wissen sollten:
 
-- `notify: false` gilt für den ganzen Vorgang: Auch später folgende Personen und Vertretungen erhalten keine E-Mail, und automatische Erinnerungen entfallen.
+- `notify: false` gilt für den ganzen Vorgang: Auch später folgende Personen und Vertretungen erhalten keine E-Mail, und automatische Erinnerungen entfallen. Gehört der Vorgang einem Kanzleimitglied (bei API-Schlüsseln: wer den Schlüssel angelegt hat), bekommt es eine E-Mail „Link übergeben: … ist an der Reihe“, sobald eine solche Person an die Reihe kommt.
 - `POST …/recipients/{rid}/link` erzeugt einen neuen Link ohne E-Mail. Alle bisherigen Links der Person werden ungültig, und offene Sitzungen auf der Signaturseite enden.
 - Eine ausdrücklich ausgelöste Erinnerung (`POST …/recipients/{rid}/remind`) versendet dagegen bewusst eine E-Mail mit neuem Link. Der unmittelbar vorherige Link bleibt gültig, ältere verfallen.
 - Beide Aufrufe funktionieren nur, solange der Vorgang läuft und die Person an der Reihe ist (sonst HTTP 409 `not_active` bzw. `not_pending`).
@@ -289,7 +289,7 @@ In der Oberfläche zeigt jeder Webhook seine letzten zehn Zustellungen mit Statu
 | `envelope.declined` | Vorgang durch Ablehnung beendet | `envelope_id` |
 | `envelope.voided` | Vorgang widerrufen | `envelope_id`, `reason` |
 | `envelope.expired` | Vorgang abgelaufen | `envelope_id` |
-| `recipient.notified` | Person ist an der Reihe (E-Mail, Linkübergabe oder Testmodus) | `envelope_id`, `recipient_id`, `email` |
+| `recipient.notified` | Person ist an der Reihe | `envelope_id`, `recipient_id`, `email`, `channel` (`email`, `link_handover`, `test_mode` oder `public_form`) |
 | `recipient.viewed` | Person hat den Link erstmals geöffnet | `envelope_id`, `recipient_id` |
 | `recipient.signed` | Person hat ihren Teil abgeschlossen | `envelope_id`, `recipient_id`, `kind` |
 | `recipient.declined` | Person hat abgelehnt | `envelope_id`, `recipient_id`, `reason` |
@@ -394,10 +394,11 @@ Die Signaturseite lässt sich per `<iframe>` in eine eigene Anwendung einbetten,
      if (e.origin !== 'https://sign.kanzlei.example') return;
      if (e.data?.type === 'paraph:completed') { /* e.data.envelope_id */ }
      if (e.data?.type === 'paraph:declined')  { /* … */ }
+     if (e.data?.type === 'paraph:delegated') { /* an Vertretung weitergegeben, Vorgang läuft weiter */ }
    });
    ```
 
-`origin` ist beim Anlegen des Einbettungslinks Pflicht und muss unter „Einbettung“ freigegeben sein, sonst antwortet Paraph mit HTTP 400 `origin_not_allowed`. Die Nachrichten `paraph:completed` und `paraph:declined` gehen nur an genau diese Herkunft. Verlassen Sie sich für den Abschluss nicht allein auf `postMessage`, sondern prüfen Sie den Status per API oder Webhook.
+`origin` ist beim Anlegen des Einbettungslinks Pflicht und muss unter „Einbettung“ freigegeben sein, sonst antwortet Paraph mit HTTP 400 `origin_not_allowed`. Die Nachrichten `paraph:completed`, `paraph:declined` und `paraph:delegated` gehen nur an genau diese Herkunft. Verlassen Sie sich für den Abschluss nicht allein auf `postMessage`, sondern prüfen Sie den Status per API oder Webhook.
 
 ## Die wichtigsten Endpunkte
 

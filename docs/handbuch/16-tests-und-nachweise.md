@@ -25,6 +25,7 @@ Die Kernabläufe sind als Testfälle A bis L benannt. Jeder ist mindestens in Vi
 | B | zwei Unterzeichner nacheinander, mehrseitiges Dokument; Reihenfolge eingehalten, beide Unterschriften im Ergebnis | Vitest |
 | C | Unterschreiben auf dem Smartphone mit Finger, Pflichtfeldern, Kontrollkästchen und Datum; kein horizontales Scrollen | Playwright `e2e/c-mobile.spec.ts` auf Pixel 7 (Chromium) und iPhone 14 (WebKit) |
 | D | Ablehnung mit Begründung; danach kein Abschluss möglich | Vitest; Playwright `e2e/d-e-h.spec.ts` |
+| D2 | Vertretung bei Linkübergabe: Signaturseite zeigt „Weitergegeben“ statt „Abgelehnt“, Menü der Signaturseite vollständig sichtbar, Kanzlei erhält Hinweis-E-Mail und stellt den Link auf der Vorgangsseite aus | Playwright `e2e/d-e-h.spec.ts` |
 | E | Widerruf (auch bei geöffneter Sitzung), Ablauf, Erinnerung (vorheriger Link bleibt gültig, „Neuer Link“ widerruft beide) | Vitest; Playwright (Widerruf) |
 | F | Mandantentrennung: fremde Organisation sieht und lädt nichts, auch nicht per API-Schlüssel; CSRF abgewiesen; nur eigene Felder setzbar | Vitest |
 | G | API und Webhooks: Ankertext-Felder, Idempotency-Key, Webhook-Signatur, Wiederholung nach HTTP 500, SSRF-Sperre, Testmodus getrennt, widerrufener und abgelaufener Schlüssel; Linkübergabe mit `notify: false` über den ganzen Vorgang; OpenAPI-Dokument | Vitest `tests/api-webhooks.test.ts` |
@@ -42,6 +43,8 @@ Die Kernabläufe sind als Testfälle A bis L benannt. Jeder ist mindestens in Vi
 |---|---|
 | `tests/flows.test.ts` | Abläufe A, B, D, E, F, H und L |
 | `tests/api-webhooks.test.ts` | Ablauf G, Testmodus, OpenAPI, Linkübergabe ohne E-Mail |
+| `tests/verify-contents.test.ts` | Siegelprüfung liest den Signaturwert über die DER-Länge, auch wenn er auf ein Null-Byte endet |
+| `tests/handover.test.ts` | Einladungswege: öffentliches Formular mit fester Kanzlei-Rolle (nacheinander und gleichzeitig, keine Erinnerung an Besucher), Linkübergabe bei „Nacheinander“ und bei Vertretung meldet sich beim Absender, Webhook-Feld `channel` |
 | `tests/integrity.test.ts` | Siegel mit geprüftem Zeitstempel (PAdES-B-T); wiederverwendete fremde Zeitstempelantwort abgelehnt, Siegel fällt sichtbar auf B-B zurück; nachträglich eingesetzter Zeitstempel über andere Daten erkannt; nach der Unterschrift geänderter Wert gelangt nicht ins finale PDF; ausgetauschtes Unterschriftsbild erkannt; Merkle-Prüfpfade für alle Baumgrößen; Anker verkettet und gestempelt, Entwürfe nicht verankert; neu berechnete Kette löst Alarm aus; gefälschte Ankerkette mit neuen Zeitstempeln zeigt Rückdatierung; gelöschte oder neu berechnete Anker erkannt; Nachweispaket mit Verankerung; fremde Signatur mit vorangestelltem Instanzzertifikat nicht anerkannt; Zeitstempel eines selbst erzeugten Dienstes abgelehnt |
 | `tests/hardening.test.ts` | Befunde der Sicherheitsprüfungen (Code-Sperre, Mindestlänge, `TRUST_PROXY`, Test/Live-Trennung, eingefrorene Formeln, PNG-Bombe, „Neuer Link“ beendet Sitzungen, API-Schlüssel entfernter Personen); Diagnose; Metriken nur mit Token; Sperren und letzte Instanz-Administration; Kopie vor Migration, keine Rückstufung; SMTP: nur verschlüsselt, Server ohne STARTTLS abgewiesen, dauerhaft abgelehnte Adresse ohne Wiederholung, Fehlermeldungen ohne Zugangsdaten; sichere Weiterleitung nach der Anmeldung |
 | `tests/backup.test.ts` | Sicherung vollständig verschlüsselt; Manipulation, Abschneiden und falsche Schlüssel erkannt; Katastrophenfall mit Passphrase; kein Überschreiben ohne `--force`; Altformat nur mit ausdrücklichem Schalter; unvollständige Sicherung verdrängt keine vollständige |
@@ -78,7 +81,7 @@ Test F („Systemseite, Benutzerverwaltung, Datenschutzhinweis, Prüfstelle“, 
 | M – E-Mail | M1 Einladung über STARTTLS mit Anmeldung zugestellt; M2 Betreff und Empfänger korrekt; M3 Tiefenprüfung meldet „STARTTLS (erzwungen)“; M4 `paraph doctor` läuft im Container |
 | D – Dokumente | D1 DOCX wird über Gotenberg in PDF umgewandelt |
 | I – Neustart | I1 Daten und Audit-Kette nach `down`/`up` intakt |
-| J – Katastrophenfall | J1 Sicherung enthält den Hauptschlüssel; J2 Sicherung ohne SQLite-Klartext; J3 `restore.sh` auf neuer Installation übernimmt den Schlüssel per Passphrase; J4 finales PDF identisch, Nachweispaket lesbar; J5 `paraph verify-audit` läuft in der neuen Umgebung |
+| J – Katastrophenfall | J1 Sicherung enthält den Hauptschlüssel; J2 Sicherung ohne SQLite-Klartext; J3 `restore.sh` auf neuer Installation übernimmt den Schlüssel per Passphrase; J4 finales PDF identisch, Nachweispaket lesbar; J5 `paraph verify-audit` in der neuen Umgebung: Exit-Code 0, mindestens ein Vorgang geprüft, keine beschädigte Kette, keine Abweichung der Verankerung |
 | H – Härtung | H1 Schlüsseldatei nicht für andere lesbar; H2 `.env` mit 0600; H3 Container läuft als UID 1000; H4 Root-Dateisystem schreibgeschützt; H5 Gotenberg im internen Netz ohne Internetzugang |
 
 Der Test läuft lokal unter Docker Desktop (macOS). Auf einem Linux-Server ist er noch nicht ausgeführt.
