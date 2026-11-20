@@ -137,10 +137,19 @@ function stripZeros(b: Buffer) {
   return b.subarray(i);
 }
 
+/**
+ * 8 Zufallsbytes als positive, minimal kodierte DER-Ganzzahl: erstes Byte 0x40–0x7f. Ein führendes 0x00
+ * (vorher bei etwa jeder 256. Anfrage) ist nicht minimal – OpenSSL-basierte Dienste lehnen die Anfrage dann ab.
+ */
+export function timestampNonce(): Buffer {
+  const nonce = randomBytes(8);
+  nonce[0] = (nonce[0] & 0x3f) | 0x40;
+  return nonce;
+}
+
 /** Fordert einen Zeitstempel über einen bereits berechneten SHA-256-Wert an und prüft die Antwort vollständig. */
 export async function requestTimestamp(tsaUrl: string, digest: Uint8Array): Promise<{ token: pkijs.ContentInfo; info: TimestampInfo }> {
-  const nonce = randomBytes(8);
-  nonce[0] &= 0x7f;
+  const nonce = timestampNonce();
   const req = new pkijs.TimeStampReq({
     version: 1,
     messageImprint: new pkijs.MessageImprint({
