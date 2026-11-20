@@ -123,14 +123,16 @@ Ein zweiter Aufruf überschreibt weder `secrets/master.key` noch `secrets/backup
 
 ## Das fertige Image von GitHub verwenden
 
-Der GitHub-Workflow (`.github/workflows/ci.yml`) baut bei jeder Freigabe (Git-Tag `v*`) nach erfolgreichen Tests und einem Rauchtest ein Image für amd64 und arm64 und veröffentlicht es unter `ghcr.io/pbaumfalk/paraph`. Pushes auf `main` werden gebaut und geprüft, aber nicht veröffentlicht, weil Images bei privaten Repositories zum Speicherkontingent des Kontos zählen.
+Der GitHub-Workflow (`.github/workflows/ci.yml`) baut nach erfolgreichen Tests und einem Rauchtest ein Image für amd64 und arm64 und veröffentlicht es öffentlich unter [`ghcr.io/pbaumfalk/paraph`](https://github.com/PBaumfalk/Paraph/pkgs/container/paraph). Eine Anmeldung bei GitHub ist zum Herunterladen nicht nötig.
 
-| Tag | Inhalt |
-|---|---|
-| `0.2.0`, `0.2` | Freigabe aus einem Git-Tag `v0.2.0` |
-| `latest` | die letzte Freigabe |
+| Tag | Inhalt | Wofür |
+|---|---|---|
+| `0.2.0`, `0.2` | Freigabe aus einem Git-Tag `v0.2.0` | Betrieb |
+| `latest` | die letzte Freigabe | Ausprobieren |
+| `main` | der aktuelle Stand von `main`, nach jeder Änderung neu | Testen neuer Funktionen vor der nächsten Freigabe |
+| `main-<Commit>` | ein bestimmter Stand von `main`, z. B. `main-424bd3f` | Zurückverfolgen eines Testbetriebs |
 
-Verwenden Sie für den Betrieb einen Versions-Tag. Solange das Paket auf GitHub nicht öffentlich ist, melden Sie sich vorher an (`docker login ghcr.io` mit einem Token, das Pakete lesen darf).
+Verwenden Sie für den Betrieb einen Versions-Tag. `main` kann Änderungen enthalten, die noch nicht freigegeben sind. Die Versionsnummer im Image ist dann noch die der letzten Freigabe.
 
 Erstinstallation mit dem fertigen Image:
 

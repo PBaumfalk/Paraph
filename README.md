@@ -4,6 +4,7 @@
 
 [![Tests](https://github.com/PBaumfalk/Paraph/actions/workflows/ci.yml/badge.svg)](https://github.com/PBaumfalk/Paraph/actions/workflows/ci.yml)
 [![Lizenz: MIT](https://img.shields.io/badge/Lizenz-MIT-blue.svg)](LICENSE)
+[![Docker-Image](https://img.shields.io/badge/Docker-ghcr.io%2Fpbaumfalk%2Fparaph-blue?logo=docker&logoColor=white)](https://github.com/PBaumfalk/Paraph/pkgs/container/paraph)
 
 **Mandatsvereinbarungen, Vollmachten und Erklärungen elektronisch unterschreiben lassen, auf dem eigenen Server der Kanzlei.**
 
@@ -53,6 +54,8 @@ sudo ./scripts/install.sh
 ```
 
 Das Skript fragt Domain, HTTPS, SMTP und Zeitstempeldienst ab. Es erzeugt die Schlüssel als Docker-Secrets und startet Paraph mit automatischem HTTPS. Am Ende zeigt es den Einrichtungscode für `https://IHRE-DOMAIN/setup` und die Wiederherstellungs-Passphrase. **Übernehmen Sie die Passphrase sofort in einen Passwortmanager.** Einen erneuten Aufruf übersteht das Skript ohne Schaden: Schlüssel und Konfiguration bleiben unverändert.
+
+Statt selbst zu bauen, können Sie das fertige Image `ghcr.io/pbaumfalk/paraph` verwenden (amd64 und arm64, [Kapitel 11](docs/handbuch/11-installation.md#das-fertige-image-von-github-verwenden)).
 
 Prüfen: `sudo docker compose exec paraph paraph doctor`. Updates: `sudo ./scripts/update.sh` (mit `--rollback` zurück). Alles Weitere, auch hinter nginx oder Traefik: [Kapitel 11](docs/handbuch/11-installation.md).
 </details>
