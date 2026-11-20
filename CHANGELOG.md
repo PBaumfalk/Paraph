@@ -78,6 +78,10 @@ Konfiguration zwischen Versionen ändern; `update.sh` migriert die Daten.
 
 ### Behoben
 
+- Versanddialog: „Jetzt versenden“ war für einen Moment klickbar, bevor die
+  Vorabprüfung (Formhinweise, fehlende Felder) geladen war; ein Klick endete
+  dann in einer Fehlermeldung des Servers. Der Knopf wartet jetzt auf die
+  Prüfung. Der Browser-Test F schlug dadurch gelegentlich fehl.
 - **Siegelprüfung:** Endete der Signaturwert eines Siegels zufällig auf ein
   Null-Byte (etwa jedes 256. Siegel), schnitt „Zusätzlich das eingebettete
   Siegel prüfen“ dieses Byte ab und meldete ein unverändertes Dokument als

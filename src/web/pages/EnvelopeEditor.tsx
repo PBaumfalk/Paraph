@@ -449,7 +449,8 @@ function SendDialog({ env, recs, onClose, onSent }: { env: any; recs: RecDraft[]
       footer={
         <>
           <button className="btn" onClick={onClose}>{t('Zurück zum Dokument')}</button>
-          <button className="btn btn-primary" disabled={busy || problems.length > 0 || (warnings.length > 0 && !ack)} onClick={send}>
+          {/* Erst nach der Vorabprüfung freigeben: vorher wären Formhinweise und fehlende Felder noch unbekannt */}
+          <button className="btn btn-primary" disabled={busy || !check.data || check.isFetching || problems.length > 0 || (warnings.length > 0 && !ack)} onClick={send}>
             <Send /> {notify ? t('Jetzt versenden') : t('Starten und Links anzeigen')}
           </button>
         </>
