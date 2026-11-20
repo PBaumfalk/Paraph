@@ -1,6 +1,6 @@
 # Paraph – Handbuch
 
-Paraph ist eine selbst gehostete Plattform für elektronische Unterschriften, etwa für Unternehmen, Kanzleien, Steuerbüros, Vereine und Verwaltungen. Dieses Handbuch erklärt jede Funktion an der Stelle, an der Sie sie im Alltag brauchen. Stand: 20.11.2026, Version 0.3.0 ([Änderungsprotokoll](../../CHANGELOG.md)).
+Paraph ist eine selbst gehostete Plattform für elektronische Unterschriften, etwa für Unternehmen, Kanzleien, Steuerbüros, Vereine und Verwaltungen. Dieses Handbuch erklärt jede Funktion an der Stelle, an der Sie sie im Alltag brauchen. Stand: 20.11.2026, Version 0.3.1 ([Änderungsprotokoll](../../CHANGELOG.md)).
 
 ## Wo fange ich an?
 

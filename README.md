@@ -17,7 +17,7 @@ Paraph läuft auf **Ihrem eigenen Server**: ohne Abo, ohne Preis pro Dokument, o
 ![Abgeschlossener Vorgang: Siegel, „Alle haben unterschrieben.“ und die Ergebnis-Dateien](docs/screenshots/vorgang.png)
 
 > [!IMPORTANT]
-> **Version 0.3.0 ist eine Vorabversion.** Die Technik ist geprüft. Die mitgelieferten Erklärungs- und Formhinweistexte sind aber noch nicht juristisch freigegeben, und der Betrieb mit echtem Mailserver und Let's Encrypt ist noch nicht abgenommen. Was das bedeutet: [Recht](docs/handbuch/07-recht.md) und [Grenzen](docs/handbuch/17-grenzen.md).
+> **Version 0.3.1 ist eine Vorabversion.** Die Technik ist geprüft. Die mitgelieferten Erklärungs- und Formhinweistexte sind aber noch nicht juristisch freigegeben, und der Betrieb mit echtem Mailserver und Let's Encrypt ist noch nicht abgenommen. Was das bedeutet: [Recht](docs/handbuch/07-recht.md) und [Grenzen](docs/handbuch/17-grenzen.md).
 
 ## 📖 Handbuch
 
