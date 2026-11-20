@@ -148,7 +148,7 @@ export default function TemplateEditor() {
                   </select>
                 </div>
                 <details>
-                  <summary className="hint" style={{ cursor: 'pointer' }}>{t('Feste Person (z. B. Anwältin, die immer gegenzeichnet)')}</summary>
+                  <summary className="hint" style={{ cursor: 'pointer' }}>{t('Feste Person (z. B. Geschäftsführung, die immer gegenzeichnet)')}</summary>
                   <div className="stack-sm" style={{ marginTop: 8 }}>
                     <input className="input" placeholder={t('Name')} value={r.default_name ?? ''} onChange={(e) => updRole(i, { default_name: e.target.value || undefined })} />
                     <input className="input" type="email" placeholder={t('E-Mail-Adresse')} value={r.default_email ?? ''} onChange={(e) => updRole(i, { default_email: e.target.value || undefined })} />

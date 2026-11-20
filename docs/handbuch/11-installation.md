@@ -14,7 +14,7 @@ Alle Umgebungsvariablen erklärt [Kapitel 12](12-konfiguration.md). Sicherung, W
 | Software | Docker und Docker Compose v2 (Befehl `docker compose`), `openssl`, `git` (für `update.sh`) |
 | Rechte | Root (`sudo`). Das Skript übergibt die Schlüsseldateien dem Container-Benutzer (UID 1000). |
 | Arbeitsspeicher | 2 GB frei. Paraph und Gotenberg sind in `docker-compose.yml` auf je 1 GB begrenzt (`mem_limit`). |
-| Domain | ein DNS-Eintrag, der auf den Server zeigt, z. B. `sign.kanzlei.example` |
+| Domain | ein DNS-Eintrag, der auf den Server zeigt, z. B. `sign.firma.example` |
 | HTTPS | entweder die Ports 80 und 443 frei für den mitgelieferten Caddy oder ein vorhandener Reverse Proxy (nginx, Traefik) |
 | E-Mail | ein SMTP-Konto für Einladungen und Benachrichtigungen |
 | Zeitstempel | empfohlen: ein Zeitstempeldienst nach RFC 3161. `install.sh` schlägt FreeTSA vor. |
@@ -89,11 +89,11 @@ Alle Antworten lassen sich vorgeben. Die Variablen stehen hinter `sudo`, damit s
 
 ```sh
 sudo PARAPH_NONINTERACTIVE=1 \
-     PARAPH_DOMAIN=sign.kanzlei.example \
+     PARAPH_DOMAIN=sign.firma.example \
      PARAPH_USE_CADDY=ja \
-     PARAPH_ACME_EMAIL=it@kanzlei.example \
+     PARAPH_ACME_EMAIL=it@firma.example \
      PARAPH_SMTP_URL='smtps://benutzer:passwort@smtp.example.org:465' \
-     PARAPH_MAIL_FROM='Kanzlei Muster <signatur@kanzlei.example>' \
+     PARAPH_MAIL_FROM='Firma Muster <signatur@firma.example>' \
      PARAPH_TSA_URL=freetsa \
      ./scripts/install.sh
 ```
@@ -204,10 +204,10 @@ Beachten Sie:
 server {
     listen 443 ssl;
     http2 on;
-    server_name sign.kanzlei.example;
+    server_name sign.firma.example;
 
-    ssl_certificate     /etc/letsencrypt/live/sign.kanzlei.example/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/sign.kanzlei.example/privkey.pem;
+    ssl_certificate     /etc/letsencrypt/live/sign.firma.example/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/sign.firma.example/privkey.pem;
 
     client_max_body_size 60m;
 
@@ -225,7 +225,7 @@ server {
 
 server {
     listen 80;
-    server_name sign.kanzlei.example;
+    server_name sign.firma.example;
     return 301 https://$host$request_uri;
 }
 ```
@@ -233,7 +233,7 @@ server {
 #### Caddy außerhalb von Docker
 
 ```caddy
-sign.kanzlei.example {
+sign.firma.example {
 	request_body {
 		max_size 60MB
 	}
@@ -251,7 +251,7 @@ Beispiel für den Datei-Provider (dynamische Konfiguration). Traefik begrenzt di
 http:
   routers:
     paraph:
-      rule: Host(`sign.kanzlei.example`)
+      rule: Host(`sign.firma.example`)
       entryPoints: [websecure]
       service: paraph
       tls:
@@ -275,7 +275,7 @@ http:
 
 ### Öffentlich nötige Pfade
 
-Mandantinnen und Mandanten sowie Dritte rufen Paraph ohne Anmeldung auf. Diese Pfade müssen aus dem Internet erreichbar sein (geprüft in `src/web/App.tsx`, `src/server/app.ts` und `src/server/routes/sign.ts`, `public.ts`):
+Unterzeichnende und andere Beteiligte rufen Paraph ohne Anmeldung auf. Diese Pfade müssen aus dem Internet erreichbar sein (geprüft in `src/web/App.tsx`, `src/server/app.ts` und `src/server/routes/sign.ts`, `public.ts`):
 
 | Pfad | Wer braucht ihn |
 |---|---|
@@ -284,18 +284,18 @@ Mandantinnen und Mandanten sowie Dritte rufen Paraph ohne Anmeldung auf. Diese P
 | `/f/<Kennung>` | öffentliche Formulare |
 | `/verify` | Prüfstelle |
 | `/api/sign/…` | alle Aufrufe der Signaturseite (Öffnen, Einmalcode, Felder, Unterschrift, Anhänge, Abschluss, Ablehnen, Vertretung, Download) |
-| `/api/public/…` | Prüfstelle (`/api/public/verify/hash`, `/api/public/verify/signature`), Formulare (`/api/public/forms/…`) und das Kanzlei-Logo (`/api/public/orgs/<id>/logo`) |
+| `/api/public/…` | Prüfstelle (`/api/public/verify/hash`, `/api/public/verify/signature`), Formulare (`/api/public/forms/…`) und das Logo der Organisation (`/api/public/orgs/<id>/logo`) |
 | `/assets/…` | Programmcode, Schriften und Styles der Oberfläche |
 | `/favicon.svg` | Symbol im Browser-Tab |
 | `/api/health`, `/api/health/ready` | nur für externes Monitoring. Die öffentlichen Seiten rufen sie nicht auf. |
 
 Die Seiten `/s/`, `/embed/s/`, `/f/` und `/verify` liefert Paraph als dieselbe Oberfläche aus (`index.html`); dafür ist kein weiterer Pfad nötig.
 
-### Nur für die Kanzlei nötige Pfade
+### Nur für die Organisation nötige Pfade
 
 Alle übrigen Pfade braucht nur das Team. Dazu gehören `/`, `/login`, `/setup`, `/envelopes/…`, `/templates`, `/forms`, `/activity`, `/settings/…`, `/api/auth/…` (Anmeldung, auch der OIDC-Rücksprung `/api/auth/oidc/callback`), `/api/v1/…` (Oberfläche, REST-API, Live-Strom `/api/v1/events`) und `/docs/api`. Einladungen und Passwort-Rücksetzungen verlinken auf `/invite/<Token>` und `/reset/<Token>`; diese Pfade müssen für neue Teammitglieder erreichbar sein, wo immer sie die E-Mail öffnen. `/metrics` braucht nur Ihr Monitoring (siehe [Kapitel 12](12-konfiguration.md#monitoring)).
 
-Wenn Sie die Verwaltung nur aus dem Kanzleinetz zulassen wollen, beschränken Sie diese Pfade im Proxy. Beispiel für nginx (nicht automatisiert getestet; Netze anpassen):
+Wenn Sie die Verwaltung nur aus dem internen Netz Ihrer Organisation zulassen wollen, beschränken Sie diese Pfade im Proxy. Beispiel für nginx (nicht automatisiert getestet; Netze anpassen):
 
 ```nginx
 # im http-Block
@@ -338,7 +338,7 @@ Gotenberg hat keinen Internetzugang (Netz `convert` ist `internal`).
 
 ## Eine eigene Domain je Organisation einrichten
 
-Jede Organisation kann eine eigene Domain erhalten (Einstellungen → Organisation, z. B. `unterschrift.kanzlei-b.example`, siehe [Kapitel 8](08-kanzlei-team-erscheinungsbild.md)). Dann gilt:
+Jede Organisation kann eine eigene Domain erhalten (Einstellungen → Organisation, z. B. `unterschrift.firma-b.example`, siehe [Kapitel 8](08-organisation-team-erscheinungsbild.md)). Dann gilt:
 
 - Links in E-Mails an Unterzeichner verwenden diese Domain.
 - Anfragen von dieser Domain gelten als zulässige Herkunft (Origin-Prüfung).
@@ -364,7 +364,7 @@ Anschließend empfohlen:
 - Einstellungen → System → „Tiefenprüfung“ und „Test-E-Mail senden“
 - Zwei-Faktor-Anmeldung für das eigene Konto einschalten (Einstellungen → Profil und Sicherheit, siehe [Kapitel 9](09-anmeldung-und-sso.md))
 - Link zu den Datenschutzhinweisen eintragen (Einstellungen → Organisation)
-- Erscheinungsbild und E-Mail-Absender einstellen ([Kapitel 8](08-kanzlei-team-erscheinungsbild.md))
+- Erscheinungsbild und E-Mail-Absender einstellen ([Kapitel 8](08-organisation-team-erscheinungsbild.md))
 - eine Sicherung erstellen und prüfen ([Kapitel 13](13-sicherung-und-updates.md))
 
 ![Einstellungen → System mit Diagnose, Test-E-Mail und Sicherung](bilder/einst-system.png)
@@ -377,6 +377,8 @@ Vor dem Produktivbetrieb empfiehlt `docs/STATUS-0.2.0.md` diesen Abnahmelauf:
 2. Eine Test-E-Mail an ein externes Postfach (z. B. Gmail oder Outlook) senden und in den Kopfzeilen `dkim=pass`, `spf=pass` und `dmarc=pass` prüfen. SPF, DKIM und DMARC richten Sie beim Mailanbieter ein.
 3. Einen Vorgang im Testmodus und einen echten Vorgang an sich selbst senden; das fertige PDF in Adobe Reader öffnen.
 4. `paraph backup` ausführen, die Sicherung auf ein zweites System kopieren und dort `restore.sh` einmal durchspielen ([Kapitel 13](13-sicherung-und-updates.md#einen-restore-test-durchführen)).
+
+> **Stand:** Die Erstinstallation mit `scripts/install.sh` auf einem echten Linux-Server mit eigener Domain war am 20.11.2026 erfolgreich (Rückmeldung aus dem Betrieb). Damit ist die Installation selbst geprüft. Die übrigen Punkte dieser Abnahme sind dadurch nicht einzeln belegt, insbesondere SPF, DKIM und DMARC (Punkt 2), die Wiederherstellung auf einem zweiten System (Punkt 4) und die Zertifikatsausstellung durch Let's Encrypt. Arbeiten Sie diese Punkte bei Ihrer Installation selbst ab. Siehe auch [Kapitel 17](17-grenzen.md).
 
 ---
 

@@ -50,7 +50,7 @@ Die Spalte „Tiefe“ nennt, ob eine Prüfung immer läuft (schnell) oder nur b
 | Entwicklungsmodus | schnell, nur wenn aktiv | Fehler: `DEV_MODE` ist an; Signaturlinks landen im Log | `DEV_MODE` aus `.env` entfernen, neu starten |
 | Öffentliche Adresse | schnell | OK bei `https://`; Hinweis bei `http://localhost`; Fehler bei `http://` mit anderer Adresse – Sitzungscookies und Signaturlinks sind dann ungeschützt | `APP_URL` auf die HTTPS-Adresse setzen, Reverse Proxy einrichten ([Kapitel 11](11-installation.md)) |
 | Reverse Proxy | schnell | OK: `TRUST_PROXY` gesetzt, mit Angabe der vertrauten Hops oder Adressen; Hinweis: aus, obwohl `APP_URL` HTTPS ist; Info: aus bei HTTP | Hinter einem Proxy `TRUST_PROXY=true` setzen (siehe [Proxy und IP-Adressen](#proxy-und-ip-adressen)) |
-| Datenschutzhinweise (Art. 13 DSGVO) | schnell, nur wenn betroffen | Hinweis: Für die genannten Organisationen ist kein Link auf der Signaturseite hinterlegt | Einstellungen → Organisation, Link zu den Datenschutzhinweisen eintragen ([Kapitel 8](08-kanzlei-team-erscheinungsbild.md)) |
+| Datenschutzhinweise (Art. 13 DSGVO) | schnell, nur wenn betroffen | Hinweis: Für die genannten Organisationen ist kein Link auf der Signaturseite hinterlegt | Einstellungen → Organisation, Link zu den Datenschutzhinweisen eintragen ([Kapitel 8](08-organisation-team-erscheinungsbild.md)) |
 | Ersteinrichtung | schnell, nur wenn offen | Hinweis: noch kein Konto; `/setup` ist offen | Ersteinrichtung abschließen; Einrichtungscode mit `paraph setup-code` |
 
 ### Schlüssel
@@ -122,7 +122,7 @@ Unter dem Betriebszustand bietet Einstellungen → System:
 - **„E-Mail-Versand prüfen“:** „Test-E-Mail senden“ verschickt sofort, ohne Warteschlange, eine Test-E-Mail an die eigene oder eine eingegebene Adresse (höchstens 5 je Minute). Angezeigt wird die Antwort des Mailservers („Test-E-Mail angenommen …“) oder eine verständliche Fehlermeldung. Der Versuch steht im Aktivitätsprotokoll.
 - **„Sicherung“:** Intervall, letzte Sicherung, Schlüsselmaterial; „Jetzt sichern“.
 - **„Hintergrundaufgaben und E-Mails“:** bis zu 20 endgültig fehlgeschlagene Aufgaben mit Fehlermeldung und „Erneut versuchen“, bis zu 20 nicht zugestellte E-Mails, darunter Warteschlange, Wiederholungen und Überfälliges.
-- **„Benutzerkonten der Instanz“:** Konten sperren, Zwei-Faktor zurücksetzen, Passwort-Link erzeugen, Instanz-Administration vergeben ([Kapitel 8](08-kanzlei-team-erscheinungsbild.md)).
+- **„Benutzerkonten der Instanz“:** Konten sperren, Zwei-Faktor zurücksetzen, Passwort-Link erzeugen, Instanz-Administration vergeben ([Kapitel 8](08-organisation-team-erscheinungsbild.md)).
 
 **Alarm per E-Mail:** Scheitert eine Hintergrundaufgabe endgültig (nach 8 Versuchen mit wachsendem Abstand), erhalten alle aktiven Instanz-Administratoren eine E-Mail mit Aufgabe, Fehler und Link auf die Systemseite. Höchstens eine E-Mail je Aufgabentyp in 24 Stunden. Betroffen sind E-Mail-unabhängige Aufgaben wie Abschluss eines Vorgangs, automatische Sicherung, Verankerung, Webhook-Zustellung und Löschung nach Aufbewahrungsfrist. Der E-Mail-Versand selbst löst keinen Alarm aus.
 
@@ -142,7 +142,7 @@ Beide Endpunkte sind öffentlich und vom Rate-Limit ausgenommen. Der Docker-Heal
 Mit `METRICS_TOKEN` stellt Paraph Zählwerte unter `/metrics` bereit. Ohne Token oder mit falschem Token antwortet Paraph mit 404.
 
 ```sh
-curl -H "Authorization: Bearer $METRICS_TOKEN" https://sign.kanzlei.example/metrics
+curl -H "Authorization: Bearer $METRICS_TOKEN" https://sign.firma.example/metrics
 ```
 
 | Metrik | Inhalt |
@@ -221,7 +221,7 @@ Die Zahlen sind ein Beispiel. Zeilen mit `Verankerung:` sind Abweichungen, Zeile
 ### E-Mail kommt nicht an
 
 1. Ist der Vorgang im **Testmodus**? Dann versendet Paraph bewusst keine E-Mails.
-2. Wurde der Vorgang mit **Linkübergabe** (`notify: false`) angelegt? Dann gehen keine Einladungen raus; die Kanzleisoftware übergibt die Links selbst ([Kapitel 10](10-anbindung-api-webhooks.md)).
+2. Wurde der Vorgang mit **Linkübergabe** (`notify: false`) angelegt? Dann gehen keine Einladungen raus; Ihre Fachsoftware, etwa Kanzlei-, Personal- oder CRM-Software, übergibt die Links selbst ([Kapitel 10](10-anbindung-api-webhooks.md#links-aus-der-fachsoftware-selbst-übergeben)).
 3. Einstellungen → System → „Tiefenprüfung“: Meldet „Mailserver“ einen Fehler?
 4. „Test-E-Mail senden“ an ein externes Postfach. Kommt sie nicht an, obwohl der Server sie angenommen hat, liegt das Problem hinter Paraph: Spam-Filter, SPF, DKIM, DMARC der Absenderdomain.
 5. Vorgangsseite ansehen: Dauerhaft abgelehnte Adressen erscheinen dort und im Audit-Trail; die Eigentümerin des Vorgangs wird benachrichtigt.
@@ -284,7 +284,7 @@ Symptome: Im Audit-Trail steht bei allen Personen dieselbe IP (die des Proxys), 
 
 1. `df -h` auf dem Host und die Prüfung „Freier Speicher (Datenverzeichnis)“ ansehen.
 2. Häufige Platzfresser: Sicherungen in `./backups` (Anzahl über `BACKUP_KEEP`), Kopien vor Migrationen unter `/data/backups/migrations`, alte Docker-Images (`docker image prune`), Docker-Logs.
-3. Aufbewahrung der Organisationen prüfen: Abgeschlossene Inhalte werden erst nach Ablauf der eingestellten Frist gelöscht ([Kapitel 8](08-kanzlei-team-erscheinungsbild.md)).
+3. Aufbewahrung der Organisationen prüfen: Abgeschlossene Inhalte werden erst nach Ablauf der eingestellten Frist gelöscht ([Kapitel 8](08-organisation-team-erscheinungsbild.md)).
 4. Löschen Sie keine Dateien unter `/data` von Hand. Datenbank und Dateiablage gehören zusammen.
 
 ### Sicherung veraltet oder unvollständig

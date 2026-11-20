@@ -1,10 +1,10 @@
 # 4. Vorlagen, Serien und Formulare
 
-Dieses Kapitel zeigt, wie Sie wiederkehrende Dokumente einmal einrichten und danach mit wenigen Angaben versenden – einzeln, als Serie aus einer Tabelle oder über ein öffentliches Formular. Am Ende steht die Unterschrift vor Ort in der Kanzlei. Es richtet sich an alle, die regelmäßig dieselben Dokumente unterschreiben lassen, etwa Vollmachten oder Mandatsvereinbarungen.
+Dieses Kapitel zeigt, wie Sie wiederkehrende Dokumente einmal einrichten und danach mit wenigen Angaben versenden – einzeln, als Serie aus einer Tabelle oder über ein öffentliches Formular. Am Ende steht die Unterschrift vor Ort, etwa am Empfang. Es richtet sich an alle, die regelmäßig dieselben Dokumente unterschreiben lassen, etwa Arbeitsverträge, Vollmachten oder Einwilligungen.
 
 ## Was eine Vorlage ist
 
-Eine Vorlage enthält Dokumente, Felder und Einstellungen wie ein Vorgang. Statt konkreter Personen hat sie **Rollen**, etwa „Mandant“ oder „Kanzlei“. Beim Verwenden tragen Sie nur noch Name und E-Mail je Rolle ein.
+Eine Vorlage enthält Dokumente, Felder und Einstellungen wie ein Vorgang. Statt konkreter Personen hat sie **Rollen**, etwa „Unterzeichner“ oder „Geschäftsführung“. Beim Verwenden tragen Sie nur noch Name und E-Mail je Rolle ein.
 
 Bearbeitet wird immer ein Entwurf der Vorlage. Erst **„Veröffentlichen“** macht daraus eine feste, nummerierte Version (`v1`, `v2` …). Versionen lassen sich nicht mehr ändern. Jeder Vorgang merkt sich die Version, aus der er entstanden ist. Spätere Änderungen an der Vorlage wirken nicht auf bereits angelegte Vorgänge.
 
@@ -15,7 +15,7 @@ Alle mit der Rolle „Mitglied“ und höher können Vorlagen anlegen. Mitgliede
 ![Seite „Vorlagen“ ohne Vorlagen](bilder/vorlagen.png)
 
 1. Öffnen Sie „Vorlagen“ und klicken Sie auf „Neue Vorlage“.
-2. Geben Sie einen Namen ein. Die Schaltflächen darunter schlagen typische Namen vor: „Mandatsvereinbarung“, „Vergütungsvereinbarung“, „Vollmacht“, „Empfangsbestätigung“, „Schweigepflichtentbindung“. Wählen Sie einen davon, legt Paraph gleich eine passende Rolle an (z. B. „Mandant“ mit „Code per E-Mail“) und einen Titel wie `Vollmacht – {{Vollmachtgeber.name}}`.
+2. Geben Sie einen Namen ein. Die Schaltflächen darunter schlagen typische Namen vor: „Arbeitsvertrag“, „Auftragsbestätigung“, „Einwilligung“, „Vollmacht“, „Empfangsbestätigung“. Wählen Sie einen davon, legt Paraph gleich eine passende Rolle an (z. B. „Mitarbeiter“ mit „Code per E-Mail“) und einen Titel wie `Vollmacht – {{Vollmachtgeber.name}}`.
 3. Wählen Sie optional einen „Ordner“ und unter „Sichtbar für“ „Ganze Organisation“ oder „Nur mich“.
 4. Klicken Sie auf „Anlegen und Dokument hochladen“ und wählen Sie die Datei (PDF, Word oder ODT).
 
@@ -29,7 +29,7 @@ Der Vorlagen-Editor sieht aus wie der Editor eines Vorgangs ([Kapitel 2](02-doku
 
 - „Gleichzeitig“ oder „Nacheinander“ wie beim Vorgang; bei „Nacheinander“ ändern Sie die Reihenfolge mit den Pfeilen.
 - Je Rolle: Rollenname, Art („Unterschreibt“, „Gibt frei“, „Füllt aus“, „Zeuge“, „Erhält Kopie“) und Identitätsprüfung („Nur Link“, „Code per E-Mail“, „Code per SMS“). Einen Zugangscode können Sie in Vorlagen nicht festlegen.
-- „Feste Person (z. B. Anwältin, die immer gegenzeichnet)“: Hinterlegen Sie Name und E-Mail. Beim Verwenden muss dann niemand diese Rolle ausfüllen.
+- „Feste Person (z. B. Geschäftsführung, die immer gegenzeichnet)“: Hinterlegen Sie Name und E-Mail. Beim Verwenden muss dann niemand diese Rolle ausfüllen.
 - „Wird im öffentlichen Formular von Besuchern ausgefüllt“: markiert die Rolle für ein öffentliches Formular (siehe unten). Nur eine Rolle kann so markiert sein.
 - „Rolle hinzufügen“ legt eine weitere Rolle an. Die letzte Rolle lässt sich nicht löschen.
 
@@ -37,7 +37,7 @@ Der Vorlagen-Editor sieht aus wie der Editor eines Vorgangs ([Kapitel 2](02-doku
 
 | Einstellung | Wirkung |
 |---|---|
-| „Titel des Vorgangs“ | Titel der entstehenden Vorgänge. Platzhalter: `{{Rolle.name}}`, `{{Rolle.email}}` und `{{Feldname}}` für vorbelegte Felder, z. B. `Vollmacht – {{Mandant.name}}` |
+| „Titel des Vorgangs“ | Titel der entstehenden Vorgänge. Platzhalter: `{{Rolle.name}}`, `{{Rolle.email}}` und `{{Feldname}}` für vorbelegte Felder, z. B. `Vollmacht – {{Vollmachtgeber.name}}` |
 | „Nachricht“ | Text der Einladungs-E-Mail; dieselben Platzhalter |
 | „Gültig (Tage)“ | 1 bis 365, ab Werk 30 |
 | „Erinnern alle … Tage“ | 0 (nie) bis 30, ab Werk 3 |
@@ -72,7 +72,7 @@ Private Vorlagen (Schloss-Symbol) sieht nur ihre Erstellerin. Scheidet sie aus d
 Dafür brauchen Sie eine Rolle, die Vorgänge anlegen darf; mit „Nur lesen“ fehlen „Verwenden“ und „Massenversand“. Sie starten auf drei Wegen: „Verwenden“ auf der Vorlagenkarte, „Aus Vorlage“ auf der Übersicht oder über die Befehlspalette (⌘K) unter „Vorlage verwenden“.
 
 1. Tragen Sie für jede Rolle ohne feste Person Name und E-Mail ein. Rollen mit fester Person nennt Paraph unter „Außerdem: …“.
-2. Unter „Vorbelegen“ bietet Paraph Felder an, die in der Vorlage eine Vorbelegung haben oder nach Aktenzeichen, Betrag, Honorar oder Stundensatz klingen. Tragen Sie die Werte ein. Vorbelegte Werte können die Beteiligten standardmäßig nicht ändern.
+2. Unter „Vorbelegen“ bietet Paraph Felder an, die in der Vorlage eine Vorbelegung haben oder nach Referenz, Aktenzeichen, Betrag, Honorar oder Stundensatz klingen. Tragen Sie die Werte ein. Vorbelegte Werte können die Beteiligten standardmäßig nicht ändern.
 3. Lassen Sie „Einladungen per E-Mail senden“ angehakt oder nehmen Sie den Haken heraus, um die Links selbst weiterzugeben. Ohne Mailserver ist der Haken von vornherein nicht gesetzt ([Kapitel 2](02-dokument-unterschreiben-lassen.md#links-selbst-übergeben)).
 4. Klicken Sie auf „Versenden“ bzw. „Starten und Links anzeigen“.
 
@@ -82,7 +82,7 @@ Der Vorgang wird sofort versendet; einen Entwurf gibt es dabei nicht. Gültigkei
 
 ## Viele Vorgänge auf einmal versenden
 
-Der Massenversand erzeugt aus einer veröffentlichten Vorlage und einer Tabelle viele Vorgänge – etwa eine Datenschutz-Einwilligung an alle Mandanten einer Sammelklage. Jede Zeile der Tabelle wird ein eigener Vorgang.
+Der Massenversand erzeugt aus einer veröffentlichten Vorlage und einer Tabelle viele Vorgänge – etwa eine Datenschutz-Einwilligung an alle Beschäftigten oder Vereinsmitglieder. Jede Zeile der Tabelle wird ein eigener Vorgang.
 
 1. Öffnen Sie auf der Vorlagenkarte das Menü „…“ und wählen Sie „Massenversand“.
 2. Klicken Sie auf „Spaltenvorlage herunterladen“. Sie erhalten eine CSV-Datei mit den richtigen Spaltenköpfen.
@@ -94,8 +94,8 @@ Der Massenversand erzeugt aus einer veröffentlichten Vorlage und einer Tabelle 
 
 | Spalte | Inhalt |
 |---|---|
-| `<rolle>.name`, `<rolle>.email` | Name und E-Mail je Rolle ohne feste Person, z. B. `mandant.name`, `mandant.email`. `<rolle>` ist der interne Schlüssel der Rolle; die Spaltenvorlage enthält ihn bereits. |
-| Feldname, z. B. `aktenzeichen` | Wert zum Vorbelegen dieses Feldes. Möglich für alle Felder außer Unterschrift, Paraphe, Datum der Unterschrift, Berechnung und Anhang. |
+| `<rolle>.name`, `<rolle>.email` | Name und E-Mail je Rolle ohne feste Person, z. B. `vollmachtgeber.name`, `vollmachtgeber.email`. `<rolle>` ist der interne Schlüssel der Rolle; die Spaltenvorlage enthält ihn bereits. |
+| Feldname, z. B. `referenz` | Wert zum Vorbelegen dieses Feldes. Möglich für alle Felder außer Unterschrift, Paraphe, Datum der Unterschrift, Berechnung und Anhang. |
 
 Regeln:
 
@@ -109,7 +109,7 @@ Regeln:
 
 ## Ein öffentliches Formular einrichten
 
-Ein öffentliches Formular macht eine Vorlage unter einem festen Link für jedermann zugänglich, etwa für eine Mandatsanfrage auf Ihrer Website oder eine Empfangsbestätigung. Jede Person, die das Formular ausfüllt, erhält einen eigenen Vorgang.
+Ein öffentliches Formular macht eine Vorlage unter einem festen Link für jedermann zugänglich, etwa für eine Anmeldung oder Anfrage auf Ihrer Website oder eine Empfangsbestätigung. Jede Person, die das Formular ausfüllt, erhält einen eigenen Vorgang.
 
 ![Seite „Öffentliche Formulare“](bilder/formulare.png)
 
@@ -118,7 +118,7 @@ Ein öffentliches Formular macht eine Vorlage unter einem festen Link für jeder
 Die Vorlage braucht:
 
 - genau eine Rolle mit „Wird im öffentlichen Formular von Besuchern ausgefüllt“; diese Rolle muss als Erste an der Reihe sein,
-- für alle anderen Rollen eine „Feste Person“ mit Name und E-Mail, etwa die Anwältin, die gegenzeichnet,
+- für alle anderen Rollen eine „Feste Person“ mit Name und E-Mail, etwa die Verantwortliche, die gegenzeichnet,
 - eine veröffentlichte Version.
 
 ### Das Formular anlegen
@@ -133,17 +133,17 @@ Die Liste zeigt jedes Formular mit Vorlage, Zahl der Einsendungen, ob ein Code v
 
 ### Was Besucher erleben
 
-Die Besucherin gibt Namen und E-Mail-Adresse an. Ist die Bestätigung eingeschaltet, erhält sie einen sechsstelligen Code per E-Mail und gibt ihn ein. Danach füllt sie das Dokument aus und unterschreibt wie in [Kapitel 5](05-so-unterschreiben-mandanten.md) beschrieben. Die entstehenden Vorgänge gehören der Person, die das Formular angelegt hat, und erscheinen in ihrer Übersicht.
+Die Besucherin gibt Namen und E-Mail-Adresse an. Ist die Bestätigung eingeschaltet, erhält sie einen sechsstelligen Code per E-Mail und gibt ihn ein. Danach füllt sie das Dokument aus und unterschreibt wie in [Kapitel 5](05-so-unterschreiben-die-beteiligten.md) beschrieben. Die entstehenden Vorgänge gehören der Person, die das Formular angelegt hat, und erscheinen in ihrer Übersicht.
 
 > **Wichtig:** Ohne E-Mail-Bestätigung kann jede Person unter beliebigem Namen unterschreiben. Das Protokoll weist dann nur IP-Adresse und Zeitpunkt aus.
 
 Ist die Höchstzahl erreicht oder das Formular deaktiviert, nimmt es keine Einsendungen mehr an.
 
-Die Besucherin selbst bekommt keine Einladungs-E-Mail, denn sie ist schon auf der Signaturseite; automatische Erinnerungen erhält sie ebenfalls nicht. Die festen Rollen der Kanzlei werden dagegen per E-Mail eingeladen, sobald sie an der Reihe sind, also etwa die gegenzeichnende Anwältin nach der Besucherin. Erinnerungen und Abschluss-E-Mails verschickt Paraph wie gewohnt.
+Die Besucherin selbst bekommt keine Einladungs-E-Mail, denn sie ist schon auf der Signaturseite; automatische Erinnerungen erhält sie ebenfalls nicht. Die festen Rollen Ihrer Organisation werden dagegen per E-Mail eingeladen, sobald sie an der Reihe sind, also etwa die gegenzeichnende Verantwortliche nach der Besucherin. Erinnerungen und Abschluss-E-Mails verschickt Paraph wie gewohnt.
 
 ## Vor Ort unterschreiben lassen
 
-Ist die Mandantin in der Kanzlei, kann sie an Ihrem Rechner oder Tablet unterschreiben, ohne E-Mail und ohne Code.
+Ist die Unterzeichnerin persönlich bei Ihnen, kann sie an Ihrem Rechner oder an einem Tablet, etwa am Empfang, unterschreiben, ohne E-Mail und ohne Code.
 
 1. Öffnen Sie den laufenden Vorgang.
 2. Öffnen Sie bei der Person das Menü „…“ und wählen Sie „Vor Ort unterschreiben“.
@@ -155,4 +155,4 @@ Die Sitzung gilt als von Ihnen bestätigt. Ihr Name steht im Audit-Trail. Die Fu
 
 ---
 
-← [3. Vorgänge verfolgen](03-vorgaenge-verfolgen.md) · [Inhalt](README.md) · [5. So unterschreiben Ihre Mandanten](05-so-unterschreiben-mandanten.md) →
+← [3. Vorgänge verfolgen](03-vorgaenge-verfolgen.md) · [Inhalt](README.md) · [5. So unterschreiben die Beteiligten](05-so-unterschreiben-die-beteiligten.md) →

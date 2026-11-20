@@ -21,7 +21,7 @@ export default function Forms() {
       <div className="page-head">
         <div className="grow">
           <h1>{t('Öffentliche Formulare')}</h1>
-          <p className="sub">{t('Ein Link für alle – etwa für eine Mandatsanfrage auf Ihrer Website oder eine Empfangsbestätigung. Jede Person erhält einen eigenen Vorgang.')}</p>
+          <p className="sub">{t('Ein Link für alle – etwa für eine Anmeldung auf Ihrer Website oder eine Empfangsbestätigung. Jede Person erhält einen eigenen Vorgang.')}</p>
         </div>
         {canWrite && <button className="btn btn-primary" onClick={() => setCreate({ template_id: '', title: '', require_otp: true, max_submissions: '' })}><Plus /> {t('Neues Formular')}</button>}
       </div>

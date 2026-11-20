@@ -50,7 +50,7 @@ export function buildOpenApi(ctx: Ctx) {
           parameters: [
             { name: 'status', in: 'query', schema: { type: 'string' }, description: 'Kommagetrennt: draft,sent,completed,declined,voided,expired' },
             { name: 'search', in: 'query', schema: { type: 'string' } },
-            { name: 'external_ref', in: 'query', schema: { type: 'string' }, description: 'Eigene Referenz, z. B. Aktenzeichen' },
+            { name: 'external_ref', in: 'query', schema: { type: 'string' }, description: 'Eigene Referenz, z. B. Akten-, Personal- oder Kundennummer' },
             { name: 'limit', in: 'query', schema: { type: 'integer', maximum: 200 } },
             { name: 'before', in: 'query', schema: { type: 'string', format: 'date-time' }, description: 'Blättern: updated_at des letzten Eintrags' },
           ],
@@ -64,10 +64,10 @@ export function buildOpenApi(ctx: Ctx) {
             title: 'Mandatsvereinbarung Müller',
             external_ref: '123/26',
             documents: [{ name: 'Mandatsvereinbarung.pdf', file_base64: 'JVBERi0xLjc…' }],
-            recipients: [{ ref: 'mandant', name: 'Erika Müller', email: 'erika@example.org', auth_method: 'email_otp' }],
+            recipients: [{ ref: 'kunde', name: 'Erika Müller', email: 'erika@example.org', auth_method: 'email_otp' }],
             fields: [
-              { type: 'signature', recipient: 'mandant', anchor: { text: 'Unterschrift Mandant', offset_y: 4, width: 180, height: 40 } },
-              { type: 'signed_date', recipient: 'mandant', document: 0, page: 0, x: 0.1, y: 0.85, w: 0.2, h: 0.03 },
+              { type: 'signature', recipient: 'kunde', anchor: { text: 'Unterschrift Kunde', offset_y: 4, width: 180, height: 40 } },
+              { type: 'signed_date', recipient: 'kunde', document: 0, page: 0, x: 0.1, y: 0.85, w: 0.2, h: 0.03 },
             ],
             send: true,
           }),
@@ -132,7 +132,7 @@ export function buildOpenApi(ctx: Ctx) {
         post: {
           tags: ['Vorlagen'],
           summary: 'Vorgang aus Vorlage erzeugen (und versenden)',
-          requestBody: json(ref('UseTemplate'), { recipients: { mandant: { name: 'Erika Müller', email: 'erika@example.org' } }, prefill: { aktenzeichen: '123/26' }, external_ref: '123/26' }),
+          requestBody: json(ref('UseTemplate'), { recipients: { kunde: { name: 'Erika Müller', email: 'erika@example.org' } }, prefill: { vertragsnummer: '123/26' }, external_ref: '123/26' }),
           responses: { '201': ok(ref('Envelope')), ...errs, '422': { $ref: '#/components/responses/Error' } },
         },
       },
@@ -226,7 +226,7 @@ export function buildOpenApi(ctx: Ctx) {
           properties: {
             recipients: { type: 'object', additionalProperties: { type: 'object', properties: { name: { type: 'string' }, email: { type: 'string' }, phone: { type: 'string' }, auth_method: { type: 'string' } } } },
             prefill: { type: 'object', additionalProperties: { type: 'string' } },
-            title: { type: 'string', description: 'Platzhalter wie {{Mandant.name}} möglich' },
+            title: { type: 'string', description: 'Platzhalter wie {{Kunde.name}} möglich' },
             send: { type: 'boolean' },
             notify: { type: 'boolean' },
             version: { type: 'integer' },

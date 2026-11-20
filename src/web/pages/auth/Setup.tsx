@@ -42,7 +42,7 @@ export default function Setup() {
           <input id="code" className="input mono" value={f.code} onChange={set('code')} required autoFocus autoComplete="off" />
         </div>
         <div className="field">
-          <label htmlFor="org">{t('Name der Kanzlei oder Organisation')}</label>
+          <label htmlFor="org">{t('Name der Organisation')}</label>
           <input id="org" className="input" value={f.orgName} onChange={set('orgName')} required />
         </div>
         <div className="grid-2">

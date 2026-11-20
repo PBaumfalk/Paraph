@@ -99,7 +99,7 @@ export default function Dashboard() {
                 ))}
               </ul>
             ) : (
-              <p className="hint" style={{ marginTop: 8 }}>{t('Wiederkehrende Dokumente wie Vollmacht oder Mandatsvereinbarung einmal als Vorlage einrichten – dann reichen Name und E-Mail.')}</p>
+              <p className="hint" style={{ marginTop: 8 }}>{t('Wiederkehrende Dokumente wie Arbeitsvertrag oder Vollmacht einmal als Vorlage einrichten – dann reichen Name und E-Mail.')}</p>
             )}
           </div>
         </div>

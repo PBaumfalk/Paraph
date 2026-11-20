@@ -60,7 +60,7 @@ export function setupInstance(ctx: Ctx, input: { code: string; orgName: string; 
   validatePassword(input.password);
   return tx(ctx.db, () => {
     if (!needsSetup(ctx)) throw conflict('already_setup', 'Die Instanz ist bereits eingerichtet.');
-    const orgId = createOrg(ctx, input.orgName || 'Meine Kanzlei');
+    const orgId = createOrg(ctx, input.orgName || 'Meine Organisation');
     const userId = id('usr');
     ctx.db
       .prepare('INSERT INTO users (id, email, name, password_hash, is_instance_admin, created_at) VALUES (?, ?, ?, ?, 1, ?)')

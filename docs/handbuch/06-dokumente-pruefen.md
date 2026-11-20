@@ -1,6 +1,6 @@
 # 6. Dokumente prüfen
 
-Dieses Kapitel erklärt, wie Sie und andere feststellen, ob ein Dokument genau dem entspricht, was mit Paraph unterschrieben wurde. Es richtet sich an die Kanzlei, an Mandanten und an Dritte, denen ein Dokument vorgelegt wird, etwa die Gegenseite oder ein Gericht. Die ersten Abschnitte kommen ohne Technik aus; die Prüfung mit Kommandozeilenwerkzeugen steht weiter unten.
+Dieses Kapitel erklärt, wie Sie und andere feststellen, ob ein Dokument genau dem entspricht, was mit Paraph unterschrieben wurde. Es richtet sich an Ihre Organisation, an die Unterzeichnenden und an Dritte, denen ein Dokument vorgelegt wird, etwa die Gegenseite oder ein Gericht. Die ersten Abschnitte kommen ohne Technik aus; die Prüfung mit Kommandozeilenwerkzeugen steht weiter unten.
 
 ## Wissen, welche Dateien es gibt
 
@@ -8,15 +8,15 @@ Nach dem Abschluss eines Vorgangs erzeugt Paraph mehrere Dateien. Von jeder spei
 
 | Datei | Inhalt | Wer sie erhält |
 |---|---|---|
-| Unterschriebenes Dokument (Gesamt-PDF) | alle Dokumente mit eingesetzten Unterschriften und Feldwerten, versiegelt; je nach Einstellung mit angehängter Abschlussbestätigung | Kanzlei und alle Beteiligten |
-| Unterschriebenes Einzeldokument | bei mehreren Dokumenten: jedes einzeln, versiegelt | Kanzlei (im Nachweispaket) |
-| Abschlussbestätigung | Beteiligte, Zeitpunkte, Zugangsnachweise, Fingerabdrücke, Auszug aus dem Ereignisprotokoll; versiegelt | Kanzlei und alle Beteiligten |
-| Audit-Trail | alle Ereignisse des Vorgangs als JSON-Datei, als Hash-Kette | Kanzlei |
-| Nachweispaket | ZIP mit allem oben, den Fassungen vor der Unterschrift, den Unterschriftsbildern, einem signierten Inhaltsverzeichnis und einem Prüfskript | Kanzlei |
-| Maßgebliche Fassung vor der Unterschrift | das bereinigte PDF, das den Beteiligten angezeigt wurde | Kanzlei (im Nachweispaket) |
-| Ursprünglich hochgeladene Datei | die Datei, wie sie hochgeladen wurde (PDF, Word oder ODT) | Kanzlei (im Nachweispaket) |
+| Unterschriebenes Dokument (Gesamt-PDF) | alle Dokumente mit eingesetzten Unterschriften und Feldwerten, versiegelt; je nach Einstellung mit angehängter Abschlussbestätigung | Ihre Organisation und alle Beteiligten |
+| Unterschriebenes Einzeldokument | bei mehreren Dokumenten: jedes einzeln, versiegelt | Ihre Organisation (im Nachweispaket) |
+| Abschlussbestätigung | Beteiligte, Zeitpunkte, Zugangsnachweise, Fingerabdrücke, Auszug aus dem Ereignisprotokoll; versiegelt | Ihre Organisation und alle Beteiligten |
+| Audit-Trail | alle Ereignisse des Vorgangs als JSON-Datei, als Hash-Kette | Ihre Organisation |
+| Nachweispaket | ZIP mit allem oben, den Fassungen vor der Unterschrift, den Unterschriftsbildern, einem signierten Inhaltsverzeichnis und einem Prüfskript | Ihre Organisation |
+| Maßgebliche Fassung vor der Unterschrift | das bereinigte PDF, das den Beteiligten angezeigt wurde | Ihre Organisation (im Nachweispaket) |
+| Ursprünglich hochgeladene Datei | die Datei, wie sie hochgeladen wurde (PDF, Word oder ODT) | Ihre Organisation (im Nachweispaket) |
 
-Wo die Kanzlei diese Dateien herunterlädt, beschreibt [Kapitel 3](03-vorgaenge-verfolgen.md). Bei einem einzelnen Dokument sind Gesamt-PDF und Einzeldokument dieselbe Datei.
+Wo Sie diese Dateien herunterladen, beschreibt [Kapitel 3](03-vorgaenge-verfolgen.md). Bei einem einzelnen Dokument sind Gesamt-PDF und Einzeldokument dieselbe Datei.
 
 ## Eine Datei in der Prüfstelle prüfen
 
@@ -54,7 +54,7 @@ Bei einem Testvorgang erscheint zusätzlich „Testvorgang – nicht rechtsverbi
 
 „Nicht gefunden“ beweist also nicht, dass der Inhalt gefälscht ist. Es heißt nur, dass diese Datei nicht die registrierte ist.
 
-Löscht die Kanzlei Inhalte nach Ablauf ihrer Aufbewahrungsfrist, bleiben die Fingerabdrücke im Register. Die Prüfstelle erkennt eine aufbewahrte Datei also auch danach.
+Löscht Paraph Inhalte nach Ablauf der Aufbewahrungsfrist Ihrer Organisation, bleiben die Fingerabdrücke im Register. Die Prüfstelle erkennt eine aufbewahrte Datei also auch danach.
 
 ## Das eingebettete Siegel prüfen
 
@@ -76,7 +76,7 @@ Ein gültiges Siegel ist das technische Plattformsiegel dieser Paraph-Instanz. D
 
 ## Mit dem Prüfwert aus der Abschluss-E-Mail vergleichen
 
-Jede beteiligte Person erhält beim Abschluss eine E-Mail mit dem „Prüfwert (SHA-256) des unterschriebenen Dokuments“. Dieser Wert liegt damit auch außerhalb des Kanzleiservers vor.
+Jede beteiligte Person erhält beim Abschluss eine E-Mail mit dem „Prüfwert (SHA-256) des unterschriebenen Dokuments“. Dieser Wert liegt damit auch außerhalb Ihres Servers vor.
 
 So vergleichen Sie eine Datei mit dem Prüfwert:
 
@@ -93,7 +93,7 @@ Stimmen beide Werte überein, ist es genau die Datei, die beim Abschluss erzeugt
 
 ## Die Abschlussbestätigung lesen
 
-Die Abschlussbestätigung ist ein eigenes, versiegeltes PDF. Standardmäßig hängt Paraph sie zusätzlich an das unterschriebene Dokument an (Einstellung „Abschlussbestätigung an das fertige PDF anhängen“, [Kapitel 8](08-kanzlei-team-erscheinungsbild.md)). Sie enthält:
+Die Abschlussbestätigung ist ein eigenes, versiegeltes PDF. Standardmäßig hängt Paraph sie zusätzlich an das unterschriebene Dokument an (Einstellung „Abschlussbestätigung an das fertige PDF anhängen“, [Kapitel 8](08-organisation-team-erscheinungsbild.md)). Sie enthält:
 
 - Vorgangs-ID, Organisation, Absender, Zeitpunkte von Erstellung, Versand und Abschluss,
 - die Signaturstufe mit dem Hinweis, dass die EES die Schriftform nicht ersetzt,
@@ -107,7 +107,7 @@ Alle Zeitangaben stehen in der Zeitzone der Organisation und zusätzlich in UTC.
 
 ## Das Nachweispaket prüfen
 
-Das Nachweispaket ist eine ZIP-Datei. Es lässt sich ohne Paraph und ohne Zugang zum Kanzleiserver prüfen. Inhalt:
+Das Nachweispaket ist eine ZIP-Datei. Es lässt sich ohne Paraph und ohne Zugang zu Ihrem Server prüfen. Inhalt:
 
 | Pfad | Inhalt |
 |---|---|
@@ -156,7 +156,7 @@ Was Verankerung und Zeitstempel technisch leisten und wo ihre Grenzen liegen, er
 
 Die PDFs in `01_signiert/` und die Abschlussbestätigung tragen eine PAdES-Signatur (`ETSI.CAdES.detached`). Mit Zeitstempeldienst ist es PAdES-B-T. Ohne Zeitstempeldienst, oder wenn er beim Abschluss nicht erreichbar war, ist es PAdES-B-B; die Zeit stammt dann aus der Serveruhr.
 
-**Adobe Acrobat und Reader** zeigen das Siegel an, melden aber zunächst einen unbekannten Aussteller. Das ist zu erwarten: Das Zertifikat der Instanz ist standardmäßig selbst signiert. Wer es bewusst als vertrauenswürdig hinterlegt, sieht das Siegel danach als gültig. Vergleichen Sie vorher den Fingerabdruck des Zertifikats mit dem Wert in der Abschlussbestätigung. Das Zertifikat liegt im Nachweispaket (`siegelzertifikat.pem`); die Kanzlei lädt es außerdem unter Einstellungen → Siegel und Signaturstufen über „Zertifikat herunterladen“ herunter.
+**Adobe Acrobat und Reader** zeigen das Siegel an, melden aber zunächst einen unbekannten Aussteller. Das ist zu erwarten: Das Zertifikat der Instanz ist standardmäßig selbst signiert. Wer es bewusst als vertrauenswürdig hinterlegt, sieht das Siegel danach als gültig. Vergleichen Sie vorher den Fingerabdruck des Zertifikats mit dem Wert in der Abschlussbestätigung. Das Zertifikat liegt im Nachweispaket (`siegelzertifikat.pem`); außerdem laden Sie es unter Einstellungen → Siegel und Signaturstufen über „Zertifikat herunterladen“ herunter.
 
 **pdfsig** (Poppler) prüft auf der Kommandozeile:
 
@@ -193,16 +193,16 @@ Paraph liefert Material, mit dem sich der Ablauf einer Unterzeichnung nachvollzi
 1. **Die Originaldateien, nicht Ausdrucke oder neu gespeicherte Fassungen.** Jedes erneute Speichern ändert den Fingerabdruck und kann das Siegel ungültig machen. Legen Sie das Gesamt-PDF so vor, wie Paraph es erzeugt hat.
 2. **Die Abschlussbestätigung.** Sie fasst Beteiligte, Zugangswege, Zeitpunkte und Fingerabdrücke auf wenigen Seiten zusammen und ist oft bereits an das PDF angehängt.
 3. **Das Nachweispaket, vollständig und unverändert,** wenn die Echtheit bestritten wird. Es enthält die Prüfanleitung und das Prüfskript, sodass ein Sachverständiger ohne Paraph prüfen kann.
-4. **Gegebenenfalls die Abschluss-E-Mail** einer beteiligten Person mit dem Prüfwert, als Zeugnis außerhalb des Kanzleiservers.
+4. **Gegebenenfalls die Abschluss-E-Mail** einer beteiligten Person mit dem Prüfwert, als Zeugnis außerhalb Ihres Servers.
 
 Zur rechtlichen Einordnung, ohne Freigabe: Nach der Vorprüfung in `docs/recht/formhinweise-analyse.md` (Teil D) gilt § 371a ZPO nur für die qualifizierte elektronische Signatur. Eine EES unterliegt der freien Beweiswürdigung; Audit-Trail, Hash-Kette, Zeitstempel und Zugangsweg sind Indizien, kein Anscheinsbeweis. Diese Einordnung ist anwaltlich nicht freigegeben (Freigabeliste F-14). Einzelheiten und Grenzen stehen in [Kapitel 7](07-recht.md#beweiswert-einordnen).
 
-> **Wichtig:** Ein Paraph-PDF ist kein Schriftsatz. Für die Einreichung bei Gericht gilt der elektronische Rechtsverkehr; siehe [Kapitel 7](07-recht.md#behörden-und-gerichte).
+> **Für Kanzleien:** Ein Paraph-PDF ist kein Schriftsatz. Für die Einreichung bei Gericht gilt der elektronische Rechtsverkehr; siehe [Kapitel 7](07-recht.md#behörden-und-gerichte).
 
-## Intern prüfen (für die Kanzlei)
+## Intern prüfen (für Ihre Organisation)
 
 Die Vorgangsseite zeigt im Bereich Integrität, ob die Ereigniskette eines Vorgangs intakt ist ([Kapitel 3](03-vorgaenge-verfolgen.md)). Der Betrieb prüft alle Ketten samt Verankerung mit dem Befehl `paraph verify-audit` im Container ([Kapitel 15](15-diagnose-und-fehlersuche.md)).
 
 ---
 
-← [5. So unterschreiben Ihre Mandanten](05-so-unterschreiben-mandanten.md) · [Inhalt](README.md) · [7. Recht: Signaturstufen, Formvorschriften, Datenschutz](07-recht.md) →
+← [5. So unterschreiben die Beteiligten](05-so-unterschreiben-die-beteiligten.md) · [Inhalt](README.md) · [7. Recht: Signaturstufen, Formvorschriften, Datenschutz](07-recht.md) →

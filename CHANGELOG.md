@@ -10,6 +10,22 @@ Konfiguration zwischen Versionen ändern; `update.sh` migriert die Daten.
 
 ### Geändert
 
+- **Allgemein statt kanzleibezogen:** Handbuch und Oberfläche sprechen alle
+  Organisationen an (Unternehmen, Kanzleien, Steuerbüros, Vereine,
+  Verwaltungen). Oberfläche: „Name der Organisation“, Standardname „Meine
+  Organisation“, Vorlagen-Vorschläge Arbeitsvertrag, Auftragsbestätigung,
+  Einwilligung, Vollmacht, Empfangsbestätigung; Fachsoftware statt
+  Kanzleisoftware; Aufbewahrungshinweis nennt HGB und AO, für Kanzleien
+  § 50 BRAO. Handbuch: Unterzeichnende statt Mandanten, Kanzlei-spezifisches
+  Recht (Berufsrecht, beA, BRAO) in eigenen „Für Kanzleien“-Abschnitten.
+  Kapitel 5 und 8 heißen jetzt `05-so-unterschreiben-die-beteiligten.md` und
+  `08-organisation-team-erscheinungsbild.md`.
+- Erster Vorgang im Handbuch mit neuem Beispieldokument
+  `Einwilligung-Beispiel.pdf` (Einwilligung zur Veröffentlichung von Fotos),
+  erneut durchgespielt, Bilder neu.
+- Handbuch: Die Erstinstallation mit `install.sh` auf einem echten
+  Linux-Server mit eigener Domain war erfolgreich (20.11.2026); die übrigen
+  Abnahmepunkte bleiben offen.
 - README allgemein gefasst (Unternehmen, Kanzleien, Steuerbüros, Vereine,
   Verwaltungen) mit Ausprobieren per `docker run` in einer Minute; Demodaten der
   Bildschirmfotos auf ein erfundenes Unternehmen umgestellt.

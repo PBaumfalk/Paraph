@@ -208,7 +208,7 @@ Klicken Sie auf „Weiter zum Versand“. Paraph speichert zuerst und öffnet da
 2. **Nachricht schreiben.** „Nachricht an die Beteiligten (optional)“ erscheint in der Einladungs-E-Mail.
 3. **Gültigkeit wählen.** „Gültig für“ 3, 7, 14, 30, 60 oder 90 Tage; vorgewählt sind 30. Die Frist läuft ab dem Versand. Danach endet der Vorgang als „Abgelaufen“.
 4. **Erinnerung wählen.** „Automatisch erinnern“: „Nie“ oder alle 1, 2, 3, 5 oder 7 Tage. Vorgewählt ist der Standard Ihrer Organisation (ab Werk 3 Tage).
-5. **Vertretung erlauben.** Mit „Beteiligte dürfen an eine Vertretung weitergeben (wird protokolliert)“ kann eine Person den Vorgang an jemand anderen weitergeben. Mehr dazu in [Kapitel 5](05-so-unterschreiben-mandanten.md).
+5. **Vertretung erlauben.** Mit „Beteiligte dürfen an eine Vertretung weitergeben (wird protokolliert)“ kann eine Person den Vorgang an jemand anderen weitergeben. Mehr dazu in [Kapitel 5](05-so-unterschreiben-die-beteiligten.md).
 6. **Zustellweg wählen.** „Einladungen per E-Mail senden“ ist angehakt, wenn ein Mailserver eingerichtet ist. Nehmen Sie den Haken heraus, wenn Sie die Links selbst übergeben wollen (siehe unten). Ohne Mailserver ist der Haken nicht gesetzt, und darunter steht „Auf diesem Server ist kein E-Mail-Versand eingerichtet. Geben Sie die Links selbst weiter.“
 7. **Dokumentart prüfen** (siehe nächster Abschnitt).
 8. Klicken Sie auf „Jetzt versenden“ bzw. „Starten und Links anzeigen“.
@@ -228,7 +228,7 @@ Die Bestätigung steht mit Ihrem Namen im Audit-Trail des Vorgangs.
 
 ### Links selbst übergeben
 
-Nehmen Sie den Haken bei „Einladungen per E-Mail senden“ heraus, wenn die Einladung nicht von Paraph kommen soll – etwa weil Sie den Link aus Ihrer Kanzleisoftware oder persönlich weitergeben.
+Nehmen Sie den Haken bei „Einladungen per E-Mail senden“ heraus, wenn die Einladung nicht von Paraph kommen soll – etwa weil Sie den Link aus Ihrer Fachsoftware (zum Beispiel Kanzlei-, Personal- oder CRM-Software) oder persönlich weitergeben.
 
 1. Klicken Sie auf „Starten und Links anzeigen“.
 2. Paraph zeigt unter „Persönliche Links“ je Person einen Link. Kopieren Sie ihn mit dem Symbol daneben.

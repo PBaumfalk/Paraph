@@ -2,7 +2,7 @@
 
 Dieses Kapitel ist die vollständige Referenz aller Umgebungsvariablen und Secrets von Paraph. Es richtet sich an die IT. Maßgeblich ist `src/server/config.ts`; ergänzend lesen einige Programmteile Variablen direkt, sie sind jeweils gekennzeichnet. Variablen, die nur Docker Compose oder die Skripte auswerten, stehen in eigenen Abschnitten.
 
-Einstellungen je Organisation (Erscheinungsbild, Aufbewahrung, Standardwerte, eigene Domain, Siegel) liegen nicht in `.env`, sondern in der Datenbank. Sie werden in der Oberfläche gepflegt, siehe [Kapitel 8](08-kanzlei-team-erscheinungsbild.md).
+Einstellungen je Organisation (Erscheinungsbild, Aufbewahrung, Standardwerte, eigene Domain, Siegel) liegen nicht in `.env`, sondern in der Datenbank. Sie werden in der Oberfläche gepflegt, siehe [Kapitel 8](08-organisation-team-erscheinungsbild.md).
 
 ## Wie Paraph die Konfiguration liest
 
@@ -170,7 +170,7 @@ Im Betrieb wiederholt Paraph Anfragen bei Serverfehlern (5xx, `SlowDown`), Zeit�
 - **Object Lock** (optional, nur bei neu angelegten Buckets mit Versionierung) macht Objekte für eine Frist unveränderbar und schützt so auch gegen Ransomware mit gestohlenen Schlüsseln. Beginnen Sie im Modus „Governance“; „Compliance“ verhindert jede Löschung vor Fristende, auch die nach Aufbewahrungsfrist.
 - **Sicherung:** Eine zusätzliche Replikation des Buckets (zweiter Standort, `mc mirror`, `rclone sync`) bleibt sinnvoll, ist aber nicht Voraussetzung für die Wiederherstellung. Ohne den Hauptschlüssel ist auch eine Bucket-Kopie unlesbar.
 
-Beispiel-Policy (AWS-IAM-Syntax; MinIO und Ceph RGW verstehen dieselbe Form, Garage vergibt Rechte stattdessen je Schlüssel mit `garage bucket allow --read --write`) für Bucket `kanzlei-paraph` mit `S3_PREFIX=paraph/`. Ohne Präfix lassen Sie die `Condition` weg und ersetzen `paraph/*` durch `*`:
+Beispiel-Policy (AWS-IAM-Syntax; MinIO und Ceph RGW verstehen dieselbe Form, Garage vergibt Rechte stattdessen je Schlüssel mit `garage bucket allow --read --write`) für Bucket `firma-paraph` mit `S3_PREFIX=paraph/`. Ohne Präfix lassen Sie die `Condition` weg und ersetzen `paraph/*` durch `*`:
 
 ```json
 {
@@ -180,14 +180,14 @@ Beispiel-Policy (AWS-IAM-Syntax; MinIO und Ceph RGW verstehen dieselbe Form, Gar
       "Sid": "ParaphListe",
       "Effect": "Allow",
       "Action": ["s3:ListBucket"],
-      "Resource": ["arn:aws:s3:::kanzlei-paraph"],
+      "Resource": ["arn:aws:s3:::firma-paraph"],
       "Condition": { "StringLike": { "s3:prefix": ["paraph/*"] } }
     },
     {
       "Sid": "ParaphObjekte",
       "Effect": "Allow",
       "Action": ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
-      "Resource": ["arn:aws:s3:::kanzlei-paraph/paraph/*"]
+      "Resource": ["arn:aws:s3:::firma-paraph/paraph/*"]
     }
   ]
 }
@@ -196,7 +196,7 @@ Beispiel-Policy (AWS-IAM-Syntax; MinIO und Ceph RGW verstehen dieselbe Form, Gar
 MinIO, Benutzer und Policy anlegen:
 
 ```sh
-mc mb local/kanzlei-paraph
+mc mb local/firma-paraph
 mc admin policy create local paraph-rw paraph-policy.json
 mc admin user add local paraph "$(openssl rand -base64 30)"
 mc admin policy attach local paraph-rw --user paraph

@@ -1,6 +1,6 @@
-# 8. Kanzlei, Team und Erscheinungsbild einrichten
+# 8. Organisation, Team und Erscheinungsbild einrichten
 
-Dieses Kapitel richtet sich an Inhaberinnen, Inhaber und die Kanzlei-Administration. Es beschreibt, wie Sie Paraph nach der Installation in Betrieb nehmen, das Team einladen, Rollen vergeben und Paraph auf Ihre Kanzlei einstellen: Logo, Farbe, E-Mail-Texte, Standardwerte, Aufbewahrung und Siegel. Am Ende folgt die Seite „System“ für Instanz-Administratoren.
+Dieses Kapitel richtet sich an Inhaberinnen, Inhaber und die Administration der Organisation. Es beschreibt, wie Sie Paraph nach der Installation in Betrieb nehmen, das Team einladen, Rollen vergeben und Paraph auf Ihre Organisation einstellen: Logo, Farbe, E-Mail-Texte, Standardwerte, Aufbewahrung und Siegel. Am Ende folgt die Seite „System“ für Instanz-Administratoren.
 
 Alle Einstellungen liegen unter **Einstellungen**. Welche Seiten Sie dort sehen, hängt von Ihrer Rolle ab:
 
@@ -23,7 +23,7 @@ Nach der Installation hat Paraph noch kein Konto. Wer die Adresse der Instanz au
    docker compose exec paraph paraph setup-code
    ```
 2. `/setup` öffnen und „Einrichtungscode“ eintragen.
-3. „Name der Kanzlei oder Organisation“, „Ihr Name“, „E-Mail-Adresse“ und „Passwort“ (mindestens 10 Zeichen) ausfüllen.
+3. „Name der Organisation“, „Ihr Name“, „E-Mail-Adresse“ und „Passwort“ (mindestens 10 Zeichen) ausfüllen.
 4. Auf „Einrichten und anmelden“ klicken.
 
 Das so angelegte Konto ist **Inhaber** der Organisation und zugleich **Instanz-Administrator**. Der Einrichtungscode wird danach gelöscht und gilt nicht mehr. Ein falscher Code wird abgewiesen.
@@ -34,13 +34,13 @@ Wie Sie Paraph installieren und die Instanz von außen erreichbar machen, steht 
 
 ## Die Organisation einstellen
 
-Einstellungen → Organisation. Eine Organisation ist in der Regel Ihre Kanzlei.
+Einstellungen → Organisation. Eine Organisation ist in der Regel Ihr Unternehmen, Ihre Kanzlei, Ihr Büro, Ihr Verein oder Ihre Behörde.
 
 ![Einstellungen → Organisation](bilder/einst-organisation.png)
 
 | Einstellung | Bedeutung | Standard |
 |---|---|---|
-| „Name“ | Name der Kanzlei. Erscheint in E-Mails und auf der Signaturseite. | bei der Einrichtung gewählt |
+| „Name“ | Name der Organisation. Erscheint in E-Mails und auf der Signaturseite. | bei der Einrichtung gewählt |
 | „Zeitzone“ | Zeitzone für Datumsangaben, etwa das Ablaufdatum in E-Mails. Eine unbekannte Zeitzone lehnt Paraph ab. | `Europe/Berlin` |
 | „Sprache für Beteiligte“ | Sprache der Signaturseite und der E-Mails an Beteiligte: Deutsch oder English. | Deutsch |
 | „Mitglieder sehen“ | „nur eigene Vorgänge“ oder „alle Vorgänge der Organisation (nur lesen)“. Siehe [Sichtbarkeit der Vorgänge](#sichtbarkeit-der-vorgänge-festlegen). | nur eigene Vorgänge |
@@ -69,7 +69,7 @@ Einen Vorgang, den jemand nicht sehen darf, beantwortet Paraph mit „nicht gefu
 
 ### Den Datenschutzhinweis verlinken
 
-Tragen Sie unter „Datenschutzhinweise für Unterzeichner (Art. 13 DSGVO)“ die Adresse Ihrer Datenschutzhinweise ein, z. B. `https://kanzlei.example/datenschutz`. Paraph verlangt eine `https://`-Adresse.
+Tragen Sie unter „Datenschutzhinweise für Unterzeichner (Art. 13 DSGVO)“ die Adresse Ihrer Datenschutzhinweise ein, z. B. `https://firma.example/datenschutz`. Paraph verlangt eine `https://`-Adresse.
 
 Die Signaturseite verlinkt die Hinweise neben der abschließenden Erklärung („Hinweise zum Datenschutz“). Beim Abschluss vermerkt Paraph die Adresse zusammen mit der Erklärung im Audit-Trail. Den Text der Hinweise stellt Paraph nicht bereit. Fehlt der Link, meldet die Betriebsdiagnose einen Hinweis. Zum Inhalt siehe [Kapitel 7](07-recht.md).
 
@@ -89,11 +89,13 @@ Erhalten bleiben der Datensatz des Vorgangs (Titel, Beteiligte mit Name und E-Ma
 
 Unabhängig von dieser Einstellung räumt Paraph immer auf: E-Mail-Datensätze nach 90 Tagen, Webhook-Zustellungen nach 30 Tagen, abgelaufene Sitzungen und Codes laufend.
 
-> **Wichtig:** Prüfen Sie die Frist anhand Ihrer gesetzlichen Aufbewahrungspflichten, etwa § 50 BRAO für Handakten (die Oberfläche nennt dafür 6 Jahre). Gelöschte Inhalte lassen sich nur aus einer älteren Sicherung zurückholen.
+> **Wichtig:** Prüfen Sie die Frist anhand Ihrer gesetzlichen Aufbewahrungspflichten; die Oberfläche nennt dazu HGB und AO. Gelöschte Inhalte lassen sich nur aus einer älteren Sicherung zurückholen.
+>
+> **Für Kanzleien:** Für Handakten gilt zusätzlich § 50 BRAO.
 
 ### Eine eigene Domain für Signaturlinks verwenden
 
-Unter „Eigene Domain für Signaturlinks (optional)“ tragen Sie einen Hostnamen ein, z. B. `sign.kanzlei.de`. Links in E-Mails an Beteiligte verwenden dann diese Domain statt der Adresse aus `APP_URL`, mit demselben Protokoll. Jede Domain kann nur eine Organisation verwenden.
+Unter „Eigene Domain für Signaturlinks (optional)“ tragen Sie einen Hostnamen ein, z. B. `sign.firma.example`. Links in E-Mails an Beteiligte verwenden dann diese Domain statt der Adresse aus `APP_URL`, mit demselben Protokoll. Jede Domain kann nur eine Organisation verwenden.
 
 Die Domain muss per DNS und Reverse Proxy auf diese Instanz zeigen und per HTTPS erreichbar sein. Das richtet die IT ein, siehe [Kapitel 11](11-installation.md).
 
@@ -178,7 +180,7 @@ Einstellungen → Erscheinungsbild und E-Mails. Logo und Farbe erscheinen auf de
 | Logo | „Logo hochladen (PNG, max. 1 MB)“. Nur PNG. Paraph bereinigt die Datei beim Hochladen. „Logo entfernen“ setzt es zurück. |
 | „Akzentfarbe“ | Farbe für Schaltflächen und Markierungen auf der Signaturseite und in E-Mails. Standard ist Petrol `#0D5C63`. |
 | „Absendername“ | Name im Absender der E-Mails. Leer: Name der Organisation. |
-| „Antwortadresse“ | Adresse für Antworten (`Reply-To`), z. B. das Kanzleipostfach. |
+| „Antwortadresse“ | Adresse für Antworten (`Reply-To`), z. B. ein zentrales Postfach der Organisation. |
 | „Fußzeile (z. B. Impressum, Kontakt)“ | Text unter jeder E-Mail, höchstens 500 Zeichen. |
 
 Mit „Speichern“ übernehmen Sie die Angaben.

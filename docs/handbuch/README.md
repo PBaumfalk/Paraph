@@ -1,23 +1,23 @@
 # Paraph – Handbuch
 
-Paraph ist eine selbst gehostete Plattform für elektronische Unterschriften, etwa für Unternehmen, Kanzleien, Steuerbüros, Vereine und Verwaltungen. Dieses Handbuch erklärt jede Funktion an der Stelle, an der Sie sie im Alltag brauchen. Die Beispiele stammen oft aus einer Kanzlei (Mandatsvereinbarung, Mandantin); sie gelten für Arbeitsverträge, Aufträge oder Mitgliedsanträge genauso. Stand: 20.11.2026, Version 0.3.0 ([Änderungsprotokoll](../../CHANGELOG.md)).
+Paraph ist eine selbst gehostete Plattform für elektronische Unterschriften, etwa für Unternehmen, Kanzleien, Steuerbüros, Vereine und Verwaltungen. Dieses Handbuch erklärt jede Funktion an der Stelle, an der Sie sie im Alltag brauchen. Stand: 20.11.2026, Version 0.3.0 ([Änderungsprotokoll](../../CHANGELOG.md)).
 
 ## Wo fange ich an?
 
 | Sie sind … | und wollen … | Lesen Sie |
 |---|---|---|
-| **neu bei Paraph** | verstehen, was Paraph tut, und einmal alles durchspielen | [1. Paraph in fünf Minuten](01-paraph-in-fuenf-minuten.md), dann [Ihr erster Vorgang Schritt für Schritt](01-paraph-in-fuenf-minuten.md#ihr-erster-vorgang-schritt-für-schritt) mit dem [Beispieldokument](beispiele/Mandatsvereinbarung-Beispiel.pdf) |
-| **Sachbearbeitung, Sekretariat, ReFa** | Dokumente zur Unterschrift vorbereiten, versenden und nachfassen | [2. Unterschreiben lassen](02-dokument-unterschreiben-lassen.md) → [3. Vorgänge verfolgen](03-vorgaenge-verfolgen.md) → [4. Vorlagen und Serien](04-vorlagen-serien-formulare.md) |
-| **Verantwortliche** (Geschäftsführung, Anwältin, Personalabteilung) | das Ergebnis kontrollieren, ablegen, die Rechtslage einordnen | [Ergebnis abholen](03-vorgaenge-verfolgen.md#das-ergebnis-abholen) → [6. Dokumente prüfen](06-dokumente-pruefen.md) → [7. Recht](07-recht.md) |
-| **Leitung, Administration** | Team, Rollen, Erscheinungsbild und Aufbewahrung festlegen | [8. Organisation, Team und Erscheinungsbild](08-kanzlei-team-erscheinungsbild.md), [9. Anmeldung](09-anmeldung-und-sso.md) |
+| **neu bei Paraph** | verstehen, was Paraph tut, und einmal alles durchspielen | [1. Paraph in fünf Minuten](01-paraph-in-fuenf-minuten.md), dann [Ihr erster Vorgang Schritt für Schritt](01-paraph-in-fuenf-minuten.md#ihr-erster-vorgang-schritt-für-schritt) mit dem [Beispieldokument](beispiele/Einwilligung-Beispiel.pdf) |
+| **Sachbearbeitung, Sekretariat, Assistenz** | Dokumente zur Unterschrift vorbereiten, versenden und nachfassen | [2. Unterschreiben lassen](02-dokument-unterschreiben-lassen.md) → [3. Vorgänge verfolgen](03-vorgaenge-verfolgen.md) → [4. Vorlagen und Serien](04-vorlagen-serien-formulare.md) |
+| **Verantwortliche** (Geschäftsführung, Personalabteilung, Anwältin) | das Ergebnis kontrollieren, ablegen, die Rechtslage einordnen | [Ergebnis abholen](03-vorgaenge-verfolgen.md#das-ergebnis-abholen) → [6. Dokumente prüfen](06-dokumente-pruefen.md) → [7. Recht](07-recht.md) |
+| **Leitung, Administration** | Team, Rollen, Erscheinungsbild und Aufbewahrung festlegen | [8. Organisation, Team und Erscheinungsbild](08-organisation-team-erscheinungsbild.md), [9. Anmeldung](09-anmeldung-und-sso.md) |
 | **IT, Admin** | Paraph installieren, betreiben, sichern | [18. Installation mit Claude Code](18-installation-mit-claude-code.md) oder [11. Installation](11-installation.md) → [13. Sicherung und Updates](13-sicherung-und-updates.md) → [15. Diagnose](15-diagnose-und-fehlersuche.md) |
-| **Entwicklung, Anbindung** | eigene Software, Kanzlei- oder Personalsoftware, n8n oder Make anbinden | [10. API und Webhooks](10-anbindung-api-webhooks.md) |
+| **Entwicklung, Anbindung** | eigene Fachsoftware, n8n oder Make anbinden | [10. API und Webhooks](10-anbindung-api-webhooks.md) |
 
 Welche Funktion wo erklärt ist, zeigt die [Funktionsliste](funktionsliste.md). Begriffe erklärt das [Glossar](glossar.md).
 
 ## Teil A – Arbeiten mit Paraph
 
-Für Anwältinnen, Anwälte und Mitarbeitende. Kein technisches Vorwissen nötig.
+Für alle, die Dokumente versenden oder Ergebnisse prüfen. Kein technisches Vorwissen nötig.
 
 | Kapitel | Worum es geht |
 |---|---|
@@ -25,7 +25,7 @@ Für Anwältinnen, Anwälte und Mitarbeitende. Kein technisches Vorwissen nötig
 | [2. Ein Dokument unterschreiben lassen](02-dokument-unterschreiben-lassen.md) | Hochladen, Beteiligte und Felder festlegen, Zugangsschutz, Formhinweise, Versand |
 | [3. Vorgänge verfolgen](03-vorgaenge-verfolgen.md) | Übersicht, Erinnern, Widerrufen, Ergebnis-Dateien, Testmodus |
 | [4. Vorlagen, Serien und Formulare](04-vorlagen-serien-formulare.md) | Wiederkehrende Dokumente, Massenversand, öffentliche Formulare, Vor-Ort-Signatur |
-| [5. So unterschreiben Ihre Mandanten](05-so-unterschreiben-mandanten.md) | Die Signaturseite aus Sicht der Mandantin, am Smartphone und am Rechner |
+| [5. So unterschreiben die Beteiligten](05-so-unterschreiben-die-beteiligten.md) | Die Signaturseite aus Sicht der Unterzeichnenden, am Smartphone und am Rechner |
 | [6. Dokumente prüfen](06-dokumente-pruefen.md) | Prüfstelle, Siegel, Nachweispaket, was man einem Gericht vorlegt |
 | [7. Recht: Signaturstufen, Formvorschriften, Datenschutz](07-recht.md) | Signaturstufen, Formvorschriften, Datenschutz, Stand der Freigabe |
 
@@ -35,7 +35,7 @@ Für Inhaber und Administration der Organisation.
 
 | Kapitel | Worum es geht |
 |---|---|
-| [8. Kanzlei, Team und Erscheinungsbild einrichten](08-kanzlei-team-erscheinungsbild.md) | Ersteinrichtung, Rollen, Einladungen, Logo und Farbe, E-Mail-Texte, Aufbewahrung |
+| [8. Organisation, Team und Erscheinungsbild einrichten](08-organisation-team-erscheinungsbild.md) | Ersteinrichtung, Rollen, Einladungen, Logo und Farbe, E-Mail-Texte, Aufbewahrung |
 | [9. Anmeldung und SSO](09-anmeldung-und-sso.md) | Passwort, Zwei-Faktor, Sitzungen, Anmeldung über authentik |
 | [10. Anbindung: API und Webhooks](10-anbindung-api-webhooks.md) | REST-API, Webhooks, Einbettung, Linkübergabe aus eigener Software |
 
@@ -54,7 +54,7 @@ Für die IT, die Paraph installiert und betreibt.
 | [17. Grenzen](17-grenzen.md) | Was Paraph nicht kann oder noch nicht unter Realbedingungen geprüft ist |
 | [18. Installation mit Claude Code](18-installation-mit-claude-code.md) | Probebetrieb und Server-Installation mit fertigem Auftrag für Claude Code, dazu die Befehle zum Nachvollziehen |
 
-Außerdem: [Funktionsliste](funktionsliste.md) (jede Funktion mit Rolle, Fundstelle und Kapitel) · [Glossar](glossar.md) · [Beispieldokument](beispiele/Mandatsvereinbarung-Beispiel.pdf)
+Außerdem: [Funktionsliste](funktionsliste.md) (jede Funktion mit Rolle, Fundstelle und Kapitel) · [Glossar](glossar.md) · [Beispieldokument](beispiele/Einwilligung-Beispiel.pdf)
 
 ## In der laufenden Instanz
 

@@ -184,7 +184,7 @@ function Org() {
               <option value="">{t('Unbegrenzt aufbewahren')}</option>
               {[90, 180, 365, 730, 2190, 3650].map((d) => <option key={d} value={d}>{t('Dokumente {n} Tage nach Abschluss löschen', { n: d })}</option>)}
             </select>
-            <span className="hint">{t('Gelöscht werden Dokumentinhalte und Unterschriftsbilder. Audit-Trail und Hashwerte bleiben als Nachweis erhalten. Gesetzliche Aufbewahrungspflichten (z. B. § 50 BRAO: 6 Jahre Handakte) beachten.')}</span>
+            <span className="hint">{t('Gelöscht werden Dokumentinhalte und Unterschriftsbilder. Audit-Trail und Hashwerte bleiben als Nachweis erhalten. Gesetzliche Aufbewahrungspflichten beachten, z. B. nach HGB und AO oder für Kanzleien nach § 50 BRAO.')}</span>
           </div>
           <div className="field">
             <label className="label">{t('Eigene Domain für Signaturlinks (optional)')}</label>
@@ -355,7 +355,7 @@ function ApiSettings() {
   return (
     <>
       <Callout>
-        {t('Die API ist vollständig und ohne Zusatzkosten nutzbar – auch für n8n, Make oder Ihre Kanzleisoftware.')} <a href="/docs/api" target="_blank" rel="noreferrer">{t('API-Dokumentation öffnen')}</a>
+        {t('Die API ist vollständig und ohne Zusatzkosten nutzbar – auch für n8n, Make oder Ihre Fachsoftware.')} <a href="/docs/api" target="_blank" rel="noreferrer">{t('API-Dokumentation öffnen')}</a>
       </Callout>
       <div style={{ height: 18 }} />
       {keys.data && (
@@ -414,7 +414,7 @@ function ApiSettings() {
         </Section>
       )}
       {me?.permissions.includes('org.manage') && (
-        <Section title={t('Einbettung')} sub={t('Websites (Origins), die die Signaturseite per iframe einbetten dürfen – eine pro Zeile, z. B. https://portal.kanzlei.de')}>
+        <Section title={t('Einbettung')} sub={t('Websites (Origins), die die Signaturseite per iframe einbetten dürfen – eine pro Zeile, z. B. https://portal.firma.example')}>
           <div className="stack-sm">
             <textarea className="textarea mono" value={origins} onChange={(e) => setOrigins(e.target.value)} />
             <div><button className="btn" onClick={() => save(() => patch('/api/v1/org', { settings: { embedOrigins: origins.split('\n').map((s: string) => s.trim()).filter(Boolean) } }))}>{t('Speichern')}</button></div>

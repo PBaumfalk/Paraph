@@ -1,12 +1,12 @@
 # 7. Recht: Signaturstufen, Formvorschriften, Datenschutz
 
-Dieses Kapitel ordnet ein, was eine Unterschrift mit Paraph rechtlich leistet und was nicht. Es richtet sich an Anwältinnen und Anwälte, die entscheiden, welche Dokumente sie über Paraph unterschreiben lassen, und an die Kanzleileitung, die Paraph datenschutzkonform betreiben muss.
+Dieses Kapitel ordnet ein, was eine Unterschrift mit Paraph rechtlich leistet und was nicht. Es richtet sich an Verantwortliche, die entscheiden, welche Dokumente sie über Paraph unterschreiben lassen, etwa Geschäftsführung, Personal- oder Rechtsabteilung, und an die Leitung, die Paraph datenschutzkonform betreiben muss.
 
 > **Wichtig:** Dieses Kapitel ist eine technische Einordnung, keine Rechtsberatung. Die rechtlichen Inhalte von Paraph, also Formhinweis-Katalog, Erklärungstexte und Hinweise in der Oberfläche, sind **anwaltlich nicht freigegeben**. Ob eine Erklärung im Einzelfall formwirksam ist, prüfen Sie selbst.
 
 ## Stand der anwaltlichen Freigabe
 
-Die rechtlichen Prüfpunkte stehen in `docs/recht/FREIGABELISTE.md`, die Begründungen in `docs/recht/formhinweise-analyse.md`. Beide sind eine technische Vorbereitung vom 22.10.2026 und tragen den Status **„NICHT ANWALTLICH FREIGEGEBEN“**. Kein Punkt der Liste ist bisher abgehakt. Die Liste ist als Prüfliste für Ihre Kanzlei gedacht: Wer Paraph produktiv einsetzt, lässt die Punkte von einer eigenen Anwältin oder einem eigenen Anwalt prüfen und trägt die Entscheidungen ein.
+Die rechtlichen Prüfpunkte stehen in `docs/recht/FREIGABELISTE.md`, die Begründungen in `docs/recht/formhinweise-analyse.md`. Beide sind eine technische Vorbereitung vom 22.10.2026 und tragen den Status **„NICHT ANWALTLICH FREIGEGEBEN“**. Kein Punkt der Liste ist bisher abgehakt. Die Liste ist als Prüfliste für Ihre Organisation gedacht: Wer Paraph produktiv einsetzt, lässt die Punkte von einer Anwältin oder einem Anwalt des eigenen Vertrauens prüfen und trägt die Entscheidungen ein.
 
 | Gruppe | Inhalt | Bedeutung |
 |---|---|---|
@@ -37,7 +37,7 @@ Im deutschen Recht ersetzt nur die QES die gesetzliche Schriftform (§ 126 Abs. 
 Paraph erzeugt **einfache elektronische Signaturen** im Sinne von Art. 3 Nr. 10 eIDAS-VO. Die Unterzeichnung wird dokumentiert durch:
 
 - einen persönlichen Link, auf Wunsch zusätzlich einen Einmalcode per E-Mail oder SMS oder einen Zugangscode,
-- eine ausdrückliche Erklärung vor dem Abschluss; der Text ist versioniert, Version und Fingerabdruck werden protokolliert. Er nennt die Stufe EES, stellt klar, dass sie keine qualifizierte Signatur ist und Schrift- oder notarielle Form nicht ersetzt, und zählt die protokollierten Merkmale auf ([Kapitel 5](05-so-unterschreiben-mandanten.md#abschließend-bestätigen)),
+- eine ausdrückliche Erklärung vor dem Abschluss; der Text ist versioniert, Version und Fingerabdruck werden protokolliert. Er nennt die Stufe EES, stellt klar, dass sie keine qualifizierte Signatur ist und Schrift- oder notarielle Form nicht ersetzt, und zählt die protokollierten Merkmale auf ([Kapitel 5](05-so-unterschreiben-die-beteiligten.md#abschließend-bestätigen)),
 - die Bindung an die maßgebliche Fassung über SHA-256,
 - einen Audit-Trail als Hash-Kette mit Zeitpunkten, IP-Adresse und Browserkennung,
 - das Plattformsiegel und die Abschlussbestätigung.
@@ -137,20 +137,22 @@ Die Bestätigung bedeutet nicht, dass die Form gewahrt ist. Sie dokumentiert nur
 
 ### Textform: dem Empfänger eine dauerhafte Kopie geben
 
-Wo Textform genügt (z. B. § 3a RVG, § 578 BGB, § 2 NachwG), sollte jede Partei das unterschriebene PDF dauerhaft erhalten. Ob ein Downloadlink auf den Kanzleiserver dafür genügt, ist eine offene Frage der Vorprüfung (F-09); Einstellungen → Organisation weist darauf hin, dass ein Link allein möglicherweise nicht ausreicht.
+Wo Textform genügt (z. B. § 3a RVG, § 578 BGB, § 2 NachwG), sollte jede Partei das unterschriebene PDF dauerhaft erhalten. Ob ein Downloadlink auf Ihren Server dafür genügt, ist eine offene Frage der Vorprüfung (F-09); Einstellungen → Organisation weist darauf hin, dass ein Link allein möglicherweise nicht ausreicht.
 
-Standardmäßig enthält die Abschluss-E-Mail nur den persönlichen Link. Mit der Einstellung „Fertiges PDF an die Abschluss-E-Mail anhängen (sonst nur persönlicher Link)“ erhalten alle Beteiligten das PDF als Anhang ([Kapitel 8](08-kanzlei-team-erscheinungsbild.md)). Übergeben Sie die Links selbst statt per E-Mail, dokumentieren Sie die Übergabe der Kopie.
+Standardmäßig enthält die Abschluss-E-Mail nur den persönlichen Link. Mit der Einstellung „Fertiges PDF an die Abschluss-E-Mail anhängen (sonst nur persönlicher Link)“ erhalten alle Beteiligten das PDF als Anhang ([Kapitel 8](08-organisation-team-erscheinungsbild.md)). Übergeben Sie die Links selbst statt per E-Mail, dokumentieren Sie die Übergabe der Kopie.
 
 ## Behörden und Gerichte
 
 Die Freigabeliste empfiehlt dazu Hinweise im Handbuch (Gruppe C, nicht freigegeben):
 
 - **Behörden:** Nach § 3a VwVfG ersetzt eine EES dort keine Schriftform. Alternativen sind die QES oder ein Weg nach § 3a Abs. 3 Nr. 2 VwVfG wie das beA (F-57).
-- **Gerichte:** Ein Paraph-PDF ist kein Schriftsatz im Sinne von § 130a Abs. 3 ZPO. Die Einreichung erfolgt über das beA mit einfacher Signatur der Anwältin oder des Anwalts oder mit QES (F-58).
+- **Gerichte:** Ein Paraph-PDF ist kein Schriftsatz im Sinne von § 130a Abs. 3 ZPO (F-58).
+
+> **Für Kanzleien:** Schriftsätze reichen Sie über das beA mit einfacher Signatur der Anwältin oder des Anwalts oder mit QES ein (F-58).
 
 ## Mustervorlagen anpassen
 
-Mitgelieferte oder in der Oberfläche vorgeschlagene Vorlagen und Texte, z. B. eine Mandatsvereinbarung, sind **Beispiele**. Sie sind nicht auf Ihren Fall geprüft und vor der Verwendung anzupassen (F-41).
+Mitgelieferte oder in der Oberfläche vorgeschlagene Vorlagen und Texte, z. B. eine Vollmacht oder eine Empfangsbestätigung, sind **Beispiele**. Sie sind nicht auf Ihren Fall geprüft und vor der Verwendung anzupassen (F-41).
 
 ## Datenschutz einhalten
 
@@ -170,7 +172,9 @@ Sie betreiben Paraph auf Ihrem eigenen Server und sind Verantwortlicher im Sinne
 
 ### Aufbewahrung und Löschung festlegen
 
-Unter Einstellungen → Organisation → „Aufbewahrung“ wählen Sie „Unbegrenzt aufbewahren“ (Standard) oder das Löschen der Dokumente 90, 180, 365, 730, 2190 oder 3650 Tage nach Abschluss ([Kapitel 8](08-kanzlei-team-erscheinungsbild.md)). Die Oberfläche erinnert an § 50 BRAO (6 Jahre Handakte).
+Unter Einstellungen → Organisation → „Aufbewahrung“ wählen Sie „Unbegrenzt aufbewahren“ (Standard) oder das Löschen der Dokumente 90, 180, 365, 730, 2190 oder 3650 Tage nach Abschluss ([Kapitel 8](08-organisation-team-erscheinungsbild.md)). Die Oberfläche erinnert dabei an gesetzliche Aufbewahrungspflichten.
+
+> **Für Kanzleien:** Die Oberfläche nennt neben HGB und AO ausdrücklich § 50 BRAO für die Handakte.
 
 - **Inhalte** (Dateien, Feldwerte, Unterschriftsbilder): bis zur Löschung nach der Aufbewahrungsfrist, sonst unbegrenzt. Mit gelöscht werden Textauszüge, die Nachricht des Absenders, Ablehnungsgründe, Mobilnummern und die E-Mail-Datensätze des Vorgangs.
 - **Audit-Trail, Beteiligte und Fingerabdrücke** bleiben auch nach der Inhaltslöschung erhalten (Nachweisfunktion).
@@ -189,7 +193,7 @@ Den Inhalt der Hinweise erstellen Sie selbst; er ist nicht Teil von Paraph. Die 
 
 Die Abschlussbestätigung geht an alle Beteiligten und enthält IP-Adresse und Gerät **jeder** beteiligten Person, unter Umständen also auch die der Gegenseite. Ob das erforderlich und von welcher Rechtsgrundlage gedeckt ist, ist offen (F-08). Erwähnen Sie es zumindest in Ihren Datenschutzhinweisen.
 
-### Auftragsverarbeitung und Berufsrecht klären
+### Auftragsverarbeitung klären
 
 Paraph selbst ist Software auf Ihrem Server; es gibt keinen Anbieter, der Daten für Paraph verarbeitet. Ein Vertrag zur Auftragsverarbeitung (Art. 28 DSGVO) kommt nur in Betracht, soweit Sie externe Dienste einbinden:
 
@@ -206,8 +210,13 @@ Sicherungen verlassen den Server nur vollständig verschlüsselt, sofern Sie die
 Offen nach der Vorprüfung:
 
 - **Auftragsverarbeitung (F-05):** Für welche Anbieter ein Vertrag nötig ist, insbesondere beim Zeitstempeldienst (Tendenz der Vorprüfung: kein Vertrag, weil kein Personenbezug erkennbar), und wie mit Anbietern außerhalb von EU/EWR umzugehen ist (Art. 44 ff. DSGVO).
-- **Berufsrecht (F-06):** Vereinbarungen nach § 43e BRAO mit allen Dienstleistern; ob § 43e Abs. 5 BRAO (Einwilligung des Mandanten bei Diensten, die unmittelbar einem einzelnen Mandat dienen) den Versand je Vorgang betrifft; Verschwiegenheit nach § 43a Abs. 2 BRAO und § 203 StGB. Der Titel des Vorgangs steht im Betreff der Einladung und ist damit für Mailanbieter und Empfänger sichtbar. Verwenden Sie keine Titel mit Mandantennamen, wenn das nicht gewollt ist.
 - **Datenschutz-Folgenabschätzung (F-15):** Schwellwertanalyse dokumentieren, im Zweifel eine Folgenabschätzung nach Art. 35 DSGVO durchführen; Eintrag im Verzeichnis nach Art. 30 DSGVO.
+
+Der Titel des Vorgangs steht im Betreff der Einladung und ist damit für Mailanbieter und Empfänger sichtbar. Verwenden Sie keine Titel mit Namen oder vertraulichen Angaben, wenn das nicht gewollt ist.
+
+### Hinweise für Kanzleien: Berufsrecht klären
+
+Offen nach der Vorprüfung ist außerdem das **Berufsrecht (F-06):** Vereinbarungen nach § 43e BRAO mit allen Dienstleistern; ob § 43e Abs. 5 BRAO (Einwilligung des Mandanten bei Diensten, die unmittelbar einem einzelnen Mandat dienen) den Versand je Vorgang betrifft; Verschwiegenheit nach § 43a Abs. 2 BRAO und § 203 StGB. Verwenden Sie keine Titel mit Mandantennamen, wenn das nicht gewollt ist.
 
 ## Vor dem Produktivbetrieb erledigen
 
@@ -223,4 +232,4 @@ Aus den Quellen ergibt sich diese Liste. Sie ersetzt nicht die Freigabeliste.
 
 ---
 
-← [6. Dokumente prüfen](06-dokumente-pruefen.md) · [Inhalt](README.md) · [8. Kanzlei, Team und Erscheinungsbild einrichten](08-kanzlei-team-erscheinungsbild.md) →
+← [6. Dokumente prüfen](06-dokumente-pruefen.md) · [Inhalt](README.md) · [8. Organisation, Team und Erscheinungsbild einrichten](08-organisation-team-erscheinungsbild.md) →
