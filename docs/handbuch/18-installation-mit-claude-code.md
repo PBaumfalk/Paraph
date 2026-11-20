@@ -7,7 +7,7 @@ Es gibt zwei Wege:
 | Weg | Wofür | Ergebnis |
 |---|---|---|
 | [Probebetrieb](#probebetrieb-auf-dem-eigenen-rechner) | Ausprobieren auf einem Mac oder Linux-Rechner, Schulung, erster Eindruck | `http://localhost:8080`, nur auf diesem Rechner, ohne E-Mail-Versand |
-| [Server](#installation-auf-dem-server) | Kanzleibetrieb | `https://<Ihre Domain>` mit HTTPS, E-Mail und Sicherung |
+| [Server](#installation-auf-dem-server) | Produktivbetrieb | `https://<Ihre Domain>` mit HTTPS, E-Mail und Sicherung |
 
 Alles, was Claude Code ausführt, steht in [Kapitel 11](11-installation.md) als Befehl. Diese Befehle finden Sie auch hier unter [Was Claude Code ausführt](#was-claude-code-ausführt). So können Sie jeden Schritt nachvollziehen oder von Hand wiederholen.
 
@@ -112,14 +112,14 @@ Woran Sie den Erfolg erkennen: Claude Code meldet die Adresse `http://localhost:
 
 ## Installation auf dem Server
 
-Für den Kanzleibetrieb installieren Sie Paraph auf einem Linux-Server. Claude Code muss dafür auf dem Server selbst laufen: Melden Sie sich per SSH an und installieren Sie Claude Code dort wie oben beschrieben.
+Für den Produktivbetrieb installieren Sie Paraph auf einem Linux-Server. Claude Code muss dafür auf dem Server selbst laufen: Melden Sie sich per SSH an und installieren Sie Claude Code dort wie oben beschrieben.
 
 Claude Code fragt Sie nach Domain, Absender und SMTP-Server. Zugangsdaten wie das SMTP-Passwort fragt es **nicht** ab. Sie tragen sie selbst in `.env` ein, damit sie nicht im Gesprächsverlauf landen. Ebenso bleibt die Wiederherstellungs-Passphrase verdeckt (`PARAPH_QUIET_SECRETS=1`); Sie lesen sie selbst aus.
 
 Fügen Sie diesen Auftrag unverändert in Claude Code ein:
 
 ```text
-Installiere Paraph aus diesem Ordner auf diesem Linux-Server für den Kanzleibetrieb und weise nach,
+Installiere Paraph aus diesem Ordner auf diesem Linux-Server für den Produktivbetrieb und weise nach,
 dass es läuft. Grundlage sind docs/handbuch/18-installation-mit-claude-code.md,
 docs/handbuch/11-installation.md und docs/handbuch/12-konfiguration.md.
 
@@ -188,14 +188,14 @@ docker compose exec -T paraph paraph setup-code
 ```sh
 cd /opt/paraph
 sudo PARAPH_NONINTERACTIVE=1 PARAPH_QUIET_SECRETS=1 \
-     PARAPH_DOMAIN=sign.kanzlei.example PARAPH_USE_CADDY=ja \
-     PARAPH_ACME_EMAIL=it@kanzlei.example \
-     PARAPH_MAIL_FROM='Kanzlei Muster <signatur@kanzlei.example>' \
+     PARAPH_DOMAIN=sign.firma.example PARAPH_USE_CADDY=ja \
+     PARAPH_ACME_EMAIL=it@firma.example \
+     PARAPH_MAIL_FROM='Firma Muster <signatur@firma.example>' \
      PARAPH_TSA_URL=freetsa PARAPH_SMTP_URL= \
      ./scripts/install.sh
 sudo nano .env                               # SMTP_URL eintragen
 sudo docker compose up -d
-curl -fsS https://sign.kanzlei.example/api/health/ready
+curl -fsS https://sign.firma.example/api/health/ready
 sudo docker compose exec -T paraph paraph doctor
 sudo cat secrets/backup_passphrase           # in den Passwortmanager übernehmen
 ```
@@ -204,7 +204,7 @@ Was `install.sh` im Einzelnen tut und welche Variablen es kennt, steht in [Kapit
 
 ## Nach der Installation
 
-1. Öffnen Sie `<Adresse>/setup` und legen Sie mit dem Einrichtungscode das erste Konto an: Kanzleiname, Ihr Name, Ihre E-Mail-Adresse und ein Passwort mit mindestens zehn Zeichen. Dieses Konto ist Inhaber der Organisation und Administrator der Instanz ([Kapitel 8](08-kanzlei-team-erscheinungsbild.md#paraph-erstmals-einrichten)).
+1. Öffnen Sie `<Adresse>/setup` und legen Sie mit dem Einrichtungscode das erste Konto an: Name der Organisation, Ihr Name, Ihre E-Mail-Adresse und ein Passwort mit mindestens zehn Zeichen. Dieses Konto ist Inhaber der Organisation und Administrator der Instanz ([Kapitel 8](08-kanzlei-team-erscheinungsbild.md#paraph-erstmals-einrichten)).
 2. Im Probebetrieb: Spielen Sie den [ersten Vorgang](01-paraph-in-fuenf-minuten.md#ihr-erster-vorgang-schritt-für-schritt) mit dem Beispieldokument durch.
 3. Auf dem Server: Öffnen Sie „Einstellungen → System“, starten Sie die „Tiefenprüfung“ und senden Sie eine „Test-E-Mail“. Arbeiten Sie danach die Abnahme in [Kapitel 11](11-installation.md#den-betrieb-abnehmen) ab und laden Sie das Team ein ([Kapitel 8](08-kanzlei-team-erscheinungsbild.md#das-team-einladen-und-verwalten)).
 
@@ -216,7 +216,7 @@ Was `install.sh` im Einzelnen tut und welche Variablen es kennt, steht in [Kapit
 | wieder starten | `docker compose up -d` | Paraph mit allen Vorgängen wie zuvor |
 | alles löschen | `docker compose down -v`, danach den Ordner löschen | **Alle Vorgänge, Dokumente und Konten sind unwiderruflich weg.** |
 
-Aus einem Probebetrieb wird kein Server-Betrieb. Für die Kanzlei installieren Sie Paraph neu auf dem Server.
+Aus einem Probebetrieb wird kein Server-Betrieb. Für den Produktivbetrieb installieren Sie Paraph neu auf dem Server.
 
 ## Wenn etwas nicht klappt
 

@@ -8,6 +8,12 @@ Konfiguration zwischen Versionen ändern; `update.sh` migriert die Daten.
 
 ## [Unveröffentlicht]
 
+### Geändert
+
+- README allgemein gefasst (Unternehmen, Kanzleien, Steuerbüros, Vereine,
+  Verwaltungen) mit Ausprobieren per `docker run` in einer Minute; Demodaten der
+  Bildschirmfotos auf ein erfundenes Unternehmen umgestellt.
+
 ## [0.3.0] – 2026-11-20
 
 ### Neu

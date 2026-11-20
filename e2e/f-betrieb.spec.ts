@@ -24,7 +24,7 @@ test('F: Systemseite, Benutzerverwaltung, Datenschutzhinweis, Prüfstelle', asyn
   // Test-E-Mail kommt an
   await page.getByRole('button', { name: 'Test-E-Mail senden' }).click();
   await expect(page.getByText(/Test-E-Mail angenommen/)).toBeVisible();
-  await waitMail('anna@kanzlei.test', 'Test-E-Mail');
+  await waitMail('anna@nordlicht.test', 'Test-E-Mail');
 
   // Benutzerverwaltung: eigenes Konto ohne Sperr-Knopf
   await expect(page.getByRole('heading', { name: 'Benutzerkonten der Instanz' })).toBeVisible();
