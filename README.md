@@ -88,7 +88,7 @@ Reverse Proxy (nginx, Traefik), Firewall, Updates mit Rückweg und Sicherung: [H
 
 ## Für Entwickler
 
-Node 24, TypeScript, Fastify, SQLite (better-sqlite3), React 19, pdf.js, pdf-lib, pkijs.
+Node 24 oder neuer (Image: Node 26), TypeScript, Fastify, SQLite (better-sqlite3), React 19, pdf.js, pdf-lib, pkijs.
 
 ```bash
 npm ci

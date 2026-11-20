@@ -8,6 +8,14 @@ Konfiguration zwischen Versionen ändern; `update.sh` migriert die Daten.
 
 ## [Unveröffentlicht]
 
+### Geändert
+
+- Abhängigkeiten aktualisiert: Laufzeit-Image auf **Node 26**, Gotenberg 9.6.0,
+  Caddy 2.11.9, Mailpit 1.34 (Tests); **pkijs 4 und asn1js 4** (nur gemeinsam
+  verträglich, Siegel und Zeitstempel auch live gegen FreeTSA geprüft);
+  Fastify-Plugins, better-sqlite3, pdf.js, nodemailer, openid-client, Vite,
+  Vitest, Playwright und weitere Patch-/Minor-Versionen.
+
 ## [0.3.1] – 2026-11-20
 
 ### Geändert

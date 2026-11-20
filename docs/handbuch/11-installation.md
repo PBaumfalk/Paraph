@@ -152,8 +152,8 @@ sudo PARAPH_SKIP_BUILD=1 \
 | Dienst | Aufgabe | Netz |
 |---|---|---|
 | `paraph` | die Anwendung. Port `127.0.0.1:8080` auf dem Host (`BIND`, `HOST_PORT`) | `frontend` und `convert` |
-| `gotenberg` | Umwandlung Word/ODT/RTF → PDF, Image `gotenberg/gotenberg:8.38.1`, JavaScript in Chromium abgeschaltet | nur `convert` (intern, ohne Internetzugang, ohne Zugriff auf Paraph-Daten) |
-| `caddy` | nur mit Profil `caddy`: HTTPS auf Port 80 und 443 (TCP und UDP), Image `caddy:2.10.2-alpine` | `frontend` |
+| `gotenberg` | Umwandlung Word/ODT/RTF → PDF, Image `gotenberg/gotenberg:9.6.0`, JavaScript in Chromium abgeschaltet | nur `convert` (intern, ohne Internetzugang, ohne Zugriff auf Paraph-Daten) |
+| `caddy` | nur mit Profil `caddy`: HTTPS auf Port 80 und 443 (TCP und UDP), Image `caddy:2.11.9-alpine` | `frontend` |
 
 Der Paraph-Container läuft als UID 1000 mit schreibgeschütztem Dateisystem, ohne Linux-Capabilities (`cap_drop: ALL`), mit `no-new-privileges` und höchstens 256 Prozessen. Schreibbar sind nur das Volume `paraph-data` (`/data`), der Sicherungsordner (`/backups`) und `/tmp` (tmpfs, 256 MB). Der Healthcheck im Image ruft alle 30 Sekunden `paraph health` auf. Protokolle rotiert Docker (10 MB, fünf Dateien).
 
