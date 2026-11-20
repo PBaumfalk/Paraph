@@ -1,6 +1,6 @@
 # Funktionsliste
 
-Jede Funktion von Paraph mit der nötigen Rolle oder Voraussetzung, der Stelle in der Oberfläche (oder im Code, wo es keine Oberfläche gibt) und dem Handbuchabschnitt, der sie erklärt. Stand: Version 0.3.0 ([Änderungsprotokoll](../../CHANGELOG.md)).
+Jede Funktion von Paraph mit der nötigen Rolle oder Voraussetzung, der Stelle in der Oberfläche (oder im Code, wo es keine Oberfläche gibt) und dem Handbuchabschnitt, der sie erklärt. Stand: Version 0.3.1 ([Änderungsprotokoll](../../CHANGELOG.md)).
 
 **Rollen:** „Inhaber“ und „Administration“ dürfen in ihrer Organisation alles. Ausnahmen, die nur Inhaber dürfen, sind markiert. „Mitglied“ legt Vorgänge und Vorlagen an und ändert nur eigene. „Nur lesen“ sieht und lädt herunter. **Instanz-Admin** ist ein Zusatzrecht für die ganze Installation; das erste Konto hat es. Einzelheiten: [Rollen und Rechte](08-organisation-team-erscheinungsbild.md#rollen-und-rechte). „Anlegen“ steht im Folgenden für die Rollen Inhaber, Administration und Mitglied.
 

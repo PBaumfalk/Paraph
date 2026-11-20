@@ -1,6 +1,6 @@
 # 13. Sicherung und Updates
 
-Dieses Kapitel richtet sich an die IT. Es beschreibt, was Paraph sichert und wie die Sicherung verschlüsselt ist, wie Sie Hauptschlüssel und Wiederherstellungs-Passphrase aufbewahren, wie Sie Sicherungen prüfen und wiederherstellen – auch auf einem neuen Server – und wie Sie Paraph mit `update.sh` aktualisieren und bei Bedarf zurückkehren. Stand: Version 0.3.0, Sicherungsformat `paraph-backup/2` (`src/server/domain/backup.ts`).
+Dieses Kapitel richtet sich an die IT. Es beschreibt, was Paraph sichert und wie die Sicherung verschlüsselt ist, wie Sie Hauptschlüssel und Wiederherstellungs-Passphrase aufbewahren, wie Sie Sicherungen prüfen und wiederherstellen – auch auf einem neuen Server – und wie Sie Paraph mit `update.sh` aktualisieren und bei Bedarf zurückkehren. Stand: Version 0.3.1, Sicherungsformat `paraph-backup/2` (`src/server/domain/backup.ts`).
 
 ## Was eine Sicherung enthält
 
@@ -193,7 +193,7 @@ Der Docker-Gesamttest `scripts/docker-e2e.mjs` spielt den Katastrophenfall autom
 
 ```sh
 sudo ./scripts/update.sh                 # neueste Fassung aus Git (fast-forward)
-sudo ./scripts/update.sh --ref v0.3.0    # bestimmter Tag oder Commit
+sudo ./scripts/update.sh --ref v0.3.1    # bestimmter Tag oder Commit
 sudo ./scripts/update.sh --no-pull       # nur neu bauen, z. B. nach manuell entpacktem Archiv
 sudo ./scripts/update.sh --rollback      # zurück auf den Stand vor dem letzten Update
 ```
@@ -216,9 +216,9 @@ Erst nach erfolgreichem Start trägt das Skript das neue Image als `PARAPH_IMAGE
 Mit `PARAPH_SKIP_BUILD=1` verwendet `update.sh` statt zu bauen ein lokal vorhandenes Image namens `paraph:<Version>` (Version aus `package.json` des neuen Stands). Für das Image von GitHub ([Kapitel 11](11-installation.md#das-fertige-image-von-github-verwenden)) geben Sie ihm vorher diesen Namen:
 
 ```sh
-sudo docker pull ghcr.io/pbaumfalk/paraph:0.3.0
-sudo docker tag ghcr.io/pbaumfalk/paraph:0.3.0 paraph:0.3.0
-sudo PARAPH_SKIP_BUILD=1 ./scripts/update.sh --ref v0.3.0
+sudo docker pull ghcr.io/pbaumfalk/paraph:0.3.1
+sudo docker tag ghcr.io/pbaumfalk/paraph:0.3.1 paraph:0.3.1
+sudo PARAPH_SKIP_BUILD=1 ./scripts/update.sh --ref v0.3.1
 ```
 
 Git-Stand und Image-Version müssen zusammenpassen, denn `docker-compose.yml`, `Caddyfile` und Skripte kommen aus dem Checkout. Fehlt das Image, baut das Skript wie gewohnt. (Abgeleitet aus `update.sh`; dieser Weg ist nicht automatisiert getestet.)

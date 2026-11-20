@@ -8,6 +8,8 @@ Konfiguration zwischen Versionen ändern; `update.sh` migriert die Daten.
 
 ## [Unveröffentlicht]
 
+## [0.3.1] – 2026-11-20
+
 ### Geändert
 
 - **Allgemein statt kanzleibezogen:** Handbuch und Oberfläche sprechen alle
@@ -221,7 +223,8 @@ Erste Fassung.
   und Englisch.
 - Gehärteter Docker-Betrieb mit Gotenberg für Word/ODT.
 
-[Unveröffentlicht]: https://github.com/PBaumfalk/Paraph/compare/v0.3.0...main
+[Unveröffentlicht]: https://github.com/PBaumfalk/Paraph/compare/v0.3.1...main
+[0.3.1]: https://github.com/PBaumfalk/Paraph/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/PBaumfalk/Paraph/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/PBaumfalk/Paraph/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/PBaumfalk/Paraph/releases/tag/v0.1.0

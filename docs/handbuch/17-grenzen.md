@@ -1,6 +1,6 @@
 # 17. Grenzen
 
-Dieses Kapitel nennt ehrlich, was Paraph nicht kann, was nicht gegen echte Gegenstellen geprüft ist und wo die Schutzmaßnahmen enden. Es richtet sich an die Leitung der Organisation, die über den Einsatz entscheidet, und an IT und Betrieb. Stand: Version 0.3.0.
+Dieses Kapitel nennt ehrlich, was Paraph nicht kann, was nicht gegen echte Gegenstellen geprüft ist und wo die Schutzmaßnahmen enden. Es richtet sich an die Leitung der Organisation, die über den Einsatz entscheidet, und an IT und Betrieb. Stand: Version 0.3.1.
 
 ## Den Freigabestand kennen
 
