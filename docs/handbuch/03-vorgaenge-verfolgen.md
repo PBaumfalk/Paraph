@@ -16,11 +16,11 @@ Die „Übersicht“ ist die Startseite. Oben grüßt Paraph und nennt, wie viel
 | „Erledigt“ | abgeschlossene, versiegelte Vorgänge |
 | „Beendet“ | abgelehnte, widerrufene und abgelaufene Vorgänge |
 
-Jede Zeile zeigt den Titel, bei laufenden Vorgängen „Wartet auf …“ mit den Namen, den Fortschritt (z. B. `1/2`), eine Kennung aus Ihrer Kanzleisoftware (falls über die API gesetzt) und wann sich zuletzt etwas geändert hat. Die Kreise rechts stehen für die Beteiligten in ihrer Reihenfolge. Über das Menü „…“ öffnen Sie den Vorgang; bei erledigten Vorgängen laden Sie dort direkt das PDF herunter.
+Jede Zeile zeigt den Titel, bei laufenden Vorgängen „Wartet auf …“ mit den Namen, den Fortschritt (z. B. `1/2`), eine Kennung aus Ihrer Fachsoftware, etwa Kanzlei-, Personal- oder CRM-Software (falls über die API gesetzt) und wann sich zuletzt etwas geändert hat. Die Kreise rechts stehen für die Beteiligten in ihrer Reihenfolge. Über das Menü „…“ öffnen Sie den Vorgang; bei erledigten Vorgängen laden Sie dort direkt das PDF herunter.
 
 Die Übersicht aktualisiert sich von selbst, sobald jemand öffnet, unterschreibt oder ablehnt.
 
-Welche Vorgänge Sie sehen, hängt von Ihrer Rolle und einer Einstellung der Organisation ab: Mitglieder sehen entweder nur ihre eigenen Vorgänge oder alle der Organisation, ändern aber nur eigene. Inhaber, Administration und „Nur lesen“ sehen alle. Details in [Kapitel 8](08-kanzlei-team-erscheinungsbild.md).
+Welche Vorgänge Sie sehen, hängt von Ihrer Rolle und einer Einstellung der Organisation ab: Mitglieder sehen entweder nur ihre eigenen Vorgänge oder alle der Organisation, ändern aber nur eigene. Inhaber, Administration und „Nur lesen“ sehen alle. Details in [Kapitel 8](08-organisation-team-erscheinungsbild.md).
 
 > **Gut zu wissen:** Die Übersicht lädt die 200 zuletzt geänderten Vorgänge. Ältere finden Sie über die Suche.
 
@@ -50,7 +50,7 @@ Ein Klick auf einen Vorgang öffnet seine Seite.
 
 ![Vorgangsseite eines laufenden Vorgangs mit Beteiligten, Verlauf und Integrität](bilder/vorgang-unterwegs.png)
 
-Oben stehen Titel, Status, Fortschritt („0 von 1 erledigt“), gegebenenfalls die Kennung aus der Kanzleisoftware und wer den Vorgang angelegt hat. Rechts davon „Vorgang widerrufen“ (nur bei laufenden Vorgängen) und „Erneut verwenden“.
+Oben stehen Titel, Status, Fortschritt („0 von 1 erledigt“), gegebenenfalls die Kennung aus der Fachsoftware und wer den Vorgang angelegt hat. Rechts davon „Vorgang widerrufen“ (nur bei laufenden Vorgängen) und „Erneut verwenden“.
 
 Links sehen Sie das Dokument mit den Feldern in den Farben der Beteiligten. Erledigte Felder tragen einen Haken. Bei mehreren Dokumenten wechseln Sie über die Reiter darüber.
 
@@ -89,7 +89,7 @@ Automatische Erinnerungen verschickt Paraph im Abstand, den Sie beim Versand gew
 
 ### Einen neuen Link ausstellen
 
-„Link selbst weitergeben“ stellt einen neuen Link aus, den Sie selbst übergeben, etwa per Kanzleisoftware oder am Telefon.
+„Link selbst weitergeben“ stellt einen neuen Link aus, den Sie selbst übergeben, etwa per Fachsoftware oder am Telefon.
 
 Bei Vorgängen ohne E-Mail-Einladung steht bei jeder Person, die an der Reihe ist und noch auf Ihren Link wartet, der Hinweis „Ohne E-Mail-Einladung: wartet auf Ihren Link.“ mit „Link selbst weitergeben“ direkt daneben. Kommt jemand später an die Reihe (bei „Nacheinander“ oder nach einer Vertretung), erhalten Sie dazu eine E-Mail.
 
@@ -100,7 +100,7 @@ Alle bisherigen Links dieser Person werden sofort ungültig, eine bereits geöff
 
 ### Vor Ort unterschreiben lassen
 
-Sitzt die Person bei Ihnen in der Kanzlei, wählen Sie „Vor Ort unterschreiben“. Die Person unterschreibt dann an Ihrem Gerät. Einzelheiten in [Kapitel 4](04-vorlagen-serien-formulare.md#vor-ort-unterschreiben-lassen).
+Ist die Person persönlich bei Ihnen, wählen Sie „Vor Ort unterschreiben“. Die Person unterschreibt dann an Ihrem Gerät. Einzelheiten in [Kapitel 4](04-vorlagen-serien-formulare.md#vor-ort-unterschreiben-lassen).
 
 ## Einen Vorgang widerrufen
 
@@ -140,17 +140,17 @@ Unter „Ergebnis“ liegen:
 
 | Datei | Inhalt | Wofür |
 |---|---|---|
-| „Unterschriebenes PDF“ | das versiegelte Dokument mit allen Eingaben; ab Werk mit angehängter Abschlussbestätigung | Akte, Weitergabe |
-| einzelne Dokumente | bei mehreren Dokumenten jedes einzeln | Ablage nach Dokument |
+| „Unterschriebenes PDF“ | das versiegelte Dokument mit allen Eingaben; ab Werk mit angehängter Abschlussbestätigung | Ablage, Weitergabe |
+| einzelne Dokumente | bei mehreren Dokumenten jedes einzeln | Ablage je Dokument |
 | „Abschlussbestätigung“ | wer, wann, wie: Beteiligte, Zeitpunkte, Prüfmethoden und Prüfwerte | zum Vorlegen |
 | „Nachweispaket (ZIP)“ | alle Fassungen, Audit-Trail, Unterschriftsbilder, Anhänge, signiertes Manifest, Prüfanleitung und Prüfskript | Beweissicherung |
 | „Audit-Trail (JSON)“ | alle Ereignisse als verkettete Liste, maschinenlesbar | technische Prüfung |
 
-Die Beteiligten und Personen mit „Erhält Kopie“ erhalten eine Abschluss-E-Mail mit persönlichem Downloadlink und dem SHA-256-Prüfwert des unterschriebenen Dokuments. Ob das PDF zusätzlich angehängt wird und ob die Abschlussbestätigung an das PDF angehängt wird, legt die Administration fest ([Kapitel 8](08-kanzlei-team-erscheinungsbild.md)). Sie selbst erhalten ebenfalls eine Nachricht.
+Die Beteiligten und Personen mit „Erhält Kopie“ erhalten eine Abschluss-E-Mail mit persönlichem Downloadlink und dem SHA-256-Prüfwert des unterschriebenen Dokuments. Ob das PDF zusätzlich angehängt wird und ob die Abschlussbestätigung an das PDF angehängt wird, legt die Administration fest ([Kapitel 8](08-organisation-team-erscheinungsbild.md)). Sie selbst erhalten ebenfalls eine Nachricht.
 
 Wie Sie oder Dritte ein Ergebnis später prüfen, steht in [Kapitel 6](06-dokumente-pruefen.md).
 
-> **Wichtig:** Hat Ihre Organisation eine Aufbewahrungsfrist eingestellt, löscht Paraph nach deren Ablauf die Dokumente und Eingaben beendeter Vorgänge. Erhalten bleiben Titel, Beteiligte, Zeitpunkte, Prüfwerte und der Audit-Trail. Legen Sie das Ergebnis deshalb rechtzeitig in Ihrer Akte ab.
+> **Wichtig:** Hat Ihre Organisation eine Aufbewahrungsfrist eingestellt, löscht Paraph nach deren Ablauf die Dokumente und Eingaben beendeter Vorgänge. Erhalten bleiben Titel, Beteiligte, Zeitpunkte, Prüfwerte und der Audit-Trail. Legen Sie das Ergebnis deshalb rechtzeitig in Ihrer eigenen Ablage ab.
 
 ## Die Aktivität ansehen
 
@@ -165,7 +165,7 @@ Anmeldungen und Änderungen an Passwort oder Zwei-Faktor protokolliert Paraph eb
 
 ## Testvorgänge erkennen
 
-Vorgänge im Testmodus entstehen nur über die API mit einem Testschlüssel, etwa wenn Ihre IT eine Anbindung an die Kanzleisoftware ausprobiert ([Kapitel 10](10-anbindung-api-webhooks.md)). Für Sie als Kanzlei gilt:
+Vorgänge im Testmodus entstehen nur über die API mit einem Testschlüssel, etwa wenn Ihre IT eine Anbindung an die Fachsoftware ausprobiert ([Kapitel 10](10-anbindung-api-webhooks.md)). Für Ihre Organisation gilt:
 
 - Testvorgänge erscheinen nicht in der Übersicht, nicht in den Zählern und nicht in der Aktivität.
 - Öffnen Sie einen Testvorgang über einen direkten Link, trägt er neben dem Status die Marke „TEST“.

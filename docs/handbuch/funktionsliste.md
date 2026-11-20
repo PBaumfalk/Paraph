@@ -2,7 +2,7 @@
 
 Jede Funktion von Paraph mit der nötigen Rolle oder Voraussetzung, der Stelle in der Oberfläche (oder im Code, wo es keine Oberfläche gibt) und dem Handbuchabschnitt, der sie erklärt. Stand: Version 0.3.0 ([Änderungsprotokoll](../../CHANGELOG.md)).
 
-**Rollen:** „Inhaber“ und „Administration“ dürfen in ihrer Organisation alles. Ausnahmen, die nur Inhaber dürfen, sind markiert. „Mitglied“ legt Vorgänge und Vorlagen an und ändert nur eigene. „Nur lesen“ sieht und lädt herunter. **Instanz-Admin** ist ein Zusatzrecht für die ganze Installation; das erste Konto hat es. Einzelheiten: [Rollen und Rechte](08-kanzlei-team-erscheinungsbild.md#rollen-und-rechte). „Anlegen“ steht im Folgenden für die Rollen Inhaber, Administration und Mitglied.
+**Rollen:** „Inhaber“ und „Administration“ dürfen in ihrer Organisation alles. Ausnahmen, die nur Inhaber dürfen, sind markiert. „Mitglied“ legt Vorgänge und Vorlagen an und ändert nur eigene. „Nur lesen“ sieht und lädt herunter. **Instanz-Admin** ist ein Zusatzrecht für die ganze Installation; das erste Konto hat es. Einzelheiten: [Rollen und Rechte](08-organisation-team-erscheinungsbild.md#rollen-und-rechte). „Anlegen“ steht im Folgenden für die Rollen Inhaber, Administration und Mitglied.
 
 **Markierungen:** *optional* = nur mit zusätzlicher Konfiguration · *Vorschau* = vorbereitet, nicht funktionsfähig
 
@@ -10,11 +10,11 @@ Jede Funktion von Paraph mit der nötigen Rolle oder Voraussetzung, der Stelle i
 
 | Funktion | Rolle oder Voraussetzung | Fundstelle | Handbuch |
 |---|---|---|---|
-| Ersteinrichtung: Organisation und erstes Konto | Einrichtungscode, nur solange kein Konto existiert | `/setup` „Paraph einrichten“ | [Kap. 8](08-kanzlei-team-erscheinungsbild.md#paraph-erstmals-einrichten), [Kap. 1](01-paraph-in-fuenf-minuten.md#ihr-erster-vorgang-schritt-für-schritt) |
+| Ersteinrichtung: Organisation und erstes Konto | Einrichtungscode, nur solange kein Konto existiert | `/setup` „Paraph einrichten“ | [Kap. 8](08-organisation-team-erscheinungsbild.md#paraph-erstmals-einrichten), [Kap. 1](01-paraph-in-fuenf-minuten.md#ihr-erster-vorgang-schritt-für-schritt) |
 | Anmelden mit Passwort, Zwei-Faktor-Code | Konto | `/login` | [Kap. 9](09-anmeldung-und-sso.md#sich-anmelden) |
 | Passwort vergessen | Konto mit Passwort, Mailserver | `/login` „Passwort vergessen?“ | [Kap. 9](09-anmeldung-und-sso.md#ein-vergessenes-passwort-zurücksetzen) |
 | Anmeldung per SSO (OIDC, z. B. authentik) | *optional*: `OIDC_*` | `/login` „Mit … anmelden“ | [Kap. 9](09-anmeldung-und-sso.md#anmeldung-per-sso-oidc-einrichten) |
-| Einladung annehmen | Einladungslink | `/invite/…` | [Kap. 8](08-kanzlei-team-erscheinungsbild.md#eine-person-einladen) |
+| Einladung annehmen | Einladungslink | `/invite/…` | [Kap. 8](08-organisation-team-erscheinungsbild.md#eine-person-einladen) |
 | Seitenleiste, Suche und Befehlspalette (⌘K / Strg+K) | angemeldet | Seitenleiste „Suchen“ | [Kap. 1](01-paraph-in-fuenf-minuten.md#wo-sie-was-finden), [Kap. 3](03-vorgaenge-verfolgen.md#vorgänge-suchen) |
 | Organisation wechseln | Mitglied mehrerer Organisationen | Organisationsname unten links | [Kap. 1](01-paraph-in-fuenf-minuten.md#wo-sie-was-finden) |
 | Sprache Deutsch/English | alle | Menü unter dem eigenen Namen | [Kap. 1](01-paraph-in-fuenf-minuten.md#wo-sie-was-finden) |
@@ -52,24 +52,24 @@ Jede Funktion von Paraph mit der nötigen Rolle oder Voraussetzung, der Stelle i
 | Vorgangsseite: Beteiligte, Verlauf, Integrität | alle | Vorgang öffnen | [Kap. 3](03-vorgaenge-verfolgen.md#die-vorgangsseite-verstehen) |
 | Erinnern | Anlegen | Vorgangsseite, Menü „…“ der Person | [Kap. 3](03-vorgaenge-verfolgen.md#eine-person-erinnern) |
 | Neuen Link ausstellen | Anlegen | „Link selbst weitergeben“ | [Kap. 3](03-vorgaenge-verfolgen.md#einen-neuen-link-ausstellen) |
-| Vor Ort unterschreiben (Kanzlei-Tablet) | Anlegen | Vorgangsseite „Vor Ort unterschreiben“ | [Kap. 4](04-vorlagen-serien-formulare.md#vor-ort-unterschreiben-lassen) |
+| Vor Ort unterschreiben (Tablet am Empfang) | Anlegen | Vorgangsseite „Vor Ort unterschreiben“ | [Kap. 4](04-vorlagen-serien-formulare.md#vor-ort-unterschreiben-lassen) |
 | Vorgang widerrufen (Links werden sofort ungültig) | Anlegen | Vorgangsseite „Vorgang widerrufen“ | [Kap. 3](03-vorgaenge-verfolgen.md#einen-vorgang-widerrufen) |
 | Ablauf und Ablehnung | automatisch | Status „Abgelaufen“, „Abgelehnt“ | [Kap. 3](03-vorgaenge-verfolgen.md#wenn-ein-vorgang-abläuft-oder-abgelehnt-wird) |
 | Erneut verwenden (Kopie als Entwurf) | Anlegen | Vorgangsseite „Erneut verwenden“ | [Kap. 3](03-vorgaenge-verfolgen.md#einen-vorgang-erneut-verwenden) |
 | Aktivität der Organisation | Inhaber, Administration | „Aktivität“ | [Kap. 3](03-vorgaenge-verfolgen.md#die-aktivität-ansehen) |
 | Testvorgänge (Wasserzeichen „TEST“) | API-Schlüssel im Testmodus | Marke „TEST“ | [Kap. 3](03-vorgaenge-verfolgen.md#testvorgänge-erkennen) |
 
-## Unterschreiben (Mandanten, ohne Konto)
+## Unterschreiben (Beteiligte, ohne Konto)
 
 | Funktion | Voraussetzung | Fundstelle | Handbuch |
 |---|---|---|---|
-| Link öffnen, Zugang mit Code bestätigen | persönlicher Link | Signaturseite `/s/…` | [Kap. 5](05-so-unterschreiben-mandanten.md#die-einladung-öffnen), [Zugang](05-so-unterschreiben-mandanten.md#den-zugang-bestätigen) |
-| Geführtes Ausfüllen, Anhang hochladen | – | „Los geht’s“, „Nächstes Feld“ | [Kap. 5](05-so-unterschreiben-mandanten.md#felder-ausfüllen) |
-| Unterschrift zeichnen, tippen oder als Bild | – | Unterschriftsfeld | [Kap. 5](05-so-unterschreiben-mandanten.md#die-unterschrift-erstellen) |
-| Abschließend bestätigen | – | „Ich stimme der obigen Erklärung zu.“, „Verbindlich unterschreiben“ | [Kap. 5](05-so-unterschreiben-mandanten.md#abschließend-bestätigen) |
-| Ablehnen | – | Menü „…“ „Ablehnen“ | [Kap. 5](05-so-unterschreiben-mandanten.md#die-unterzeichnung-ablehnen) |
-| An Vertretung weitergeben | beim Versand erlaubt | Menü „…“ „An Vertretung weitergeben“ | [Kap. 5](05-so-unterschreiben-mandanten.md#an-eine-vertretung-weitergeben) |
-| Ergebnis herunterladen | nach Abschluss | „Unterschriebenes Dokument“, „Abschlussbestätigung“ | [Kap. 5](05-so-unterschreiben-mandanten.md#nach-dem-unterschreiben) |
+| Link öffnen, Zugang mit Code bestätigen | persönlicher Link | Signaturseite `/s/…` | [Kap. 5](05-so-unterschreiben-die-beteiligten.md#die-einladung-öffnen), [Zugang](05-so-unterschreiben-die-beteiligten.md#den-zugang-bestätigen) |
+| Geführtes Ausfüllen, Anhang hochladen | – | „Los geht’s“, „Nächstes Feld“ | [Kap. 5](05-so-unterschreiben-die-beteiligten.md#felder-ausfüllen) |
+| Unterschrift zeichnen, tippen oder als Bild | – | Unterschriftsfeld | [Kap. 5](05-so-unterschreiben-die-beteiligten.md#die-unterschrift-erstellen) |
+| Abschließend bestätigen | – | „Ich stimme der obigen Erklärung zu.“, „Verbindlich unterschreiben“ | [Kap. 5](05-so-unterschreiben-die-beteiligten.md#abschließend-bestätigen) |
+| Ablehnen | – | Menü „…“ „Ablehnen“ | [Kap. 5](05-so-unterschreiben-die-beteiligten.md#die-unterzeichnung-ablehnen) |
+| An Vertretung weitergeben | beim Versand erlaubt | Menü „…“ „An Vertretung weitergeben“ | [Kap. 5](05-so-unterschreiben-die-beteiligten.md#an-eine-vertretung-weitergeben) |
+| Ergebnis herunterladen | nach Abschluss | „Unterschriebenes Dokument“, „Abschlussbestätigung“ | [Kap. 5](05-so-unterschreiben-die-beteiligten.md#nach-dem-unterschreiben) |
 | Eingebettete Signaturseite | *optional*: freigegebene Herkunft unter „Einbettung“ | `/embed/s/…` | [Kap. 10](10-anbindung-api-webhooks.md#die-signaturseite-einbetten) |
 
 ## Ergebnis und Prüfung
@@ -95,23 +95,23 @@ Jede Funktion von Paraph mit der nötigen Rolle oder Voraussetzung, der Stelle i
 | Massenversand aus CSV oder Excel (bis 500 Zeilen) | Anlegen | Menü „…“ „Massenversand“ | [Kap. 4](04-vorlagen-serien-formulare.md#viele-vorgänge-auf-einmal-versenden) |
 | Öffentliches Formular (z. B. für die Website) | Anlegen; Vorlage mit Formularrolle | „Formulare“, Besucher unter `/f/…` | [Kap. 4](04-vorlagen-serien-formulare.md#ein-öffentliches-formular-einrichten) |
 
-## Kanzlei, Team und Einstellungen
+## Organisation, Team und Einstellungen
 
 | Funktion | Rolle oder Voraussetzung | Fundstelle | Handbuch |
 |---|---|---|---|
-| Organisation: Name, Zeitzone, Sprache, Standardwerte | Inhaber, Administration | Einstellungen → Organisation | [Kap. 8](08-kanzlei-team-erscheinungsbild.md#die-organisation-einstellen) |
-| Sichtbarkeit der Vorgänge für Mitglieder | Inhaber, Administration | Einstellungen → Organisation „Mitglieder sehen“ | [Kap. 8](08-kanzlei-team-erscheinungsbild.md#sichtbarkeit-der-vorgänge-festlegen) |
-| Datenschutzhinweis verlinken | Inhaber, Administration | Einstellungen → Organisation | [Kap. 8](08-kanzlei-team-erscheinungsbild.md#den-datenschutzhinweis-verlinken) |
-| Aufbewahrung (löscht Inhalte beendeter Vorgänge) | Inhaber, Administration | Einstellungen → Organisation | [Kap. 8](08-kanzlei-team-erscheinungsbild.md#die-aufbewahrung-festlegen) |
-| Eigene Domain für Signaturlinks | Inhaber, Administration; DNS und Proxy | Einstellungen → Organisation | [Kap. 8](08-kanzlei-team-erscheinungsbild.md#eine-eigene-domain-für-signaturlinks-verwenden), [Kap. 11](11-installation.md#eine-eigene-domain-je-organisation-einrichten) |
-| Weitere Organisation anlegen | Instanz-Admin | Einstellungen → Organisation | [Kap. 8](08-kanzlei-team-erscheinungsbild.md#weitere-organisationen-anlegen) |
-| Team einladen, Rolle ändern, entfernen | Inhaber, Administration; Inhaberrechte nur Inhaber | Einstellungen → Team | [Kap. 8](08-kanzlei-team-erscheinungsbild.md#das-team-einladen-und-verwalten) |
-| Logo, Akzentfarbe, Absender, E-Mail-Texte | Inhaber, Administration | Einstellungen → Erscheinungsbild und E-Mails | [Kap. 8](08-kanzlei-team-erscheinungsbild.md#das-erscheinungsbild-anpassen) |
-| Siegel und Signaturstufen ansehen, Zertifikat herunterladen | Inhaber, Administration | Einstellungen → Siegel und Signaturstufen | [Kap. 8](08-kanzlei-team-erscheinungsbild.md#siegel-und-signaturstufen-einsehen) |
-| Eigenes Siegelzertifikat verwenden | nur Inhaber | Einstellungen → Siegel und Signaturstufen | [Kap. 8](08-kanzlei-team-erscheinungsbild.md#ein-eigenes-siegelzertifikat-verwenden) |
+| Organisation: Name, Zeitzone, Sprache, Standardwerte | Inhaber, Administration | Einstellungen → Organisation | [Kap. 8](08-organisation-team-erscheinungsbild.md#die-organisation-einstellen) |
+| Sichtbarkeit der Vorgänge für Mitglieder | Inhaber, Administration | Einstellungen → Organisation „Mitglieder sehen“ | [Kap. 8](08-organisation-team-erscheinungsbild.md#sichtbarkeit-der-vorgänge-festlegen) |
+| Datenschutzhinweis verlinken | Inhaber, Administration | Einstellungen → Organisation | [Kap. 8](08-organisation-team-erscheinungsbild.md#den-datenschutzhinweis-verlinken) |
+| Aufbewahrung (löscht Inhalte beendeter Vorgänge) | Inhaber, Administration | Einstellungen → Organisation | [Kap. 8](08-organisation-team-erscheinungsbild.md#die-aufbewahrung-festlegen) |
+| Eigene Domain für Signaturlinks | Inhaber, Administration; DNS und Proxy | Einstellungen → Organisation | [Kap. 8](08-organisation-team-erscheinungsbild.md#eine-eigene-domain-für-signaturlinks-verwenden), [Kap. 11](11-installation.md#eine-eigene-domain-je-organisation-einrichten) |
+| Weitere Organisation anlegen | Instanz-Admin | Einstellungen → Organisation | [Kap. 8](08-organisation-team-erscheinungsbild.md#weitere-organisationen-anlegen) |
+| Team einladen, Rolle ändern, entfernen | Inhaber, Administration; Inhaberrechte nur Inhaber | Einstellungen → Team | [Kap. 8](08-organisation-team-erscheinungsbild.md#das-team-einladen-und-verwalten) |
+| Logo, Akzentfarbe, Absender, E-Mail-Texte | Inhaber, Administration | Einstellungen → Erscheinungsbild und E-Mails | [Kap. 8](08-organisation-team-erscheinungsbild.md#das-erscheinungsbild-anpassen) |
+| Siegel und Signaturstufen ansehen, Zertifikat herunterladen | Inhaber, Administration | Einstellungen → Siegel und Signaturstufen | [Kap. 8](08-organisation-team-erscheinungsbild.md#siegel-und-signaturstufen-einsehen) |
+| Eigenes Siegelzertifikat verwenden | nur Inhaber | Einstellungen → Siegel und Signaturstufen | [Kap. 8](08-organisation-team-erscheinungsbild.md#ein-eigenes-siegelzertifikat-verwenden) |
 | Qualifizierte elektronische Signatur (QES) | *Vorschau*: Versand mit QES gesperrt | Einstellungen → Siegel und Signaturstufen | [Kap. 12](12-konfiguration.md#qes-anbieter-vorbereitet-nicht-funktionsfähig), [Kap. 17](17-grenzen.md#signaturstufen) |
-| System: Diagnose, Tiefenprüfung, Test-E-Mail, Jetzt sichern, Hintergrundaufgaben | Instanz-Admin | Einstellungen → System | [Kap. 8](08-kanzlei-team-erscheinungsbild.md#die-instanz-verwalten-system), [Kap. 15](15-diagnose-und-fehlersuche.md) |
-| Benutzerkonten sperren, Zwei-Faktor zurücksetzen, Passwort-Link, Admin-Recht | Instanz-Admin | Einstellungen → System | [Kap. 8](08-kanzlei-team-erscheinungsbild.md#benutzerkonten-der-instanz-verwalten) |
+| System: Diagnose, Tiefenprüfung, Test-E-Mail, Jetzt sichern, Hintergrundaufgaben | Instanz-Admin | Einstellungen → System | [Kap. 8](08-organisation-team-erscheinungsbild.md#die-instanz-verwalten-system), [Kap. 15](15-diagnose-und-fehlersuche.md) |
+| Benutzerkonten sperren, Zwei-Faktor zurücksetzen, Passwort-Link, Admin-Recht | Instanz-Admin | Einstellungen → System | [Kap. 8](08-organisation-team-erscheinungsbild.md#benutzerkonten-der-instanz-verwalten) |
 
 ## Anbindung
 
@@ -120,7 +120,7 @@ Jede Funktion von Paraph mit der nötigen Rolle oder Voraussetzung, der Stelle i
 | API-Schlüssel mit Berechtigungen, Live- und Testmodus | Inhaber, Administration | Einstellungen → API und Webhooks | [Kap. 10](10-anbindung-api-webhooks.md#einen-api-schlüssel-anlegen) |
 | REST-API, Vorgang in einem Aufruf, Idempotency-Key | API-Schlüssel | `/api/v1/…` | [Kap. 10](10-anbindung-api-webhooks.md#einen-vorgang-in-einem-aufruf-anlegen-und-versenden) |
 | API-Referenz und OpenAPI-Dokument | öffentlich | `/docs/api`, `/api/v1/openapi.json` | [Kap. 10](10-anbindung-api-webhooks.md#die-api-dokumentation-öffnen) |
-| Links aus der Kanzleisoftware übergeben | API-Schlüssel | `notify: false`, `…/recipients/{rid}/link` | [Kap. 10](10-anbindung-api-webhooks.md#links-aus-der-kanzleisoftware-selbst-übergeben) |
+| Links aus der Fachsoftware übergeben | API-Schlüssel | `notify: false`, `…/recipients/{rid}/link` | [Kap. 10](10-anbindung-api-webhooks.md#links-aus-der-fachsoftware-selbst-übergeben) |
 | Webhooks mit Signatur und Wiederholung | Inhaber, Administration | Einstellungen → API und Webhooks | [Kap. 10](10-anbindung-api-webhooks.md#webhooks-empfangen) |
 | Beispiele für n8n und Make | – | – | [Kap. 10](10-anbindung-api-webhooks.md#beispiele-für-n8n-und-make) |
 

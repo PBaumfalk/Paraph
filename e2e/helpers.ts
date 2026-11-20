@@ -38,7 +38,7 @@ export async function setupOrLogin(page: Page) {
   await page.locator('h1').first().waitFor();
   if (page.url().endsWith('/setup')) {
     await page.getByLabel('Einrichtungscode').fill('e2e-setup-code');
-    await page.getByLabel('Name der Kanzlei oder Organisation').fill('Nordlicht Software GmbH');
+    await page.getByLabel('Name der Organisation').fill('Nordlicht Software GmbH');
     await page.getByLabel('Ihr Name').fill(ADMIN.name);
     await page.getByLabel('E-Mail-Adresse').fill(ADMIN.email);
     await page.getByLabel('Passwort').fill(ADMIN.password);

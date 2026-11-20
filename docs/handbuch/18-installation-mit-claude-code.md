@@ -75,7 +75,7 @@ Fragt Claude Code beim Start, ob Sie dem Ordner vertrauen, bestätigen Sie. Vor 
 
 ## Probebetrieb auf dem eigenen Rechner
 
-Im Probebetrieb läuft Paraph unter `http://localhost:8080`, nur auf Ihrem Rechner. Es gibt keine Domain, kein HTTPS und keinen E-Mail-Versand. Die Links zum Unterschreiben öffnen Sie selbst ([Kapitel 1, Schritt für Schritt](01-paraph-in-fuenf-minuten.md#ihr-erster-vorgang-schritt-für-schritt)). Verwenden Sie im Probebetrieb **keine echten Mandantendaten**.
+Im Probebetrieb läuft Paraph unter `http://localhost:8080`, nur auf Ihrem Rechner. Es gibt keine Domain, kein HTTPS und keinen E-Mail-Versand. Die Links zum Unterschreiben öffnen Sie selbst ([Kapitel 1, Schritt für Schritt](01-paraph-in-fuenf-minuten.md#ihr-erster-vorgang-schritt-für-schritt)). Verwenden Sie im Probebetrieb **keine echten Daten von Unterzeichnenden oder Kunden**.
 
 Fügen Sie diesen Auftrag unverändert in Claude Code ein:
 
@@ -204,9 +204,9 @@ Was `install.sh` im Einzelnen tut und welche Variablen es kennt, steht in [Kapit
 
 ## Nach der Installation
 
-1. Öffnen Sie `<Adresse>/setup` und legen Sie mit dem Einrichtungscode das erste Konto an: Name der Organisation, Ihr Name, Ihre E-Mail-Adresse und ein Passwort mit mindestens zehn Zeichen. Dieses Konto ist Inhaber der Organisation und Administrator der Instanz ([Kapitel 8](08-kanzlei-team-erscheinungsbild.md#paraph-erstmals-einrichten)).
+1. Öffnen Sie `<Adresse>/setup` und legen Sie mit dem Einrichtungscode das erste Konto an: Name der Organisation, Ihr Name, Ihre E-Mail-Adresse und ein Passwort mit mindestens zehn Zeichen. Dieses Konto ist Inhaber der Organisation und Administrator der Instanz ([Kapitel 8](08-organisation-team-erscheinungsbild.md#paraph-erstmals-einrichten)).
 2. Im Probebetrieb: Spielen Sie den [ersten Vorgang](01-paraph-in-fuenf-minuten.md#ihr-erster-vorgang-schritt-für-schritt) mit dem Beispieldokument durch.
-3. Auf dem Server: Öffnen Sie „Einstellungen → System“, starten Sie die „Tiefenprüfung“ und senden Sie eine „Test-E-Mail“. Arbeiten Sie danach die Abnahme in [Kapitel 11](11-installation.md#den-betrieb-abnehmen) ab und laden Sie das Team ein ([Kapitel 8](08-kanzlei-team-erscheinungsbild.md#das-team-einladen-und-verwalten)).
+3. Auf dem Server: Öffnen Sie „Einstellungen → System“, starten Sie die „Tiefenprüfung“ und senden Sie eine „Test-E-Mail“. Arbeiten Sie danach die Abnahme in [Kapitel 11](11-installation.md#den-betrieb-abnehmen) ab und laden Sie das Team ein ([Kapitel 8](08-organisation-team-erscheinungsbild.md#das-team-einladen-und-verwalten)).
 
 ## Probebetrieb beenden oder entfernen
 

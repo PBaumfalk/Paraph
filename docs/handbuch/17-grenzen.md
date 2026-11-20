@@ -1,13 +1,13 @@
 # 17. Grenzen
 
-Dieses Kapitel nennt ehrlich, was Paraph nicht kann, was nicht gegen echte Gegenstellen geprüft ist und wo die Schutzmaßnahmen enden. Es richtet sich an die Kanzleileitung, die über den Einsatz entscheidet, und an IT und Betrieb. Stand: Version 0.3.0.
+Dieses Kapitel nennt ehrlich, was Paraph nicht kann, was nicht gegen echte Gegenstellen geprüft ist und wo die Schutzmaßnahmen enden. Es richtet sich an die Leitung der Organisation, die über den Einsatz entscheidet, und an IT und Betrieb. Stand: Version 0.3.0.
 
 ## Den Freigabestand kennen
 
 Der Abnahmebericht (`docs/STATUS-0.2.0.md`) bewertet Paraph als **„NOT READY FOR PRODUCTION – technisch abnahmefähig, Freigaben offen“**. Drei Punkte blockieren den Produktivstart; keiner lässt sich durch weiteren Code lösen:
 
 1. **Anwaltliche Freigabe** der Formhinweise und Erklärungstexte ist offen (`docs/recht/FREIGABELISTE.md`, [Kapitel 7](07-recht.md)).
-2. **Echte Gegenstellen sind nicht verifiziert:** Mailserver mit SPF/DKIM/DMARC, Domain mit Let's-Encrypt-Zertifikat. Geprüft wurde nur gegen lokale Testdienste.
+2. **Echte Gegenstellen sind nur teilweise verifiziert:** Die Erstinstallation mit `scripts/install.sh` auf einem echten Linux-Server mit eigener Domain war am 20.11.2026 erfolgreich (Rückmeldung aus dem Betrieb). Damit ist die Installation selbst geprüft. Nicht einzeln belegt sind weiterhin der Mailserver mit SPF/DKIM/DMARC, die Ausstellung des Let's-Encrypt-Zertifikats und die Wiederherstellung einer Sicherung auf einem zweiten System. Diese Gegenstellen sind nur gegen lokale Testdienste geprüft.
 3. **Zeitstempeldienst:** Gewählt ist inzwischen FreeTSA als Vorgabe von `install.sh`. Erledigt ist der Punkt, sobald `paraph doctor` auf dem Server den Zeitstempeldienst mit „Kette vertrauenswürdig“ meldet.
 
 Danach gehört ein Abnahmelauf auf dem eigenen Server dazu ([Kapitel 16](16-tests-und-nachweise.md#abnahme-auf-dem-eigenen-server)).
@@ -24,12 +24,12 @@ Danach gehört ein Abnahmelauf auf dem eigenen Server dazu ([Kapitel 16](16-test
 | Bereich | Geprüft gegen | Nicht geprüft |
 |---|---|---|
 | E-Mail | Mailpit mit erzwungenem STARTTLS und Anmeldung; lokaler SMTP-Stub | echte Zustellung, Zustellbarkeit, Spam-Einstufung, SPF, DKIM, DMARC |
-| HTTPS | Caddy mit interner CA für `localhost` | Let's Encrypt mit echter Domain |
+| HTTPS | Caddy mit interner CA für `localhost` | Let's Encrypt mit echter Domain nicht einzeln belegt |
 | Zeitstempel | lokaler OpenSSL-Zeitstempeldienst; FreeTSA live (23.10.2026) | qualifizierter Anbieter; Prüfung eines FreeTSA-versiegelten PDFs mit pdfsig oder pyHanko |
 | S3 | MinIO (Pfadstil) | AWS, Hetzner, Wasabi; virtual-hosted-Stil (`S3_FORCE_PATH_STYLE=false`) |
 | OIDC | authentik 2026.8.5 | Keycloak, Entra ID, Google und andere |
 | SMS | – | **gar nicht**; weder gegen einen Anbieter noch automatisiert. Die Diagnose prüft das Gateway nicht. |
-| Docker-Betrieb | Docker Desktop unter macOS | Linux-Server |
+| Docker-Betrieb | Docker Desktop unter macOS; Erstinstallation mit `scripts/install.sh` auf einem echten Linux-Server mit eigener Domain (20.11.2026, Rückmeldung aus dem Betrieb) | übrige Abnahmepunkte auf dem Linux-Server nicht einzeln belegt, insbesondere Wiederherstellung einer Sicherung auf einem zweiten System ([Kapitel 11](11-installation.md#den-betrieb-abnehmen)) |
 
 Die MinIO- und authentik-Tests liefen bei der Entwicklung mit den Diensten. In den letzten belegten Gesamtläufen waren die Dienste nicht gestartet; die Tests wurden übersprungen.
 

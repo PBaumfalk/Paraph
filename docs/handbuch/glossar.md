@@ -8,13 +8,13 @@ Begriffe, die im Handbuch vorkommen, von A bis Z. Jeder Eintrag nennt das Kapite
 
 **Ablauf** – Ein Vorgang hat eine Gültigkeit. Danach lässt er sich nicht mehr unterschreiben; Links werden ungültig. → [Kapitel 3](03-vorgaenge-verfolgen.md)
 
-**Ablehnung** – Eine beteiligte Person lehnt mit Begründung ab. Der Vorgang ist damit beendet. → [Kapitel 3](03-vorgaenge-verfolgen.md), [Kapitel 5](05-so-unterschreiben-mandanten.md)
+**Ablehnung** – Eine beteiligte Person lehnt mit Begründung ab. Der Vorgang ist damit beendet. → [Kapitel 3](03-vorgaenge-verfolgen.md), [Kapitel 5](05-so-unterschreiben-die-beteiligten.md)
 
 **Abschluss** – Haben alle Beteiligten ihren Teil erledigt, erzeugt Paraph das unterschriebene PDF, die Abschlussbestätigung, den Audit-Export und das Nachweispaket und versiegelt sie. Der Abschluss prüft vorher die Audit-Kette und bricht bei Abweichungen ab. → [Kapitel 3](03-vorgaenge-verfolgen.md), [Kapitel 14](14-sicherheit-und-nachweis.md)
 
 **Abschlussbestätigung** – Versiegeltes PDF mit allen Beteiligten, Zeitpunkten, Zugangsverfahren, IP-Adressen, Dokument-Hashes, Kettenkopf und Formhinweisen. Kann an das unterschriebene PDF angehängt werden. → [Kapitel 3](03-vorgaenge-verfolgen.md), [Kapitel 6](06-dokumente-pruefen.md)
 
-**Akzentfarbe** – Farbe der Kanzlei in Oberfläche und E-Mails. Standard ist Petrol (`#0D5C63`). → [Kapitel 8](08-kanzlei-team-erscheinungsbild.md)
+**Akzentfarbe** – Farbe der Organisation in Oberfläche und E-Mails. Standard ist Petrol (`#0D5C63`). → [Kapitel 8](08-organisation-team-erscheinungsbild.md)
 
 **Aktivität** – Protokoll der Organisation: wer wann was in Paraph getan hat, über alle Vorgänge. → [Kapitel 3](03-vorgaenge-verfolgen.md)
 
@@ -22,11 +22,11 @@ Begriffe, die im Handbuch vorkommen, von A bis Z. Jeder Eintrag nennt das Kapite
 
 **Ankertext-Feld** – Feld, das über die API nicht mit Koordinaten, sondern über einen Text im Dokument platziert wird. → [Kapitel 10](10-anbindung-api-webhooks.md)
 
-**API-Schlüssel** – Zugang für Programme (Kanzleisoftware, n8n, Make) zur REST-API, mit Scopes und Modus live oder test. Gespeichert nur als Hash. → [Kapitel 10](10-anbindung-api-webhooks.md)
+**API-Schlüssel** – Zugang für Programme (Fachsoftware wie Kanzlei-, Personal- oder CRM-Software, n8n, Make) zur REST-API, mit Scopes und Modus live oder test. Gespeichert nur als Hash. → [Kapitel 10](10-anbindung-api-webhooks.md)
 
 **Audit-Trail** – Lückenlose Liste aller Ereignisse eines Vorgangs (Versand, Öffnen, Codeprüfung, Unterschrift, Abschluss …) mit Zeit, Akteur und Daten, geführt als Hash-Kette. In der Oberfläche heißt er „Verlauf“. → [Kapitel 3](03-vorgaenge-verfolgen.md), [Kapitel 14](14-sicherheit-und-nachweis.md)
 
-**Aufbewahrung** – Einstellung der Organisation, nach welcher Frist Inhalte abgeschlossener Vorgänge gelöscht werden. Der Audit-Trail sowie Namen und E-Mail-Adressen bleiben. → [Kapitel 8](08-kanzlei-team-erscheinungsbild.md), [Kapitel 7](07-recht.md)
+**Aufbewahrung** – Einstellung der Organisation, nach welcher Frist Inhalte abgeschlossener Vorgänge gelöscht werden. Der Audit-Trail sowie Namen und E-Mail-Adressen bleiben. → [Kapitel 8](08-organisation-team-erscheinungsbild.md), [Kapitel 7](07-recht.md)
 
 ## B
 
@@ -42,7 +42,7 @@ Begriffe, die im Handbuch vorkommen, von A bis Z. Jeder Eintrag nennt das Kapite
 
 ## D
 
-**Datenschutzhinweis-Link** – Link auf die Datenschutzhinweise der Kanzlei (Art. 13 DSGVO), den Paraph auf der Signaturseite zeigt. Fehlt er, meldet die Diagnose einen Hinweis. → [Kapitel 8](08-kanzlei-team-erscheinungsbild.md), [Kapitel 7](07-recht.md)
+**Datenschutzhinweis-Link** – Link auf die Datenschutzhinweise der Organisation (Art. 13 DSGVO), den Paraph auf der Signaturseite zeigt. Fehlt er, meldet die Diagnose einen Hinweis. → [Kapitel 8](08-organisation-team-erscheinungsbild.md), [Kapitel 7](07-recht.md)
 
 ## E
 
@@ -50,9 +50,9 @@ Begriffe, die im Handbuch vorkommen, von A bis Z. Jeder Eintrag nennt das Kapite
 
 **Einbettung** – Die Signaturseite lässt sich in eine eigene Website einbinden (`/embed/s/…`), mit Einbettungslinks, die 10 Minuten und nur einmal gelten. → [Kapitel 10](10-anbindung-api-webhooks.md)
 
-**Einmalcode** – Sechsstelliger Code per E-Mail oder SMS als Zugangsschutz, 10 Minuten gültig. Belegt Zugriff auf Postfach oder Rufnummer, nicht die Identität. → [Kapitel 2](02-dokument-unterschreiben-lassen.md), [Kapitel 5](05-so-unterschreiben-mandanten.md)
+**Einmalcode** – Sechsstelliger Code per E-Mail oder SMS als Zugangsschutz, 10 Minuten gültig. Belegt Zugriff auf Postfach oder Rufnummer, nicht die Identität. → [Kapitel 2](02-dokument-unterschreiben-lassen.md), [Kapitel 5](05-so-unterschreiben-die-beteiligten.md)
 
-**Einrichtungscode** – Code für die Ersteinrichtung unter `/setup`, solange noch kein Konto existiert. Anzeige mit `paraph setup-code`. → [Kapitel 8](08-kanzlei-team-erscheinungsbild.md), [Kapitel 11](11-installation.md)
+**Einrichtungscode** – Code für die Ersteinrichtung unter `/setup`, solange noch kein Konto existiert. Anzeige mit `paraph setup-code`. → [Kapitel 8](08-organisation-team-erscheinungsbild.md), [Kapitel 11](11-installation.md)
 
 **Entwurf** – Vorgang vor dem Versand. Entwürfe werden nicht verankert. → [Kapitel 2](02-dokument-unterschreiben-lassen.md)
 
@@ -86,9 +86,9 @@ Begriffe, die im Handbuch vorkommen, von A bis Z. Jeder Eintrag nennt das Kapite
 
 **Idempotency-Key** – Header, mit dem ein Programm eine API-Anfrage gefahrlos wiederholen kann: Dieselbe Anfrage liefert die gespeicherte Antwort, eine abweichende wird abgewiesen. → [Kapitel 10](10-anbindung-api-webhooks.md)
 
-**Instanz** – Eine Paraph-Installation auf einem Server. Sie kann mehrere Organisationen enthalten. → [Kapitel 8](08-kanzlei-team-erscheinungsbild.md)
+**Instanz** – Eine Paraph-Installation auf einem Server. Sie kann mehrere Organisationen enthalten. → [Kapitel 8](08-organisation-team-erscheinungsbild.md)
 
-**Instanz-Administration** – Konten mit Zugriff auf Einstellungen → System, die Benutzerverwaltung der Instanz und die Organisationen. → [Kapitel 8](08-kanzlei-team-erscheinungsbild.md)
+**Instanz-Administration** – Konten mit Zugriff auf Einstellungen → System, die Benutzerverwaltung der Instanz und die Organisationen. → [Kapitel 8](08-organisation-team-erscheinungsbild.md)
 
 **Integrität** – Abschnitt der Vorgangsseite mit den Hashes der maßgeblichen Fassung und des unterschriebenen PDFs, der Siegelstufe und dem Kettenkopf. → [Kapitel 3](03-vorgaenge-verfolgen.md)
 
@@ -98,7 +98,7 @@ Begriffe, die im Handbuch vorkommen, von A bis Z. Jeder Eintrag nennt das Kapite
 
 ## L
 
-**Linkübergabe** – Paraph versendet keine Einladungen (`notify: false`); die Kanzleisoftware übergibt die Signaturlinks selbst, etwa aus j-lawyer. → [Kapitel 10](10-anbindung-api-webhooks.md)
+**Linkübergabe** – Paraph versendet keine Einladungen (`notify: false`); die Fachsoftware übergibt die Signaturlinks selbst, etwa j-lawyer, eine Personalsoftware oder ein CRM. → [Kapitel 10](10-anbindung-api-webhooks.md)
 
 ## M
 
@@ -120,7 +120,7 @@ Begriffe, die im Handbuch vorkommen, von A bis Z. Jeder Eintrag nennt das Kapite
 
 **OIDC (OpenID Connect)** – Standard für die Anmeldung über einen zentralen Anbieter (Single Sign-on), getestet mit authentik. → [Kapitel 9](09-anmeldung-und-sso.md)
 
-**Organisation** – Kanzlei innerhalb einer Instanz mit eigenem Team, Erscheinungsbild, Vorgängen und Einstellungen. Organisationen sind strikt getrennt. → [Kapitel 8](08-kanzlei-team-erscheinungsbild.md)
+**Organisation** – Unternehmen, Büro, Verein oder Verwaltung innerhalb einer Instanz mit eigenem Team, Erscheinungsbild, Vorgängen und Einstellungen. Organisationen sind strikt getrennt. → [Kapitel 8](08-organisation-team-erscheinungsbild.md)
 
 ## P
 
@@ -130,7 +130,7 @@ Begriffe, die im Handbuch vorkommen, von A bis Z. Jeder Eintrag nennt das Kapite
 
 **PAdES-B-T** – Signatur mit geprüftem Zeitstempel eines unabhängigen Dienstes. → [Kapitel 14](14-sicherheit-und-nachweis.md)
 
-**Plattformsiegel** – Signatur der Paraph-Instanz auf jedem fertigen PDF, der Abschlussbestätigung und dem Manifest. Belegt, dass die Datei seit dem Abschluss unverändert ist; kein qualifiziertes Siegel und keine persönliche Signatur. → [Kapitel 14](14-sicherheit-und-nachweis.md), [Kapitel 8](08-kanzlei-team-erscheinungsbild.md)
+**Plattformsiegel** – Signatur der Paraph-Instanz auf jedem fertigen PDF, der Abschlussbestätigung und dem Manifest. Belegt, dass die Datei seit dem Abschluss unverändert ist; kein qualifiziertes Siegel und keine persönliche Signatur. → [Kapitel 14](14-sicherheit-und-nachweis.md), [Kapitel 8](08-organisation-team-erscheinungsbild.md)
 
 **Prüfstelle** – Öffentliche Seite `/verify`, die eine vorgelegte Datei im Browser hasht, mit dem Register vergleicht und eingebettete Siegel prüft. → [Kapitel 6](06-dokumente-pruefen.md)
 
@@ -144,7 +144,7 @@ Begriffe, die im Handbuch vorkommen, von A bis Z. Jeder Eintrag nennt das Kapite
 
 **RFC-3161-Zeitstempel** – Bestätigung eines Zeitstempeldienstes, dass ein bestimmter Hash zu einer bestimmten Zeit vorlag. Paraph prüft Signatur, Hashwert, Nonce, Zertifikat und Kette. → [Kapitel 14](14-sicherheit-und-nachweis.md)
 
-**Rollen (Team)** – Rechte im Team einer Organisation: „Inhaber“, „Administration“, „Mitglied“, „Nur lesen“. → [Kapitel 8](08-kanzlei-team-erscheinungsbild.md)
+**Rollen (Team)** – Rechte im Team einer Organisation: „Inhaber“, „Administration“, „Mitglied“, „Nur lesen“. → [Kapitel 8](08-organisation-team-erscheinungsbild.md)
 
 **Rückdatierungsverzug** – Größter Abstand zwischen einem Ereignis und seiner ersten externen Bestätigung durch einen Zeitstempel. Ein großer Wert deutet auf nachträgliche Fälschung hin; `paraph verify-audit` meldet ihn. → [Kapitel 14](14-sicherheit-und-nachweis.md)
 
@@ -154,7 +154,7 @@ Begriffe, die im Handbuch vorkommen, von A bis Z. Jeder Eintrag nennt das Kapite
 
 **Sicherung v2** – Vollständig verschlüsselte Sicherung von Datenbank und Dokumenten, wahlweise mit dem Hauptschlüssel, geschützt durch die Wiederherstellungs-Passphrase. → [Kapitel 13](13-sicherung-und-updates.md)
 
-**Signaturlink** – Persönlicher Link (`/s/…`), über den eine beteiligte Person unterschreibt. 256 Bit Zufall, gespeichert nur als Hash. → [Kapitel 5](05-so-unterschreiben-mandanten.md), [Kapitel 14](14-sicherheit-und-nachweis.md)
+**Signaturlink** – Persönlicher Link (`/s/…`), über den eine beteiligte Person unterschreibt. 256 Bit Zufall, gespeichert nur als Hash. → [Kapitel 5](05-so-unterschreiben-die-beteiligten.md), [Kapitel 14](14-sicherheit-und-nachweis.md)
 
 **Signaturstufe** – EES, FES oder QES. Paraph erzeugt EES. → [Kapitel 7](07-recht.md)
 
@@ -182,9 +182,9 @@ Begriffe, die im Handbuch vorkommen, von A bis Z. Jeder Eintrag nennt das Kapite
 
 **Vertrauensanker** – Zertifikat des Zeitstempelanbieters (`TSA_CA_FILE`, in Docker `secrets/tsa_ca.pem`). Erst damit ist geprüft, welcher Dienst einen Zeitstempel ausgestellt hat. → [Kapitel 14](14-sicherheit-und-nachweis.md), [Kapitel 12](12-konfiguration.md)
 
-**Vertretung** – Eine Person gibt ihre Aufgabe an jemand anderen weiter; ihr Link wird ungültig. → [Kapitel 2](02-dokument-unterschreiben-lassen.md), [Kapitel 5](05-so-unterschreiben-mandanten.md)
+**Vertretung** – Eine Person gibt ihre Aufgabe an jemand anderen weiter; ihr Link wird ungültig. → [Kapitel 2](02-dokument-unterschreiben-lassen.md), [Kapitel 5](05-so-unterschreiben-die-beteiligten.md)
 
-**Vor-Ort-Signatur** – Unterschrift am Bildschirm eines angemeldeten Kanzleimitglieds, wenn die Person in der Kanzlei ist; die gastgebende Person steht im Audit-Trail und ist zur persönlichen Identitätsprüfung angehalten. → [Kapitel 4](04-vorlagen-serien-formulare.md)
+**Vor-Ort-Signatur** – Unterschrift am Bildschirm eines angemeldeten Teammitglieds, wenn die Person vor Ort ist; die gastgebende Person steht im Audit-Trail und ist zur persönlichen Identitätsprüfung angehalten. → [Kapitel 4](04-vorlagen-serien-formulare.md)
 
 **Vorgang** – Ein Dokument (oder mehrere) mit Beteiligten und Feldern, das zur Unterschrift versandt wird, vom Entwurf bis zum Abschluss. → [Kapitel 1](01-paraph-in-fuenf-minuten.md)
 
@@ -194,13 +194,13 @@ Begriffe, die im Handbuch vorkommen, von A bis Z. Jeder Eintrag nennt das Kapite
 
 **Webhook** – Nachricht von Paraph an eine Adresse Ihrer Wahl bei Ereignissen wie „Vorgang abgeschlossen“, signiert nach „Standard Webhooks“ und bei Fehlern wiederholt. → [Kapitel 10](10-anbindung-api-webhooks.md)
 
-**Widerruf** – Die Kanzlei zieht einen versandten Vorgang zurück; alle Links und Sitzungen werden ungültig. → [Kapitel 3](03-vorgaenge-verfolgen.md)
+**Widerruf** – Die absendende Organisation zieht einen versandten Vorgang zurück; alle Links und Sitzungen werden ungültig. → [Kapitel 3](03-vorgaenge-verfolgen.md)
 
 **Wiederherstellungs-Passphrase** – Passphrase (`BACKUP_PASSPHRASE_FILE`), die den Hauptschlüssel in jeder Sicherung schützt. Mit ihr lässt sich eine Sicherung auch auf einem neuen Server ohne alten Schlüssel wiederherstellen. → [Kapitel 13](13-sicherung-und-updates.md)
 
 ## Z
 
-**Zugangscode** – Von der Kanzlei festgelegter Code (mindestens 6 Zeichen), den sie der Person auf einem zweiten Weg mitteilt. → [Kapitel 2](02-dokument-unterschreiben-lassen.md)
+**Zugangscode** – Vom Absender festgelegter Code (mindestens 6 Zeichen), den er der Person auf einem zweiten Weg mitteilt. → [Kapitel 2](02-dokument-unterschreiben-lassen.md)
 
 **Zugangsschutz** – Verfahren, mit dem sich eine Person vor dem Unterschreiben ausweist: nur Link, E-Mail-Code, SMS-Code oder Zugangscode. → [Kapitel 2](02-dokument-unterschreiben-lassen.md), [Kapitel 14](14-sicherheit-und-nachweis.md)
 

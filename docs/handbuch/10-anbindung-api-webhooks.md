@@ -1,6 +1,6 @@
 # 10. Anbindung: API und Webhooks
 
-Dieses Kapitel richtet sich an alle, die Paraph mit anderen Systemen verbinden: Kanzleisoftware wie j-lawyer, Automationswerkzeuge wie n8n oder Make und eigene Anwendungen. Es erklärt API-Schlüssel, Testmodus, typische Aufrufe, Webhooks und die Einbettung der Signaturseite. Grundkenntnisse in HTTP und JSON setzt es voraus.
+Dieses Kapitel richtet sich an alle, die Paraph mit anderen Systemen verbinden: Fachsoftware, etwa Kanzlei-, Personal- oder CRM-Software (z. B. j-lawyer als Kanzleisoftware), Automationswerkzeuge wie n8n oder Make und eigene Anwendungen. Es erklärt API-Schlüssel, Testmodus, typische Aufrufe, Webhooks und die Einbettung der Signaturseite. Grundkenntnisse in HTTP und JSON setzt es voraus.
 
 Die API ist vollständig und ohne Zusatzkosten nutzbar. Die Oberfläche von Paraph verwendet dieselben Endpunkte.
 
@@ -8,10 +8,10 @@ Die API ist vollständig und ohne Zusatzkosten nutzbar. Die Oberfläche von Para
 
 | Ziel | Weg | Abschnitt |
 |---|---|---|
-| Vorgang aus der Kanzleisoftware anlegen, Link dort selbst an Mandanten übergeben | API mit `notify: false` und `external_ref` | [Links selbst übergeben](#links-aus-der-kanzleisoftware-selbst-übergeben) |
-| Automatisch reagieren, wenn unterschrieben wurde (PDF ablegen, Akte aktualisieren) | Webhook `envelope.completed`, dann PDF per API laden | [Webhooks](#webhooks-empfangen) |
+| Vorgang aus der Fachsoftware anlegen, Link dort selbst an Unterzeichnende übergeben | API mit `notify: false` und `external_ref` | [Links selbst übergeben](#links-aus-der-fachsoftware-selbst-übergeben) |
+| Automatisch reagieren, wenn unterschrieben wurde (PDF ablegen, Datensatz in der Fachsoftware aktualisieren) | Webhook `envelope.completed`, dann PDF per API laden | [Webhooks](#webhooks-empfangen) |
 | Standarddokumente mit festen Rollen versenden | Vorlage per API verwenden | [Vorlage verwenden](#einen-vorgang-aus-einer-vorlage-anlegen) |
-| Unterschrift im eigenen Mandantenportal | Einbettung per `iframe` | [Einbettung](#die-signaturseite-einbetten) |
+| Unterschrift im eigenen Kunden- oder Mitarbeiterportal | Einbettung per `iframe` | [Einbettung](#die-signaturseite-einbetten) |
 | Werkzeuge wie n8n oder Make | HTTP-Knoten mit API-Schlüssel, Webhook-Knoten | [Beispiele](#beispiele-für-n8n-und-make) |
 
 ## Die API-Dokumentation öffnen
@@ -110,20 +110,20 @@ Bei Netzfehlern wissen Sie oft nicht, ob ein Vorgang schon angelegt wurde. Dafü
 - Gleicher Schlüssel, andere Anfrage: HTTP 422 `idempotency_mismatch`.
 - Gespeichert werden nur Antworten mit Status unter 500, je API-Schlüssel bzw. Benutzer, für 48 Stunden, verschlüsselt (sie können Signaturlinks enthalten).
 
-Verwenden Sie eine eindeutige Kennung aus Ihrem System, z. B. `akte-123-vollmacht-2026-10-22`.
+Verwenden Sie eine eindeutige Kennung aus Ihrem System, z. B. `ref-123-vollmacht-2026-10-22`.
 
 ## Einen Vorgang in einem Aufruf anlegen und versenden
 
 `POST /api/v1/envelopes` legt Entwurf, Dokumente, Beteiligte und Felder an und versendet auf Wunsch sofort (`"send": true`). Schlägt ein Teil fehl, löscht Paraph den halben Entwurf wieder.
 
 ```sh
-curl -X POST https://sign.kanzlei.example/api/v1/envelopes \
+curl -X POST https://sign.firma.example/api/v1/envelopes \
   -H "Authorization: Bearer $PARAPH_KEY" \
   -H "Content-Type: application/json" \
-  -H "Idempotency-Key: akte-123-vollmacht" \
+  -H "Idempotency-Key: ref-123-vollmacht" \
   -d @- <<EOF
 {
-  "title": "Vollmacht Müller ./. Schmidt",
+  "title": "Vollmacht Max Müller",
   "message": "Bitte unterschreiben Sie die Vollmacht.",
   "external_ref": "123/26",
   "expires_in_days": 14,
@@ -131,11 +131,11 @@ curl -X POST https://sign.kanzlei.example/api/v1/envelopes \
     { "name": "Vollmacht.pdf", "file_base64": "$(base64 < Vollmacht.pdf | tr -d '\n')" }
   ],
   "recipients": [
-    { "ref": "mandant", "kind": "signer", "name": "Max Müller", "email": "max@example.org", "auth_method": "email_otp" }
+    { "ref": "unterzeichner", "kind": "signer", "name": "Max Müller", "email": "max@example.org", "auth_method": "email_otp" }
   ],
   "fields": [
-    { "type": "signature", "recipient": "mandant", "anchor": { "text": "Unterschrift Mandant", "offset_y": 4 } },
-    { "type": "signed_date", "recipient": "mandant", "anchor": { "text": "Datum", "offset_y": 4, "width": 100, "height": 20 } }
+    { "type": "signature", "recipient": "unterzeichner", "anchor": { "text": "Unterschrift", "offset_y": 4 } },
+    { "type": "signed_date", "recipient": "unterzeichner", "anchor": { "text": "Datum", "offset_y": 4, "width": 100, "height": 20 } }
   ],
   "send": true
 }
@@ -172,13 +172,13 @@ Hat der Vorgang Formklassen (`form_classes`), die eine strengere Form als die ei
 ## Einen Vorgang aus einer Vorlage anlegen
 
 ```sh
-curl -X POST https://sign.kanzlei.example/api/v1/templates/tpl_…/envelopes \
+curl -X POST https://sign.firma.example/api/v1/templates/tpl_…/envelopes \
   -H "Authorization: Bearer $PARAPH_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "recipients": { "mandant": { "name": "Max Müller", "email": "max@example.org" } },
-    "prefill": { "aktenzeichen": "123/26", "gegenstand": "Kündigungsschutzklage" },
-    "title": "Vollmacht {{mandant.name}} – {{aktenzeichen}}",
+    "recipients": { "unterzeichner": { "name": "Max Müller", "email": "max@example.org" } },
+    "prefill": { "referenz": "123/26", "gegenstand": "Arbeitsvertrag" },
+    "title": "Vertrag {{unterzeichner.name}} – {{referenz}}",
     "external_ref": "123/26"
   }'
 ```
@@ -192,29 +192,29 @@ curl -X POST https://sign.kanzlei.example/api/v1/templates/tpl_…/envelopes \
 
 Vorlagen, Rollen und Massenversand erklärt [Kapitel 4](04-vorlagen-serien-formulare.md).
 
-## Links aus der Kanzleisoftware selbst übergeben
+## Links aus der Fachsoftware selbst übergeben
 
-Soll Paraph keine E-Mail versenden, weil Ihre Kanzleisoftware (z. B. j-lawyer) den Link selbst übermittelt, versenden Sie mit `"notify": false`. Die Antwort enthält dann die Links:
+Soll Paraph keine E-Mail versenden, weil Ihre Fachsoftware den Link selbst übermittelt, versenden Sie mit `"notify": false`. Die Antwort enthält dann die Links:
 
 ```json
 "signing_links": [
-  { "recipient_id": "rcp_…", "email": "max@example.org", "url": "https://sign.kanzlei.example/s/…" }
+  { "recipient_id": "rcp_…", "email": "max@example.org", "url": "https://sign.firma.example/s/…" }
 ]
 ```
 
 Ein typischer Ablauf:
 
-1. Vorgang mit `"send": true`, `"notify": false` und dem Aktenzeichen in `external_ref` anlegen.
-2. Die Links aus `signing_links` in der Kanzleisoftware an die Mandantin übergeben (E-Mail aus der Akte, beA, Portal).
+1. Vorgang mit `"send": true`, `"notify": false` und Ihrem Zeichen in `external_ref` anlegen. Das ist Ihre Referenz aus der Fachsoftware, z. B. eine Akten-, Personal- oder Kundennummer.
+2. Die Links aus `signing_links` aus der Fachsoftware an die Unterzeichnenden übergeben (eigene E-Mail, Portal, Nachricht). Für Kanzleien kommt auch das beA in Betracht.
 3. Einen Webhook auf `recipient.notified` und `envelope.completed` einrichten. Ist bei Reihenfolge `sequential` die nächste Person oder nach einer Weitergabe die Vertretung an der Reihe, meldet `recipient.notified` das mit `"channel": "link_handover"`; den Link holt Ihr System mit `POST /api/v1/envelopes/{id}/recipients/{rid}/link`. Den Link selbst enthält der Webhook nicht, damit keine gültigen Links in Zustellprotokollen liegen.
-4. Bei `envelope.completed` das unterschriebene PDF laden und zur Akte legen.
-5. Vorgänge zu einer Akte finden Sie über `GET /api/v1/envelopes?external_ref=123/26`.
+4. Bei `envelope.completed` das unterschriebene PDF laden und in der Fachsoftware ablegen.
+5. Vorgänge zu einer Referenz finden Sie über `GET /api/v1/envelopes?external_ref=123/26`.
 
 Der Audit-Trail vermerkt bei der Benachrichtigung den Kanal `link_handover`.
 
 Was Sie wissen sollten:
 
-- `notify: false` gilt für den ganzen Vorgang: Auch später folgende Personen und Vertretungen erhalten keine E-Mail, und automatische Erinnerungen entfallen. Gehört der Vorgang einem Kanzleimitglied (bei API-Schlüsseln: wer den Schlüssel angelegt hat), bekommt es eine E-Mail „Link übergeben: … ist an der Reihe“, sobald eine solche Person an die Reihe kommt.
+- `notify: false` gilt für den ganzen Vorgang: Auch später folgende Personen und Vertretungen erhalten keine E-Mail, und automatische Erinnerungen entfallen. Gehört der Vorgang einem Mitglied der Organisation (bei API-Schlüsseln: wer den Schlüssel angelegt hat), bekommt es eine E-Mail „Link übergeben: … ist an der Reihe“, sobald eine solche Person an die Reihe kommt.
 - `POST …/recipients/{rid}/link` erzeugt einen neuen Link ohne E-Mail. Alle bisherigen Links der Person werden ungültig, und offene Sitzungen auf der Signaturseite enden.
 - Eine ausdrücklich ausgelöste Erinnerung (`POST …/recipients/{rid}/remind`) versendet dagegen bewusst eine E-Mail mit neuem Link. Der unmittelbar vorherige Link bleibt gültig, ältere verfallen.
 - Beide Aufrufe funktionieren nur, solange der Vorgang läuft und die Person an der Reihe ist (sonst HTTP 409 `not_active` bzw. `not_pending`).
@@ -226,20 +226,20 @@ Beide Werkzeuge rufen die API über einen HTTP-Knoten auf: Methode und Adresse w
 Vorgänge mit Status abfragen (`status` kommagetrennt: `draft`, `sent`, `completed`, `declined`, `voided`, `expired`; außerdem `search`, `external_ref`, `limit`):
 
 ```sh
-curl -s "https://sign.kanzlei.example/api/v1/envelopes?status=sent,completed&limit=50" \
+curl -s "https://sign.firma.example/api/v1/envelopes?status=sent,completed&limit=50" \
   -H "Authorization: Bearer $PARAPH_KEY"
 ```
 
 Vorgang ansehen:
 
 ```sh
-curl -s https://sign.kanzlei.example/api/v1/envelopes/env_… -H "Authorization: Bearer $PARAPH_KEY"
+curl -s https://sign.firma.example/api/v1/envelopes/env_… -H "Authorization: Bearer $PARAPH_KEY"
 ```
 
 Unterschriebenes PDF herunterladen, wenn `envelope.completed` eintrifft:
 
 ```sh
-curl -s -o ergebnis.pdf https://sign.kanzlei.example/api/v1/envelopes/env_…/files/final \
+curl -s -o ergebnis.pdf https://sign.firma.example/api/v1/envelopes/env_…/files/final \
   -H "Authorization: Bearer $PARAPH_KEY"
 ```
 
@@ -248,14 +248,14 @@ Der Endpunkt `files/{kind}` kennt außerdem `certificate` (Abschlussbestätigung
 Person erinnern (neuer Link; der unmittelbar vorherige bleibt gültig):
 
 ```sh
-curl -X POST https://sign.kanzlei.example/api/v1/envelopes/env_…/recipients/rcp_…/remind \
+curl -X POST https://sign.firma.example/api/v1/envelopes/env_…/recipients/rcp_…/remind \
   -H "Authorization: Bearer $PARAPH_KEY"
 ```
 
 Vorgang widerrufen:
 
 ```sh
-curl -X POST https://sign.kanzlei.example/api/v1/envelopes/env_…/void \
+curl -X POST https://sign.firma.example/api/v1/envelopes/env_…/void \
   -H "Authorization: Bearer $PARAPH_KEY" -H "Content-Type: application/json" \
   -d '{ "reason": "Vertrag wird neu aufgesetzt" }'
 ```
@@ -273,7 +273,7 @@ Paraph meldet Ereignisse per HTTP-POST an Ihre Adresse. Das Format folgt der Spe
 **Per API** (Scope `webhooks:manage`):
 
 ```json
-{ "url": "https://n8n.kanzlei.example/webhook/paraph", "events": ["envelope.completed", "envelope.declined"], "mode": "live" }
+{ "url": "https://n8n.firma.example/webhook/paraph", "events": ["envelope.completed", "envelope.declined"], "mode": "live" }
 ```
 
 an `POST /api/v1/webhooks`. Die Antwort enthält einmalig das Geheimnis `whsec_…`. Mit einem Test-Schlüssel angelegte Webhooks sind immer im Modus `test`. `"events": ["*"]` abonniert alle Ereignisse. Paraph speichert das Geheimnis verschlüsselt.
@@ -376,22 +376,22 @@ Für interne Ziele wie n8n im LAN tragen Sie den Host in `WEBHOOK_ALLOW_HOSTS` e
 
 ## Die Signaturseite einbetten
 
-Die Signaturseite lässt sich per `<iframe>` in eine eigene Anwendung einbetten, etwa in ein Mandantenportal. Nur sie ist einbettbar; alle übrigen Seiten von Paraph verbieten die Darstellung in fremden Rahmen.
+Die Signaturseite lässt sich per `<iframe>` in eine eigene Anwendung einbetten, etwa in ein Kunden- oder Mitarbeiterportal. Nur sie ist einbettbar; alle übrigen Seiten von Paraph verbieten die Darstellung in fremden Rahmen.
 
-1. Erlaubte Herkünfte eintragen: Einstellungen → API und Webhooks → „Einbettung“, eine pro Zeile, z. B. `https://portal.kanzlei.example`, dann „Speichern“. Höchstens 20 Einträge.
+1. Erlaubte Herkünfte eintragen: Einstellungen → API und Webhooks → „Einbettung“, eine pro Zeile, z. B. `https://portal.firma.example`, dann „Speichern“. Höchstens 20 Einträge.
 2. Pro Aufruf einen Einbettungslink holen (Scope `envelopes:write`):
    ```sh
-   curl -X POST https://sign.kanzlei.example/api/v1/envelopes/env_…/recipients/rcp_…/embed \
+   curl -X POST https://sign.firma.example/api/v1/envelopes/env_…/recipients/rcp_…/embed \
      -H "Authorization: Bearer $PARAPH_KEY" -H "Content-Type: application/json" \
-     -d '{ "origin": "https://portal.kanzlei.example" }'
-   # → { "url": "https://sign.kanzlei.example/embed/s/…", "expires_in": 600 }
+     -d '{ "origin": "https://portal.firma.example" }'
+   # → { "url": "https://sign.firma.example/embed/s/…", "expires_in": 600 }
    ```
    Der Link ist 10 Minuten gültig und nur einmal verwendbar. Die Person muss gerade an der Reihe sein.
 3. Den Link im `iframe` laden. Paraph setzt `Content-Security-Policy: frame-ancestors` auf die angegebene Herkunft.
 4. Auf Nachrichten hören:
    ```js
    window.addEventListener('message', (e) => {
-     if (e.origin !== 'https://sign.kanzlei.example') return;
+     if (e.origin !== 'https://sign.firma.example') return;
      if (e.data?.type === 'paraph:completed') { /* e.data.envelope_id */ }
      if (e.data?.type === 'paraph:declined')  { /* … */ }
      if (e.data?.type === 'paraph:delegated') { /* an Vertretung weitergegeben, Vorgang läuft weiter */ }

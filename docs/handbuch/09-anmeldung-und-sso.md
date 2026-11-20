@@ -1,8 +1,8 @@
 # 9. Anmeldung und SSO
 
-Dieses Kapitel beschreibt, wie sich Kanzleimitarbeiter bei Paraph anmelden und wie die Administration die Anmeldung absichert: Passwort, Zwei-Faktor-Anmeldung, Sitzungen, vergessene Passwörter, Sperren und die Anmeldung über einen zentralen Anmeldedienst (OIDC/SSO, z. B. authentik). Es richtet sich an die Kanzlei-Administration; die Abschnitte zu Passwort und Zwei-Faktor sind auch für alle anderen nützlich.
+Dieses Kapitel beschreibt, wie sich die Mitarbeiterinnen und Mitarbeiter Ihrer Organisation bei Paraph anmelden und wie die Administration die Anmeldung absichert: Passwort, Zwei-Faktor-Anmeldung, Sitzungen, vergessene Passwörter, Sperren und die Anmeldung über einen zentralen Anmeldedienst (OIDC/SSO, z. B. authentik). Es richtet sich an die Administration; die Abschnitte zu Passwort und Zwei-Faktor sind auch für alle anderen nützlich.
 
-Mandantinnen und Mandanten, die unterschreiben, brauchen kein Konto. Wie sie sich auf der Signaturseite ausweisen, steht in [Kapitel 2](02-dokument-unterschreiben-lassen.md) und [Kapitel 5](05-so-unterschreiben-mandanten.md).
+Unterzeichnende und andere Beteiligte brauchen kein Konto. Wie sie sich auf der Signaturseite ausweisen, steht in [Kapitel 2](02-dokument-unterschreiben-lassen.md) und [Kapitel 5](05-so-unterschreiben-die-beteiligten.md).
 
 ## Sich anmelden
 
@@ -15,7 +15,7 @@ Die Anmeldeseite liegt unter `/login`.
 
 Ist SSO eingerichtet, zeigt die Seite zusätzlich die Schaltfläche „Mit … anmelden“, z. B. „Mit authentik anmelden“. Unter dem Formular führt „Ein unterschriebenes Dokument prüfen“ zur Prüfstelle ([Kapitel 6](06-dokumente-pruefen.md)).
 
-Gehört ein Konto noch zu keiner Organisation, erscheint nach der Anmeldung ein entsprechender Hinweis. Die Person braucht dann eine Einladung ([Kapitel 8](08-kanzlei-team-erscheinungsbild.md#eine-person-einladen)).
+Gehört ein Konto noch zu keiner Organisation, erscheint nach der Anmeldung ein entsprechender Hinweis. Die Person braucht dann eine Einladung ([Kapitel 8](08-organisation-team-erscheinungsbild.md#eine-person-einladen)).
 
 ## Das Passwort ändern
 
@@ -85,7 +85,7 @@ Nach dem Zurücksetzen sind alle bisherigen Sitzungen abgemeldet, und eine Sperr
 
 ## Ein Konto sperren
 
-Instanz-Administratoren sperren Konten unter Einstellungen → System → „Benutzerkonten der Instanz“ mit „Sperren“ (siehe [Kapitel 8](08-kanzlei-team-erscheinungsbild.md#benutzerkonten-der-instanz-verwalten)). Ein gesperrtes Konto
+Instanz-Administratoren sperren Konten unter Einstellungen → System → „Benutzerkonten der Instanz“ mit „Sperren“ (siehe [Kapitel 8](08-organisation-team-erscheinungsbild.md#benutzerkonten-der-instanz-verwalten)). Ein gesperrtes Konto
 
 - wird sofort abgemeldet,
 - kann sich weder mit Passwort noch per SSO anmelden,
@@ -100,7 +100,7 @@ Ist noch eine Instanz-Administration angemeldet, genügt Einstellungen → Syste
 
 ```sh
 # Link zum Zurücksetzen des Passworts, 60 Minuten gültig
-docker compose exec paraph paraph reset-link person@kanzlei.example
+docker compose exec paraph paraph reset-link person@firma.example
 
 # Einrichtungscode anzeigen (nur solange noch kein Konto existiert)
 docker compose exec paraph paraph setup-code
@@ -159,7 +159,7 @@ Getestet mit authentik 2026.8.5. Die Bezeichnungen der authentik-Oberfläche sin
    - Name: `Paraph`
    - Authorization flow: `default-provider-authorization-implicit-consent` (oder `explicit-consent`, wenn eine Zustimmungsseite gewünscht ist)
    - Client type: **Confidential**; Client ID und Client Secret notieren
-   - Redirect URIs: Modus *Strict*, `${APP_URL}/api/auth/oidc/callback`, z. B. `https://sign.kanzlei.example/api/auth/oidc/callback` (genau wie `APP_URL`, ohne Schrägstrich am Ende)
+   - Redirect URIs: Modus *Strict*, `${APP_URL}/api/auth/oidc/callback`, z. B. `https://sign.firma.example/api/auth/oidc/callback` (genau wie `APP_URL`, ohne Schrägstrich am Ende)
    - Grant types: **authorization_code** muss aktiviert sein, sonst antwortet authentik mit `invalid_request`
    - Signing Key: der Schlüssel aus Schritt 1
    - Advanced protocol settings → Scopes: `openid`, `profile` und das eigene E-Mail-Mapping aus Schritt 3 (statt des Standard-Mappings `email`)
@@ -168,7 +168,7 @@ Getestet mit authentik 2026.8.5. Die Bezeichnungen der authentik-Oberfläche sin
 6. **Mehrfaktor:** Im Authentication-Flow von authentik eine Authenticator-Validation-Stage erzwingen (empfohlen).
 7. **Paraph konfigurieren** (`.env`) und neu starten:
    ```ini
-   OIDC_ISSUER=https://auth.kanzlei.example/application/o/paraph/
+   OIDC_ISSUER=https://auth.firma.example/application/o/paraph/
    OIDC_CLIENT_ID=…
    OIDC_CLIENT_SECRET_FILE=/run/secrets/oidc_client_secret
    OIDC_NAME=authentik
@@ -197,4 +197,4 @@ Fehler führen immer zurück zur Anmeldeseite mit einer verständlichen Meldung.
 
 ---
 
-← [8. Kanzlei, Team und Erscheinungsbild einrichten](08-kanzlei-team-erscheinungsbild.md) · [Inhalt](README.md) · [10. Anbindung: API und Webhooks](10-anbindung-api-webhooks.md) →
+← [8. Organisation, Team und Erscheinungsbild einrichten](08-organisation-team-erscheinungsbild.md) · [Inhalt](README.md) · [10. Anbindung: API und Webhooks](10-anbindung-api-webhooks.md) →

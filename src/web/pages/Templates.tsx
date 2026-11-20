@@ -54,7 +54,7 @@ export default function Templates() {
         <div className="sheet empty">
           <FileStack size={40} color="var(--tinte)" />
           <h3>{archived ? t('Archiv ist leer') : t('Noch keine Vorlagen')}</h3>
-          <p>{t('Typisch für Kanzleien: Mandatsvereinbarung, Vergütungsvereinbarung, Vollmacht, Empfangsbestätigung.')}</p>
+          <p>{t('Typisch: Arbeitsvertrag, Auftragsbestätigung, Einwilligung, Vollmacht, Empfangsbestätigung.')}</p>
           {canWrite && !archived && <button className="btn btn-primary" onClick={() => setCreate(true)}>{t('Erste Vorlage anlegen')}</button>}
         </div>
       ) : (
@@ -114,11 +114,11 @@ export default function Templates() {
 }
 
 const STARTERS = [
-  { name: 'Mandatsvereinbarung', roles: ['Mandant'] },
-  { name: 'Vergütungsvereinbarung', roles: ['Mandant'] },
+  { name: 'Arbeitsvertrag', roles: ['Mitarbeiter'] },
+  { name: 'Auftragsbestätigung', roles: ['Kunde'] },
+  { name: 'Einwilligung', roles: ['Unterzeichner'] },
   { name: 'Vollmacht', roles: ['Vollmachtgeber'] },
   { name: 'Empfangsbestätigung', roles: ['Empfänger'] },
-  { name: 'Schweigepflichtentbindung', roles: ['Mandant'] },
 ];
 
 function CreateDialog({ folders, onClose, onCreated }: { folders: any[]; onClose: () => void; onCreated: (id: string) => void }) {

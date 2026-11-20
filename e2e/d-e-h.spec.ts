@@ -38,7 +38,7 @@ test('D: Ablehnung mit Begründung – Status und kein Abschluss möglich', asyn
   await expect(s2.getByRole('heading', { name: /Link ungültig|Beendet/ })).toBeVisible();
 });
 
-test('D2: Vertretung bei Linkübergabe – „Weitergegeben“ statt „Abgelehnt“, Kanzlei stellt den Link aus', async ({ page, browser }) => {
+test('D2: Vertretung bei Linkübergabe – „Weitergegeben“ statt „Abgelehnt“, Absender stellt den Link aus', async ({ page, browser }) => {
   await clearMail();
   await setupOrLogin(page);
   const env = await apiEnvelope(page, 'Vollmacht Vertretung', 'xenia.d2@example.org', { notify: false, allow_delegation: true });
@@ -89,10 +89,10 @@ test('H: Vorlage anlegen, veröffentlichen, mit wenigen Klicks verwenden', async
   await setupOrLogin(page);
   await page.goto('/templates');
   await page.getByRole('button', { name: /Neue Vorlage|Erste Vorlage anlegen/ }).first().click();
-  await page.getByRole('button', { name: 'Mandatsvereinbarung' }).click();
+  await page.getByRole('button', { name: 'Auftragsbestätigung' }).click();
   await page.getByRole('button', { name: 'Anlegen und Dokument hochladen' }).click();
   await page.waitForURL(/\/templates\/tpl_[^/]+\/edit$/);
-  const file = await pdfFile('vorlage.pdf', { title: 'Mandatsvereinbarung' });
+  const file = await pdfFile('vorlage.pdf', { title: 'Auftragsbestätigung' });
   await page.locator('.drop-card input[type=file]').setInputFiles(file);
   const pageEl = page.locator('.pdfpage[data-page="0"]').first();
   await expect(pageEl.locator('canvas')).toBeVisible();
@@ -110,7 +110,7 @@ test('H: Vorlage anlegen, veröffentlichen, mit wenigen Klicks verwenden', async
   await page.getByPlaceholder('E-Mail-Adresse', { exact: true }).fill('bruno@example.org');
   await page.getByRole('dialog').getByRole('button', { name: 'Versenden' }).click();
   await page.waitForURL(/\/envelopes\/env_/);
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Mandatsvereinbarung – Bruno Bauer');
-  const mail = await waitMail('bruno@example.org', 'Mandatsvereinbarung – Bruno Bauer');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Auftragsbestätigung – Bruno Bauer');
+  const mail = await waitMail('bruno@example.org', 'Auftragsbestätigung – Bruno Bauer');
   expect(mail.link).toBeTruthy();
 });

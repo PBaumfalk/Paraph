@@ -497,7 +497,7 @@ function SendDialog({ env, recs, onClose, onSent }: { env: any; recs: RecDraft[]
         <label className="check"><input type="checkbox" checked={delegation} onChange={(e) => setDelegation(e.target.checked)} /> {t('Beteiligte dürfen an eine Vertretung weitergeben (wird protokolliert)')}</label>
         <label className="check"><input type="checkbox" checked={notify} onChange={(e) => setNotify(e.target.checked)} /> {t('Einladungen per E-Mail senden')}</label>
         {!smtp && <p className="hint">{t('Auf diesem Server ist kein E-Mail-Versand eingerichtet. Geben Sie die Links selbst weiter.')}</p>}
-        {!notify && <p className="hint">{t('Sie erhalten die persönlichen Links einmalig und geben sie selbst weiter, etwa aus Ihrer Kanzleisoftware.')}</p>}
+        {!notify && <p className="hint">{t('Sie erhalten die persönlichen Links einmalig und geben sie selbst weiter, etwa aus Ihrer Fachsoftware.')}</p>}
 
         <div className="form-check">
           <div className="row"><Scale size={16} /><strong className="grow">{t('Dokumentart und Formvorschriften')}</strong></div>
