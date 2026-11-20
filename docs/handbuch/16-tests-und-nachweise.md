@@ -43,6 +43,7 @@ Die Kernabläufe sind als Testfälle A bis L benannt. Jeder ist mindestens in Vi
 |---|---|
 | `tests/flows.test.ts` | Abläufe A, B, D, E, F, H und L |
 | `tests/api-webhooks.test.ts` | Ablauf G, Testmodus, OpenAPI, Linkübergabe ohne E-Mail |
+| `tests/timestamp-nonce.test.ts` | Nonce der Zeitstempelanfrage ist immer eine minimal kodierte, positive Ganzzahl |
 | `tests/verify-contents.test.ts` | Siegelprüfung liest den Signaturwert über die DER-Länge, auch wenn er auf ein Null-Byte endet |
 | `tests/handover.test.ts` | Einladungswege: öffentliches Formular mit fester Kanzlei-Rolle (nacheinander und gleichzeitig, keine Erinnerung an Besucher), Linkübergabe bei „Nacheinander“ und bei Vertretung meldet sich beim Absender, Webhook-Feld `channel` |
 | `tests/integrity.test.ts` | Siegel mit geprüftem Zeitstempel (PAdES-B-T); wiederverwendete fremde Zeitstempelantwort abgelehnt, Siegel fällt sichtbar auf B-B zurück; nachträglich eingesetzter Zeitstempel über andere Daten erkannt; nach der Unterschrift geänderter Wert gelangt nicht ins finale PDF; ausgetauschtes Unterschriftsbild erkannt; Merkle-Prüfpfade für alle Baumgrößen; Anker verkettet und gestempelt, Entwürfe nicht verankert; neu berechnete Kette löst Alarm aus; gefälschte Ankerkette mit neuen Zeitstempeln zeigt Rückdatierung; gelöschte oder neu berechnete Anker erkannt; Nachweispaket mit Verankerung; fremde Signatur mit vorangestelltem Instanzzertifikat nicht anerkannt; Zeitstempel eines selbst erzeugten Dienstes abgelehnt |

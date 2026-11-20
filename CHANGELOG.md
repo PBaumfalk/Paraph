@@ -78,6 +78,12 @@ Konfiguration zwischen Versionen ändern; `update.sh` migriert die Daten.
 
 ### Behoben
 
+- **Zeitstempel:** Die Nonce der Zeitstempelanfrage begann bei etwa jeder
+  256. Anfrage mit einem Null-Byte (nicht minimal kodiert). OpenSSL-basierte
+  Dienste wie FreeTSA lehnen solche Anfragen ab; Siegel und Anker blieben dann
+  ohne Zeitstempel. Die Nonce ist jetzt immer minimal kodiert
+  (`tests/timestamp-nonce.test.ts`). Derselbe Fehler machte einen Test in
+  `tests/integrity.test.ts` gelegentlich rot.
 - Versanddialog: „Jetzt versenden“ war für einen Moment klickbar, bevor die
   Vorabprüfung (Formhinweise, fehlende Felder) geladen war; ein Klick endete
   dann in einer Fehlermeldung des Servers. Der Knopf wartet jetzt auf die
