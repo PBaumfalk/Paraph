@@ -42,6 +42,9 @@ Konfiguration zwischen Versionen ändern; `update.sh` migriert die Daten.
 
 ### Geändert
 
+- Docker-Image: Jeder Stand auf `main` erscheint zusätzlich als
+  `ghcr.io/pbaumfalk/paraph:main` (und `main-<Commit>`); Freigaben weiter mit
+  Versionsnummer und `latest`. Das Image ist öffentlich.
 - README für die Veröffentlichung neu geschrieben: Schnellstart für
   Probebetrieb, Server und Claude Code, Wegweiser nach Zielgruppe,
   Funktionsübersicht mit Kapitellinks.
